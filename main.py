@@ -27,9 +27,6 @@ st.image("educational/images/TT_Logo_Stacked_Colour.png", width=300, output_form
 st.title("Wind Load Calculator")
 st.caption("BS EN 1991-1-4 Implementation")
 
-# Version information
-st.text(f"Version {APP_VERSION} | Last Updated: {LAST_UPDATED}")
-
 # Add print-specific CSS - minimal version
 st.markdown("""
 <style>
