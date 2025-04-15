@@ -21,12 +21,12 @@ if 'initialized' not in st.session_state:
     st.session_state.results = {}
     st.session_state.show_educational = True
 
+# Display company logo
+st.image("educational/images/TT_Logo_Stacked_Colour.png", width=300, output_format="PNG")
+
 # Simple title and subtitle using Streamlit's built-in functions
 st.title("Wind Load Calculator")
 st.caption("BS EN 1991-1-4 Implementation")
-
-# Display company logo
-st.image("educational/images/TT_Logo_Stacked_Colour.png", width=150, output_format="PNG")
 
 # Version information
 st.text(f"Version {APP_VERSION} | Last Updated: {LAST_UPDATED}")
