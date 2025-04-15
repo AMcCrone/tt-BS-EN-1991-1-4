@@ -1,312 +1,313 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+import datetime
 
+# App version and metadata
+APP_VERSION = "1.0.0"
+LAST_UPDATED = "April 15, 2025"
+
+# Setup page configuration with a favicon
+st.set_page_config(
+    page_title="Wind Load Calculator",
+    page_icon="🌪️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Initialize session state
+if 'initialized' not in st.session_state:
+    st.session_state.initialized = True
+    st.session_state.region = None
+    st.session_state.current_page = "region_selection"
+    st.session_state.inputs = {}
+    st.session_state.results = {}
+    st.session_state.show_educational = True
+
+# Custom CSS for the entire app
+st.markdown("""
+<style>
+    /* Main app styling */
+    .main {
+        padding: 1rem 1rem;
+    }
+    
+    /* App header styling */
+    .app-header {
+        background-color: #f0f2f6;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #4e8df5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .header-logo {
+        text-align: left;
+    }
+    
+    .header-title {
+        text-align: center;
+        flex-grow: 1;
+    }
+    
+    .header-version {
+        text-align: right;
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    /* Section styling */
+    .section-container {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Navigation styling */
+    .navigation-section {
+        display: flex;
+        justify-content: space-between;
+        margin: 1rem 0;
+    }
+    
+    /* App footer styling */
+    .app-footer {
+        background-color: #f0f2f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-top: 2rem;
+        border-top: 1px solid #ddd;
+        font-size: 0.8rem;
+        color: #666;
+        text-align: center;
+    }
+    
+    /* Progress indicator */
+    .stProgress > div > div > div > div {
+        background-color: #4e8df5;
+    }
+    
+    /* Educational content styling */
+    .educational-content {
+        background-color: #e8f4f8;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #4e8df5;
+        margin: 1rem 0;
+    }
+    
+    /* Results highlight */
+    .results-highlight {
+        font-weight: bold;
+        color: #4e8df5;
+    }
+    
+    /* Print-specific styling */
+    @media print {
+        /* Hide UI elements in print mode */
+        .stApp header, .stApp footer, .stSidebar, .stButton, 
+        .educational-content, .navigation-section, .app-header .header-version {
+            display: none !important;
+        }
+        
+        /* Format printable content */
+        .print-friendly {
+            page-break-inside: avoid;
+            margin: 20px 0;
+        }
+        
+        /* Ensure header prints but simplified */
+        .app-header {
+            border: none;
+            padding: 0;
+            margin-bottom: 2rem;
+            background: none;
+        }
+        
+        /* Show company info in print */
+        .print-company-info {
+            display: block !important;
+            margin-top: 1rem;
+        }
+        
+        /* Section container without shadows */
+        .section-container {
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+    }
+    
+    /* Hide print company info normally */
+    .print-company-info {
+        display: none;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# App Header with Logo, Title and Version
+st.markdown(f"""
+<div class="app-header">
+    <div class="header-logo">
+        <span style="font-size: 2rem;">🌪️</span>
+    </div>
+    <div class="header-title">
+        <h1>Wind Load Calculator</h1>
+        <p>Professional engineering calculations for structural design</p>
+    </div>
+    <div class="header-version">
+        <p>Version {APP_VERSION}</p>
+        <p>Last Updated: {LAST_UPDATED}</p>
+    </div>
+</div>
+<div class="print-company-info">
+    <p>Your Company Name</p>
+    <p>Report Generated: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M")}</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Display progress indicator for multi-page workflow
+def display_progress():
+    workflow_steps = ["Region Selection", "Building Parameters", "Site Conditions", "Calculation Results"]
+    
+    # Determine current step number
+    if st.session_state.current_page == "region_selection":
+        current_step = 1
+    elif st.session_state.current_page == "building_parameters":
+        current_step = 2
+    elif st.session_state.current_page == "site_conditions":
+        current_step = 3
+    elif st.session_state.current_page == "results":
+        current_step = 4
+    else:
+        current_step = 1
+    
+    # Display progress bar
+    progress_percent = current_step / len(workflow_steps)
+    st.progress(progress_percent)
+    
+    # Display step names
+    cols = st.columns(len(workflow_steps))
+    for i, (col, step) in enumerate(zip(cols, workflow_steps)):
+        if i + 1 < current_step:
+            col.markdown(f"✅ {step}")
+        elif i + 1 == current_step:
+            col.markdown(f"**→ {step}**")
+        else:
+            col.markdown(f"{step}")
+
+# Main app content container
 def main():
-    st.title("BS EN 1991-1-4 Wind Load Calculator")
-    st.sidebar.header("Project Information")
+    display_progress()
     
-    # Project and Location Information
-    project_name = st.sidebar.text_input("Project Name")
-    location = st.sidebar.text_input("Location")
-    height_above_ground = st.sidebar.number_input("Height above ground (m)", min_value=0.0, value=10.0)
-    altitude = st.sidebar.number_input("Altitude above sea level (m)", min_value=0.0, value=0.0)
-    
-    # Building Geometry
-    st.sidebar.header("Building Geometry")
-    width = st.sidebar.number_input("Elevation width (m)", min_value=0.0, value=20.0)
-    height = st.sidebar.number_input("Building height (m)", min_value=0.0, value=10.0)
-    depth = st.sidebar.number_input("Building depth (m)", min_value=0.0, value=15.0)
-    
-    # Terrain Information
-    st.sidebar.header("Terrain Information")
-    country = st.sidebar.selectbox("Country", ["UK", "Other European Country"])
-    
-    if country == "UK":
-        location_type = st.sidebar.selectbox("Location Type", ["Town", "Country", "Sea"])
-        uk_vb_map = st.sidebar.number_input("Vb,map from UK Map (m/s)", min_value=0.0, value=23.0)
-    else:
-        terrain_category = st.sidebar.selectbox("Terrain Category", ["0", "I", "II", "III", "IV"])
-        vb_0 = st.sidebar.number_input("Fundamental Wind Velocity Vb,0 (m/s)", min_value=0.0, value=27.0)
-    
-    # Terrain & Geometry Factors
-    with st.expander("Terrain & Geometry Factors"):
-        if country == "UK":
-            # UK specific calculations
-            altitude_factor = calculate_altitude_factor(altitude)
-            vb_0 = uk_vb_map * altitude_factor
-            st.write(f"Altitude Factor: {altitude_factor:.3f}")
-            st.write(f"Fundamental Wind Velocity after altitude correction (Vb,0): {vb_0:.2f} m/s")
-        else:
-            # Other European country calculations
-            st.write(f"Using provided Fundamental Wind Velocity (Vb,0): {vb_0:.2f} m/s")
+    # Example section - replace with your actual app logic
+    with st.container():
+        st.markdown('<div class="section-container">', unsafe_allow_html=True)
         
-        c_dir = st.number_input("Directional factor (Cdir)", min_value=0.0, max_value=1.0, value=1.0, 
-                               help="Conservative value is 1.0")
-        c_season = st.number_input("Seasonal factor (Cseason)", min_value=0.0, max_value=1.0, value=1.0,
-                                  help="1.0 for year-round calculation")
-        
-        # Return period
-        st.subheader("Return Period")
-        return_period = st.number_input("Return Period (years)", min_value=1, value=50)
-        
-        # Custom K, n, p values or standard
-        custom_probability_factors = st.checkbox("Use custom probability factors?")
-        if custom_probability_factors:
-            k = st.number_input("Shape factor (K)", min_value=0.0, value=0.2)
-            n = st.number_input("Exponent (n)", min_value=0.0, value=0.5)
-            p = st.number_input("Annual probability of exceedance (p)", min_value=0.0, max_value=1.0, value=0.02)
-            c_prob = calculate_cprob(return_period, k, n, p)
-        else:
-            k, n, p = 0.2, 0.5, 0.02
-            c_prob = 1.0
-        
-        st.write(f"Probability factor (Cprob): {c_prob:.3f}")
-        
-        # Basic Wind Velocity calculation
-        vb = vb_0 * c_dir * c_season * c_prob
-        st.write(f"Basic Wind Velocity (Vb): {vb:.2f} m/s")
-    
-    # Roughness Factor and Orography
-    with st.expander("Roughness Factor and Orography"):
-        # Roughness factor
-        if country == "UK":
-            if location_type == "Town":
-                terrain_cat = "IV"
-            elif location_type == "Country":
-                terrain_cat = "II"
-            else:  # Sea
-                terrain_cat = "0"
-            st.write(f"UK Location Type: {location_type} (Terrain Category: {terrain_cat})")
-        else:
-            terrain_cat = terrain_category
-            st.write(f"Terrain Category: {terrain_cat}")
-        
-        cr_z = calculate_roughness_factor(height_above_ground, terrain_cat)
-        st.write(f"Roughness Factor Cr(z): {cr_z:.3f}")
-        
-        # Orography factor
-        orography_significant = st.checkbox("Is orography significant?")
-        if orography_significant:
-            co_z = st.number_input("Orography factor Co(z)", min_value=0.0, value=1.0, 
-                                 help="Use A.3 for hills or A.4 for shaded areas")
-        else:
-            co_z = 1.0
-        
-        st.write(f"Orography Factor Co(z): {co_z:.3f}")
-        
-        # Mean wind velocity
-        vm_z = vb * cr_z * co_z
-        st.write(f"Mean Wind Velocity Vm(z): {vm_z:.2f} m/s")
-    
-    # Peak Velocity Pressure
-    with st.expander("Peak Velocity Pressure"):
-        air_density = st.number_input("Air Density (kg/m³)", min_value=0.0, value=1.25)
-        
-        # Basic wind pressure
-        qb = 0.5 * air_density * vb**2
-        st.write(f"Basic Wind Pressure qb: {qb:.2f} Pa")
-        
-        # Calculate peak velocity pressure
-        # In a real implementation, this would use more complex formulas from BS EN 1991-1-4
-        iv = calculate_turbulence_intensity(height_above_ground, terrain_cat, co_z)
-        qp_z = qb * (1 + 7 * iv) * (cr_z * co_z)**2
-        
-        st.write(f"Turbulence Intensity Iv(z): {iv:.3f}")
-        st.write(f"Peak Velocity Pressure qp(z): {qp_z:.2f} Pa")
-    
-    # Wind Zones and Pressure Coefficients
-    with st.expander("Wind Zones and Pressure Coefficients"):
-        # Calculate e
-        e = min(width, 2 * height)
-        st.write(f"e = min(b, 2h) = {e:.2f} m")
-        
-        # Determine zones
-        if e < depth:
-            zones = ["A", "B", "C"]
-        elif e >= 5 * depth:
-            zones = ["A"]
-        else:
-            zones = ["A", "B"]
-        
-        st.write(f"Applicable Wind Zones: {', '.join(zones)}")
-        
-        # External pressure coefficients
-        h_d_ratio = height / depth
-        st.write(f"h/d ratio: {h_d_ratio:.3f}")
-        
-        # This is simplified - would need more complex lookup tables in reality
-        cpe_values = calculate_external_pressure_coefficients(h_d_ratio, zones, width, height)
-        
-        # Display cpe values
-        st.write("External Pressure Coefficients:")
-        for zone, cpe in cpe_values.items():
-            st.write(f"Zone {zone}: cpe,10 = {cpe:.3f}")
-        
-        # Internal pressure coefficients
-        st.subheader("Internal Pressure Coefficient")
-        st.write("Most onerous of +0.2, -0.3 is typically used")
-        cpi_values = [0.2, -0.3]
-        
-        # Funnelling check
-        check_funnelling = st.checkbox("Check for funnelling effects")
-        if check_funnelling:
-            gap_width = st.number_input("Gap width (m)", min_value=0.0, value=2.0)
+        # Content based on current page
+        if st.session_state.current_page == "region_selection":
+            st.header("Select Region")
+            # Your region selection code here
             
-            if gap_width < e/4 or gap_width > e:
-                st.write("No funnelling applies")
-            else:
-                st.write(f"Funnelling applies (gap between e/4 = {e/4:.2f}m and e = {e:.2f}m)")
-                # Here you would adjust cpe values for funnelling
+        elif st.session_state.current_page == "building_parameters":
+            st.header("Building Parameters")
+            # Your building parameters input code here
+            
+        elif st.session_state.current_page == "site_conditions":
+            st.header("Site Conditions")
+            # Your site conditions input code here
+            
+        elif st.session_state.current_page == "results":
+            st.header("Calculation Results")
+            # Your results display code here
+            
+            # Example of print-friendly section
+            st.markdown('<div class="print-friendly">', unsafe_allow_html=True)
+            st.subheader("Summary Report")
+            # Your summary report content here
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Net Pressures
-    with st.expander("Net Pressures"):
-        st.subheader("Wind Pressure Calculation")
+    # Educational toggle section
+    with st.container():
+        show_educational = st.checkbox("Show explanatory information", 
+                                       value=st.session_state.show_educational)
         
-        for zone, cpe in cpe_values.items():
-            st.write(f"Zone {zone}:")
-            for cpi in cpi_values:
-                we = qp_z * cpe
-                wi = qp_z * cpi
-                net_pressure_1 = we + wi  # For suction on internal surfaces
-                net_pressure_2 = we - wi  # For pressure on internal surfaces
-                
-                st.write(f"  With cpi = {cpi}:")
-                st.write(f"  - External pressure (We): {we:.2f} Pa")
-                st.write(f"  - Internal pressure (Wi): {wi:.2f} Pa")
-                st.write(f"  - Net pressure (We + Wi): {net_pressure_1:.2f} Pa")
-                st.write(f"  - Net pressure (We - Wi): {net_pressure_2:.2f} Pa")
-                st.write("---")
+        if show_educational:
+            st.markdown('<div class="educational-content">', unsafe_allow_html=True)
+            st.subheader("Understanding Wind Load Calculations")
+            st.write("""
+            Wind loads are an important consideration in structural design. They represent the force 
+            that wind exerts on a structure and are influenced by factors such as:
+            
+            - Geographic location and wind speed data
+            - Building height, shape, and dimensions
+            - Surrounding terrain and exposure conditions
+            - Building usage and importance
+            """)
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.session_state.show_educational = show_educational
     
-    # Visual representation
-    with st.expander("Visual Representation"):
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
-        # Simple building representation
-        building_x = [0, width, width, 0, 0]
-        building_y = [0, 0, height, height, 0]
-        ax.plot(building_x, building_y, 'k-', linewidth=2)
-        
-        # Wind zones (simplified)
-        if "A" in zones:
-            # Zone A coloring - this is simplified
-            zone_a_width = min(e/5, width)
-            ax.fill_between([0, zone_a_width], [0], [height], alpha=0.3, color='blue', label='Zone A')
-        
-        if "B" in zones:
-            zone_b_width = min(e*4/5, width)
-            ax.fill_between([zone_a_width, zone_b_width], [0], [height], alpha=0.3, color='green', label='Zone B')
-        
-        if "C" in zones:
-            ax.fill_between([zone_b_width, width], [0], [height], alpha=0.3, color='red', label='Zone C')
-        
-        # Add labels and legend
-        ax.set_xlabel('Width (m)')
-        ax.set_ylabel('Height (m)')
-        ax.set_title('Wind Zones on Building Facade')
-        ax.legend()
-        ax.grid(True)
-        ax.set_aspect('equal')
-        
-        st.pyplot(fig)
+    # Navigation buttons
+    st.markdown('<div class="navigation-section">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    # Back button if not on first page
+    if st.session_state.current_page != "region_selection":
+        with col1:
+            if st.button("← Back"):
+                # Your navigation logic here
+                pass
+    
+    # Next button if not on last page
+    if st.session_state.current_page != "results":
+        with col3:
+            if st.button("Next →"):
+                # Your navigation logic here
+                pass
+    
+    # Generate report on results page
+    if st.session_state.current_page == "results":
+        with col3:
+            if st.button("📑 Generate Report"):
+                st.info("Preparing PDF report...")
+                # Your report generation logic here
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Helper functions
-def calculate_altitude_factor(altitude):
-    """Calculate altitude factor for UK"""
-    if altitude <= 10:
-        return 1.0
-    else:
-        return 1.0 + 0.001 * (altitude - 10)
-
-def calculate_cprob(return_period, k=0.2, n=0.5, p=0.02):
-    """Calculate probability factor based on return period"""
-    p_annual = 1 / return_period
-    return ((1 - k * np.log(-np.log(1 - p_annual))) / (1 - k * np.log(-np.log(1 - p))))**n
-
-def calculate_roughness_factor(z, terrain_category):
-    """Calculate roughness factor based on terrain category and height"""
-    # Simplified - would need more detailed implementation based on BS EN 1991-1-4
-    z0_values = {
-        "0": 0.003,
-        "I": 0.01,
-        "II": 0.05,
-        "III": 0.3,
-        "IV": 1.0
-    }
-    z_min_values = {
-        "0": 1,
-        "I": 1,
-        "II": 2,
-        "III": 5,
-        "IV": 10
-    }
-    
-    z0 = z0_values[terrain_category]
-    z_min = z_min_values[terrain_category]
-    z_max = 200  # Standard value
-    
-    # Apply the height limit
-    z_calc = max(z_min, min(z, z_max))
-    
-    kr = 0.19 * (z0 / 0.05)**0.07  # Terrain factor
-    cr = kr * np.log(z_calc / z0)  # Roughness factor
-    
-    return cr
-
-def calculate_turbulence_intensity(z, terrain_category, co_z):
-    """Calculate turbulence intensity"""
-    # Simplified - would need more detailed implementation
-    z0_values = {
-        "0": 0.003,
-        "I": 0.01,
-        "II": 0.05,
-        "III": 0.3,
-        "IV": 1.0
-    }
-    z_min_values = {
-        "0": 1,
-        "I": 1,
-        "II": 2,
-        "III": 5,
-        "IV": 10
-    }
-    
-    z0 = z0_values[terrain_category]
-    z_min = z_min_values[terrain_category]
-    
-    # Apply the height limit
-    z_calc = max(z_min, min(z, 200))
-    
-    if co_z > 1.0:
-        # Orography affects turbulence
-        kl = 1.0  # Turbulence factor, default value
-        iv = kl / (co_z * np.log(z_calc / z0))
-    else:
-        kl = 1.0
-        iv = kl / (np.log(z_calc / z0))
-    
-    return iv
-
-def calculate_external_pressure_coefficients(h_d_ratio, zones, width, height):
-    """Calculate external pressure coefficients for zones"""
-    # Simplified implementation - would need more detailed tables from BS EN 1991-1-4
-    cpe_values = {}
-    
-    # Very simplified coefficients - in reality would depend on h/d ratio and other factors
-    if "A" in zones:
-        cpe_values["A"] = -1.2
-    if "B" in zones:
-        cpe_values["B"] = -0.8
-    if "C" in zones:
-        cpe_values["C"] = -0.5
-    
-    # Adjust based on h/d ratio (simplified)
-    factor = min(1.0, max(0.5, h_d_ratio / 5))
-    for zone in cpe_values:
-        cpe_values[zone] *= factor
-    
-    return cpe_values
+    # Footer
+    st.markdown(f"""
+    <div class="app-footer">
+        <p>Wind Load Calculator v{APP_VERSION} | Developed with Streamlit</p>
+        <p>© {datetime.datetime.now().year} Your Company Name. All rights reserved.</p>
+        <p>For engineering use only. Results should be verified by a licensed professional engineer.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
+    # Add a sidebar for additional options
+    with st.sidebar:
+        st.image("https://via.placeholder.com/150x100?text=Your+Logo", width=150)
+        st.title("Options")
+        
+        units = st.radio("Units System", ["Imperial (US)", "Metric (SI)"])
+        
+        st.subheader("About")
+        st.write("""
+        This application calculates wind loads on structures 
+        according to relevant building codes and standards.
+        """)
+        
+        st.subheader("Resources")
+        st.markdown("- [User Guide](#)")
+        st.markdown("- [Technical Support](#)")
+        st.markdown("- [Code References](#)")
+        
+        st.caption(f"Wind Load Calculator v{APP_VERSION}")
+    
+    # Main app execution
     main()
