@@ -26,7 +26,7 @@ st.title("Wind Load Calculator")
 st.caption("BS EN 1991-1-4 Implementation")
 
 # Display company logo
-st.image("educational/images/tt_logo.png", width=150)
+st.image("educational/images/TT_Logo_Stacked_Colour.png", width=150)
 
 # Version information
 st.text(f"Version {APP_VERSION} | Last Updated: {LAST_UPDATED}")
