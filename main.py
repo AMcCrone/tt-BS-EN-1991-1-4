@@ -3,6 +3,7 @@ import datetime
 
 # App version and metadata
 APP_VERSION = "1.0.0"
+LAST_UPDATED = "April 15, 2025"
 
 # Setup page configuration with a favicon
 st.set_page_config(
