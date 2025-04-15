@@ -21,7 +21,7 @@ if 'initialized' not in st.session_state:
     st.session_state.show_educational = True
 
 # Display company logo
-st.image("educational/images/TT_Logo_Colour.png", width=600, output_format="PNG")
+st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG")
 
 # Simple title and subtitle using Streamlit's built-in functions
 st.title("Wind Load Calculator")
