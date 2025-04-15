@@ -8,8 +8,7 @@ LAST_UPDATED = "April 15, 2025"
 # Setup page configuration with a favicon
 st.set_page_config(
     page_title="Wind Load Calculator",
-    page_icon="🌪️",
-    layout="wide"
+    page_icon="🌪️"
 )
 
 # Initialize session state
