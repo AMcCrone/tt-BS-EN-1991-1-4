@@ -3,13 +3,11 @@ import datetime
 
 # App version and metadata
 APP_VERSION = "1.0.0"
-LAST_UPDATED = "April 15, 2025"
 
 # Setup page configuration with a favicon
 st.set_page_config(
     page_title="Wind Load Calculator",
-    page_icon="🌪️",
-    layout="wide"
+    page_icon="🌪️"
 )
 
 # Initialize session state
@@ -71,7 +69,7 @@ st.markdown("""
 st.markdown(f"""
 <div class="title-block">
     <div class="logo-container">
-        <img src="educational/images/tt_logo.png" alt="Company Logo" height="60">
+        <img src="educational/images/TT_Logo_Stacked_Colour" alt="Company Logo" height="60">
     </div>
     <div class="title-container">
         <h1>Wind Load Calculator</h1>
@@ -85,7 +83,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Main app content would go here
-# This is just the title block setup as requested
 
 # Simple footer
 st.markdown(f"""
