@@ -1,3 +1,4 @@
+import plotly as go
 def create_building_visualisation(NS_dimension, EW_dimension, z):
     # Create a simple 3D building model
     x = [0, NS_dimension, NS_dimension, 0, 0]
