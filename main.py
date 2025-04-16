@@ -333,21 +333,14 @@ if region == "United Kingdom":
         )
         st.session_state.inputs["height"] = z_input
         
-        x_upwind_input = st.number_input(
-            "Distance upwind to shoreline (km)",
-            min_value=0.1,
-            max_value=100.0,
-            value=x_upwind,
-            format="%.1f"
-        )
-        st.session_state.inputs["distance_upwind"] = x_upwind_input
+        d_sea = st.session_state.inputs.get("d_sea", 60.0)
     
     # Load the contour data
     contour_data_path = "calc_engine/uk/contour_data.xlsx"
     datasets = load_contour_data(contour_data_path)
     
     # Get interpolated c_r(z) value from NA.3
-    interpolated_c_r = get_interpolated_value(datasets, "NA.3", x_upwind_input, z_input)
+    interpolated_c_r = get_interpolated_value(datasets, "NA.3", d_sea, z_input)
     
     with col2:
         # Display NA.3 plot
