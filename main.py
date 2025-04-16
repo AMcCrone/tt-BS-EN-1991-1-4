@@ -1,6 +1,7 @@
 import streamlit as st
 import datetime
 import math
+import os
 from auth import authenticate_user
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
@@ -343,7 +344,7 @@ if region == "United Kingdom":
         st.session_state.inputs["distance_upwind"] = x_upwind_input
     
     # Load the contour data
-    contour_data_path = "path/to/your/contour_data.xlsx"  # Adjust path as needed
+    contour_data_path = os.path.join("calc_engine", "uk", "contour_data.xlsx")
     datasets = load_contour_data(contour_data_path)
     
     # Get interpolated c_r(z) value from NA.3
