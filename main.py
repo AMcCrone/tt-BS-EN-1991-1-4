@@ -212,12 +212,35 @@ render_terrain_category()
 st.markdown("---")
 st.header("Wind Velocity")
 st.subheader("Basic Wind Velocity")
-V_bmap = st.number_input(
-        "$$v_b,map$$ (m/s)",
+
+col_input, col_result = st.columns(2)
+
+with col_input:
+    V_bmap = st.number_input(
+        "$$v_{b,map}$$ (m/s)",
         min_value=0.1,
         max_value=100.0,
         value=float(st.session_state.inputs.get("V_bmap", 24.0)),
-        step=0.1)
+        step=0.1
+    )
+    # You can optionally store this value back to session state.
+    st.session_state.inputs["V_bmap"] = V_bmap
+
+with col_result:
+    # Assume variables 'z' and 'altitude_factor' are already defined appropriately.
+    if z <= 10:
+        c_alt = 1 + 0.001 * altitude_factor
+    else:
+        c_alt = 1 + 0.001 * altitude_factor * (10 / z) ** 0.2
+
+    V_b0 = V_bmap * c_alt
+    c_dir = 1.0
+    c_season = 1.0
+    # Basic Wind Speed calculation:
+    V_b = V_b0 * c_dir * c_season
+    
+    st.markdown("**Calculated Basic Wind Speed**")
+    st.write("$$V_b = {:.2f}\\; m/s$$".format(V_b))
 
 st.subheader("Mean Wind Velocity")
 
