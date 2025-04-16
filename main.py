@@ -162,7 +162,7 @@ with col2:
     )
     st.plotly_chart(building_fig, use_container_width=True)
 
-st.columns(2)
+col1, col2 = st.columns(2)
 with col1:
         alt_sea = st.number_input(
         "Altitude Above Sea Level (m)",
