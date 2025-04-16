@@ -304,14 +304,35 @@ st.subheader("Mean Wind Velocity")
 
 region = st.session_state.inputs.get("region", "").lower()
 
-# Check that the region is not UK (i.e. assume EU if not UK)
-if region != "United Kingdom":
+# Check the region selection
+if region == "United Kingdom":
+    # For UK, let the user input a numerical value directly
+    st.markdown("### Roughness Factor")
+    
+    # Direct numerical input for UK
+    c_r = st.number_input(
+        "Enter roughness factor value",
+        min_value=0.0,
+        max_value=5.0,
+        value=float(st.session_state.inputs.get("uk_roughness_factor", 1.0)),
+        step=0.01,
+        format="%.3f"
+    )
+    
+    # Save the UK roughness factor to session state
+    st.session_state.inputs["uk_roughness_factor"] = c_r
+    
+    st.latex(f"c_r(z) = {c_r:.3f}")
+    
+    # Optional info message about UK calculation method
+    st.info("For UK projects, you can directly enter the roughness factor calculated according to BS EN 1991-1-4.")
+else:
     # Import the roughness function from the EU module
     from calc_engine.eu import roughness as roughness_module
-
+    
     # Assume that a terrain category was selected via a dropdown earlier, stored in session_state
     terrain_category = st.session_state.inputs.get("terrain_category", "II")  # default to Category II if not set
-
+    
     # Now call the roughness function
     try:
         c_r = roughness_module.calculate_cr(z, terrain_category)
@@ -320,8 +341,6 @@ if region != "United Kingdom":
         st.latex(f"c_r(z) = {c_r:.3f}")
     except Exception as e:
         st.error(f"Error calculating roughness factor: {e}")
-else:
-    st.info("For UK projects the roughness factor is calculated using a different method.")
         
 # Section 4: WIND PRESSURE
 st.markdown("---")
