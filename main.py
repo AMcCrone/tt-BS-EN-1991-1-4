@@ -87,7 +87,6 @@ st.header("Geometry & Terrain")
 st.subheader("Geometry")
 # Building dimensions input
 col1, col2 = st.columns([0.3,0.7])
-
 with col1:
     # Building dimensions
     NS_dimension = st.number_input(
@@ -113,7 +112,32 @@ with col1:
         value=float(st.session_state.inputs.get("z", 10.0)),
         step=1.0
     )
-
+    
+    # Option to include an inset zone
+    include_inset = st.checkbox("Include Inset Zone", 
+                               value=st.session_state.inputs.get("include_inset", False))
+    
+    # Show inset parameters only if inset is enabled
+    inset_offset = 0
+    inset_height = 0
+    
+    if include_inset:
+        inset_offset = st.number_input(
+            "Inset Offset from Edges (m)",
+            min_value=0.1,
+            max_value=min(NS_dimension/2, EW_dimension/2) - 0.1,  # Prevent negative dimensions
+            value=float(st.session_state.inputs.get("inset_offset", 2.0)),
+            step=0.1
+        )
+        
+        inset_height = st.number_input(
+            "Inset Zone Height (m)",
+            min_value=0.1,
+            max_value=100.0,
+            value=float(st.session_state.inputs.get("inset_height", 3.0)),
+            step=0.1
+        )
+    
     alt_sea = st.number_input(
         "Altitude Above Sea Level (m)",
         min_value=1.0,
@@ -121,7 +145,7 @@ with col1:
         value=float(st.session_state.inputs.get("alt_sea", 20.0)),
         step=1.0
     )
-
+    
     d_sea = st.number_input(
         "Distance to Sea (km)",
         min_value=1.0,
@@ -134,10 +158,21 @@ with col1:
 st.session_state.inputs["NS_dimension"] = NS_dimension
 st.session_state.inputs["EW_dimension"] = EW_dimension
 st.session_state.inputs["z"] = z
+st.session_state.inputs["include_inset"] = include_inset
+if include_inset:
+    st.session_state.inputs["inset_offset"] = inset_offset
+    st.session_state.inputs["inset_height"] = inset_height
 
 # 3D visualization of the building
 with col2:
-    building_fig = create_building_visualisation(NS_dimension, EW_dimension, z)
+    building_fig = create_building_visualisation(
+        NS_dimension, 
+        EW_dimension, 
+        z,
+        include_inset=include_inset,
+        inset_offset=inset_offset if include_inset else 0,
+        inset_height=inset_height if include_inset else 0
+    )
     st.plotly_chart(building_fig, use_container_width=True)
 
 st.subheader("Terrain Category")
