@@ -108,7 +108,29 @@ if st.session_state.current_page == "region_selection":
                                     value=float(st.session_state.inputs.get("height_above_ground", 10.0)), 
                                     step=1.0)
 
-# Main app content would go here
+    st.markdown("---")
+    col_nav1, col_nav2, col_nav3 = st.columns([1, 2, 1])
+    
+    with col_nav3:
+        if st.button("Next →"):
+            # Save inputs to session state
+            st.session_state.inputs["project_name"] = project_name
+            st.session_state.inputs["project_reference"] = project_reference
+            st.session_state.inputs["location_name"] = location_name
+            st.session_state.inputs["country"] = country
+            
+            if country == "United Kingdom":
+                st.session_state.inputs["region"] = region
+                st.session_state.region = region
+            else:
+                st.session_state.inputs["terrain_category"] = terrain_category
+            
+            st.session_state.inputs["altitude"] = altitude
+            st.session_state.inputs["height_above_ground"] = height_above_ground
+            
+            # Proceed to next page
+            st.session_state.current_page = "building_parameters"
+            st.experimental_rerun()
 
 # Simple footer
 st.markdown(f"""
