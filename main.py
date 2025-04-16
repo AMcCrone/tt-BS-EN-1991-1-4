@@ -1,5 +1,6 @@
 import streamlit as st
 import datetime
+import math
 from auth import authenticate_user
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
@@ -216,31 +217,82 @@ st.subheader("Basic Wind Velocity")
 col_input, col_result = st.columns(2)
 
 with col_input:
+    # Vb,map input
     V_bmap = st.number_input(
         "$$v_{b,map}$$ (m/s)",
         min_value=0.1,
         max_value=100.0,
         value=float(st.session_state.inputs.get("V_bmap", 24.0)),
-        step=0.1
+        step=0.1,
+        help="Fundamental wind velocity from Figure 3.2"
     )
-    # You can optionally store this value back to session state.
     st.session_state.inputs["V_bmap"] = V_bmap
 
+    # Let the user choose whether they want to override standard K, n, return period
+    use_custom_values = st.checkbox("Use custom K, n, and return period?")
+    
+    if use_custom_values:
+        K = st.number_input(
+            "Shape parameter (K)",
+            min_value=0.0,
+            max_value=5.0,
+            value=0.2,
+            step=0.1,
+            help="Typically 0.2 if unspecified."
+        )
+        n = st.number_input(
+            "Exponent (n)",
+            min_value=0.0,
+            max_value=5.0,
+            value=0.5,
+            step=0.1,
+            help="Typically 0.5 if unspecified."
+        )
+        return_period = st.number_input(
+            "Return Period (years)",
+            min_value=1,
+            max_value=10000,
+            value=50,
+            step=1,
+            help="Typical is 50 years."
+        )
+        # Probability of exceedance
+        p = 1.0 / return_period
+        
+        # Equation (4.2):
+        # c_prob = [ (1 - K * ln(-ln(1 - p))) / (1 - K * ln(-ln(0.98))) ]^n
+        numerator = 1.0 - K * math.log(-math.log(1.0 - p))
+        denominator = 1.0 - K * math.log(-math.log(0.98))
+        # Guard against division by zero
+        if abs(denominator) < 1e-9:
+            st.warning("Denominator is close to zero; check K and standard reference. Setting c_prob = 1.")
+            c_prob = 1.0
+        else:
+            c_prob = (numerator / denominator) ** n
+    else:
+        # If user doesn't override, c_prob = 1.0
+        c_prob = 1.0
+
 with col_result:
-    # Assume variables 'z' and 'altitude_factor' are already defined appropriately.
+    # Altitude correction
     if z <= 10:
         c_alt = 1 + 0.001 * altitude_factor
     else:
         c_alt = 1 + 0.001 * altitude_factor * (10 / z) ** 0.2
 
     V_b0 = V_bmap * c_alt
+    
+    # Directional & seasonal factors (assume standard = 1.0 unless user changes them)
     c_dir = 1.0
     c_season = 1.0
-    # Basic Wind Speed calculation:
-    V_b = V_b0 * c_dir * c_season
     
+    # Basic Wind Speed with c_prob included
+    V_b = V_b0 * c_dir * c_season * c_prob
+    
+    # Display the result
     st.markdown("**Calculated Basic Wind Speed**")
-    st.write("$$V_b = {:.2f}\\; m/s$$".format(V_b))
+    st.latex(f"V_b = {V_b:.2f}\\; m/s")
+    st.write(f"(Probability factor used: {c_prob:.3f})")
 
 st.subheader("Mean Wind Velocity")
 
