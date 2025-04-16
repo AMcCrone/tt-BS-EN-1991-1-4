@@ -96,9 +96,14 @@ st.markdown("---")
 st.header("Peak Wind Pressure")
 st.info("Peak Wind Pressure will be added here")
 
-# Section 5: Calculation Results
+# Section 5: PRESSURE COEFFICIENTS
 st.markdown("---")
-st.header("5. Calculation Results")
+st.header("Pressure Coefficients")
+st.info("Pressure Coefficients will be displayed here")
+
+# Section 6: RESULTS SUMMARY
+st.markdown("---")
+st.header("Results Summary")
 st.info("Calculation results will be displayed here")
 
 # Toggle educational content in sidebar
