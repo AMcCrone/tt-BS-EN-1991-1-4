@@ -46,6 +46,68 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Page routing based on current_page
+if st.session_state.current_page == "region_selection":
+    # Project Location UI
+    st.header("Project Information")
+    
+    # Create two columns for the form elements
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Project details
+        project_name = st.text_input("Project Name", 
+                              value=st.session_state.inputs.get("project_name", ""))
+        project_reference = st.text_input("Project Reference", 
+                              value=st.session_state.inputs.get("project_reference", ""))
+        
+        # Location details
+        location_name = st.text_input("Location", 
+                              value=st.session_state.inputs.get("location_name", ""))
+        
+    with col2:
+        # Country selection
+        countries = ["United Kingdom", "Other European Country"]
+        country = st.selectbox("Country", 
+                       options=countries,
+                       index=countries.index(st.session_state.inputs.get("country", "United Kingdom")) 
+                       if st.session_state.inputs.get("country") in countries else 0)
+        
+        # Region selection (for UK)
+        if country == "United Kingdom":
+            uk_regions = ["England", "Scotland", "Wales", "Northern Ireland"]
+            region = st.selectbox("Region", 
+                         options=uk_regions,
+                         index=uk_regions.index(st.session_state.inputs.get("region", "England")) 
+                         if st.session_state.inputs.get("region") in uk_regions else 0)
+        else:
+            # Terrain category selection for non-UK European countries
+            terrain_categories = ["0 - Sea or coastal area", 
+                                 "I - Lakes or flat and horizontal area with negligible vegetation",
+                                 "II - Area with low vegetation and isolated obstacles",
+                                 "III - Area with regular cover of vegetation or buildings",
+                                 "IV - Area where at least 15% of surface is covered with buildings"]
+            terrain_category = st.selectbox("Terrain Category", 
+                                  options=terrain_categories,
+                                  index=terrain_categories.index(st.session_state.inputs.get("terrain_category", terrain_categories[0])) 
+                                  if st.session_state.inputs.get("terrain_category") in terrain_categories else 0)
+    
+    # Altitude information
+    st.subheader("Altitude Information")
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        altitude = st.number_input("Site Altitude Above Sea Level (m)", 
+                          min_value=0.0, max_value=1000.0, 
+                          value=float(st.session_state.inputs.get("altitude", 0.0)), 
+                          step=10.0)
+    
+    with col4:
+        height_above_ground = st.number_input("Height Above Ground / Reference Height (m)", 
+                                    min_value=0.0, max_value=500.0, 
+                                    value=float(st.session_state.inputs.get("height_above_ground", 10.0)), 
+                                    step=1.0)
+
 # Main app content would go here
 
 # Simple footer
