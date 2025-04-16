@@ -43,11 +43,11 @@ def calculate_cr(z, terrain_category):
 
     # Define terrain parameters for each category
     terrain_params = {
-        '0 - Sea or coastal area exposed to the open sea': {'z0': 0.003, 'z_min': 1},
-        'I - Lakes or flat and horizontal area with negligible vegetation': {'z0': 0.01, 'z_min': 1},
-        'II - Area with low vegetation and isolated obstacles': {'z0': 0.05, 'z_min': 2},
-        'III - Area with regular cover of vegetation or buildings': {'z0': 0.3, 'z_min': 5},
-        'IV - Area where at least 15% of surface is covered with buildings': {'z0': 1.0, 'z_min': 10},
+        '0': {'z0': 0.003, 'z_min': 1},
+        'I': {'z0': 0.01, 'z_min': 1},
+        'II': {'z0': 0.05, 'z_min': 2},
+        'III': {'z0': 0.3, 'z_min': 5},
+        'IV': {'z0': 1.0, 'z_min': 10},
     }
 
     # Ensure terrain_category is a string and in uppercase form for lookup.
