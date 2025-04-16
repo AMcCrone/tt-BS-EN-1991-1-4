@@ -65,7 +65,7 @@ with col2:
     # Project number and region
     project_number = st.text_input("Project Number", 
                            value=st.session_state.inputs.get("project_number", ""))
-    region_options = ["United Kingdom", "European Union"]
+    region_options = ["United Kingdom", "Other European Country"]
     region = st.selectbox("Region", 
                   options=region_options,
                   index=region_options.index(st.session_state.inputs.get("region", "United Kingdom")) 
@@ -181,6 +181,33 @@ with col2:
     )
 
 st.subheader("Terrain Category")
+
+def render_terrain_category():
+    st.subheader("Terrain Category")
+
+    # Import correct terrain function based on region from session state
+    region = st.session_state.inputs.get("region")
+    if region and region.lower() == "United Kingdom":
+        from calc_engine.uk import terrain as terrain_module
+    else:
+        from calc_engine.eu import terrain as terrain_module
+
+    # Get the terrain categories list
+    terrain_categories = terrain_module.get_terrain_categories()
+
+    # Create a dropdown (selectbox) for terrain category selection
+    selected_category = st.selectbox("Select Terrain Category", terrain_categories)
+    st.session_state.inputs["terrain_category"] = selected_category
+
+    # Display educational content if the toggle is enabled in the sidebar
+    # if st.session_state.get("show_educational", False):
+    #     st.markdown("""<div class="educational-content print-friendly">""", unsafe_allow_html=True)
+    #     # Display an image from the educational folder; adjust the path as needed.
+    #     st.image("educational/images/terrain_types.png", caption="Terrain Types")
+    #     # Import educational text (assuming the file educational/text_content.py contains a variable or function)
+    #     from educational import text_content
+    #     st.write(text_content.terrain_help)  # Assume 'terrain_help' holds descriptive text for the terrain categories
+    #     st.markdown("</div>", unsafe_allow_html=True)
 
 # Section 3: WIND VELOCITY
 st.markdown("---")
