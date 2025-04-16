@@ -295,7 +295,34 @@ with col_result:
     st.write(f"(Probability factor used: {c_prob:.3f})")
 
 st.subheader("Mean Wind Velocity")
+st.subsubheader("Roughness")
 
+region = st.session_state.inputs.get("region", "").lower()
+
+# Check that the region is not UK (i.e. assume EU if not UK)
+if region != "uk":
+    # Import the roughness function from the EU module
+    from calc_engine.eu import roughness as roughness_module
+
+    # Assume that a terrain category was selected via a dropdown earlier, stored in session_state
+    terrain_category = st.session_state.inputs.get("terrain_category", "II")  # default to Category II if not set
+
+    # Assume 'z' (height) is input elsewhere; for this snippet, retrieve it from session_state or an input widget
+    # For example, if z is input in main.py:
+    z = st.number_input("Height (z) (m)", value=10.0)
+    st.session_state["z"] = z
+
+    # Now call the roughness function
+    try:
+        c_r = roughness_module.calculate_cr(z, terrain_category)
+        st.markdown("### Roughness Factor")
+        st.write(f"The roughness factor, \\(c_r(z)\\), for terrain category **{terrain_category}** and height **{z} m** is:")
+        st.latex(f"c_r(z) = {c_r:.3f}")
+    except Exception as e:
+        st.error(f"Error calculating roughness factor: {e}")
+else:
+    st.info("For UK projects the roughness factor is calculated using a different method.")
+        
 # Section 4: WIND PRESSURE
 st.markdown("---")
 st.header("Peak Wind Pressure")
