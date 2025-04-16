@@ -1,7 +1,7 @@
 import streamlit as st
 import datetime
-from calculation_engine.uk.terrain import get_terrain_categories as get_uk_terrain
-from calculation_engine.eu.terrain import get_terrain_categories as get_eu_terrain
+from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
+from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
 
 # App version and metadata
 APP_VERSION = "1.0.0"
