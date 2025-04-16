@@ -295,7 +295,6 @@ with col_result:
     st.write(f"(Probability factor used: {c_prob:.3f})")
 
 st.subheader("Mean Wind Velocity")
-st.subsubheader("Roughness")
 
 region = st.session_state.inputs.get("region", "").lower()
 
