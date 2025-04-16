@@ -80,20 +80,21 @@ if region:
 # Divider between sections
 st.markdown("---")
 
-# Future sections will go here (terrain categories, building parameters, etc.)
-# Section 2: Terrain Categories
-st.header("2. Terrain Categories")
-st.info("Terrain category inputs will be added here")
+# Section 2: GEOMETRY AND TERRAIN
+st.header("Geometry & Terrain")
 
-# Section 3: Building Parameters
+
+# Section 3: WIND VELOCITY
 st.markdown("---")
-st.header("3. Building Parameters")
+st.header("Wind Velocity")
+st.subheader("Basic Wind Velocity")
 st.info("Building parameter inputs will be added here")
+st.subheader("Mean Wind Velocity")
 
-# Section 4: Site Conditions
+# Section 4: WIND PRESSURE
 st.markdown("---")
-st.header("4. Site Conditions")
-st.info("Site condition inputs will be added here")
+st.header("Peak Wind Pressure")
+st.info("Peak Wind Pressure will be added here")
 
 # Section 5: Calculation Results
 st.markdown("---")
