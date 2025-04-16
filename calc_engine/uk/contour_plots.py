@@ -72,7 +72,7 @@ Y_AXIS_NAME = "z-h_dis (m)"
 # Data Loading Function
 # -----------------------
 @st.cache_data(show_spinner=False)
-def load_contour_data(excel_file_path="contour_data.xlsx"):
+def load_contour_data(excel_file_path="calc_engine/uk/contour_data.xlsx"):
     """
     Load contour data from an Excel file.
     
