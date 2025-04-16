@@ -19,7 +19,8 @@ def create_building_visualisation(NS_dimension, EW_dimension, z):
         k=[2, 3],
         color=TT_MidBlue,
         opacity=1,
-        showlegend=False
+        showlegend=False,
+        hoverinfo='none'
     ))
     
     # Back face (y=EW_dimension)
@@ -32,7 +33,8 @@ def create_building_visualisation(NS_dimension, EW_dimension, z):
         k=[2, 3],
         color=TT_MidBlue,
         opacity=1,
-        showlegend=False
+        showlegend=False,
+        hoverinfo='none'
     ))
     
     # East-West faces (light blue)
@@ -46,7 +48,8 @@ def create_building_visualisation(NS_dimension, EW_dimension, z):
         k=[2, 3],
         color=TT_LightBlue,
         opacity=1,
-        showlegend=False
+        showlegend=False,
+        hoverinfo='none'
     ))
     
     # Right face (x=NS_dimension)
@@ -59,7 +62,8 @@ def create_building_visualisation(NS_dimension, EW_dimension, z):
         k=[2, 3],
         color=TT_LightBlue,
         opacity=1,
-        showlegend=False
+        showlegend=False,
+        hoverinfo='none'
     ))
     
     # Top face (z=z)
@@ -72,7 +76,8 @@ def create_building_visualisation(NS_dimension, EW_dimension, z):
         k=[2, 3],
         color=TT_LightBlue,
         opacity=1,
-        showlegend=False
+        showlegend=False,
+        hoverinfo='none'
     ))
     
     # Bottom face (z=0)
@@ -85,7 +90,8 @@ def create_building_visualisation(NS_dimension, EW_dimension, z):
         k=[2, 3],
         color=TT_LightBlue,
         opacity=1,
-        showlegend=False
+        showlegend=False,
+        hoverinfo='none'
     ))
     
     # Set the layout to be minimal with no axes or grid
