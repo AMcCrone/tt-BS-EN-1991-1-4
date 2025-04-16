@@ -305,7 +305,7 @@ st.subheader("Mean Wind Velocity")
 region = st.session_state.inputs.get("region", "").lower()
 
 # Check that the region is not UK (i.e. assume EU if not UK)
-if region != "uk":
+if region != "United Kingdom":
     # Import the roughness function from the EU module
     from calc_engine.eu import roughness as roughness_module
 
