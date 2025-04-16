@@ -208,6 +208,7 @@ def render_terrain_category():
     #     from educational import text_content
     #     st.write(text_content.terrain_help)  # Assume 'terrain_help' holds descriptive text for the terrain categories
     #     st.markdown("</div>", unsafe_allow_html=True)
+render_terrain_category()
 
 # Section 3: WIND VELOCITY
 st.markdown("---")
