@@ -140,6 +140,8 @@ with col2:
     building_fig = create_building_visualisation(NS_dimension, EW_dimension, z)
     st.plotly_chart(building_fig, use_container_width=True)
 
+st.subheader("Terrain Category")
+
 # Section 3: WIND VELOCITY
 st.markdown("---")
 st.header("Wind Velocity")
