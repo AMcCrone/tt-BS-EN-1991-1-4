@@ -168,7 +168,7 @@ with col1:
         "Altitude Above Sea Level (m)",
         min_value=1.0,
         max_value=500.0,
-        value=float(st.session_state.inputs.get("alt_sea", 20.0)),
+        value=float(st.session_state.inputs.get("altitude_factor", 20.0)),
         step=1.0
     )
 with col2:
@@ -212,7 +212,13 @@ render_terrain_category()
 st.markdown("---")
 st.header("Wind Velocity")
 st.subheader("Basic Wind Velocity")
-st.info("Building parameter inputs will be added here")
+V_bmap = st.number_input(
+        "$$v_b,map$$ (m/s)",
+        min_value=0.1,
+        max_value=100.0,
+        value=float(st.session_state.inputs.get("V_bmap", 24.0)),
+        step=0.1)
+
 st.subheader("Mean Wind Velocity")
 
 # Section 4: WIND PRESSURE
