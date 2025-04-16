@@ -140,22 +140,6 @@ with col1:
             value=float(st.session_state.inputs.get("inset_height", 3.0)),
             step=0.1
         )
-    
-    alt_sea = st.number_input(
-        "Altitude Above Sea Level (m)",
-        min_value=1.0,
-        max_value=500.0,
-        value=float(st.session_state.inputs.get("alt_sea", 20.0)),
-        step=1.0
-    )
-    
-    d_sea = st.number_input(
-        "Distance to Sea (km)",
-        min_value=1.0,
-        max_value=1000.0,
-        value=float(st.session_state.inputs.get("d_sea", 60.0)),
-        step=1.0
-    )
 
 # Save geometry inputs to session state
 st.session_state.inputs["NS_dimension"] = NS_dimension
@@ -177,6 +161,24 @@ with col2:
         inset_height=inset_height if include_inset else 0
     )
     st.plotly_chart(building_fig, use_container_width=True)
+
+st.columns(2)
+with col1:
+        alt_sea = st.number_input(
+        "Altitude Above Sea Level (m)",
+        min_value=1.0,
+        max_value=500.0,
+        value=float(st.session_state.inputs.get("alt_sea", 20.0)),
+        step=1.0
+    )
+with col2:
+    d_sea = st.number_input(
+        "Distance to Sea (km)",
+        min_value=1.0,
+        max_value=1000.0,
+        value=float(st.session_state.inputs.get("d_sea", 60.0)),
+        step=1.0
+    )
 
 st.subheader("Terrain Category")
 
