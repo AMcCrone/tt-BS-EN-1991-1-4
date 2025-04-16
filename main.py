@@ -121,7 +121,7 @@ st.session_state.inputs["z"] = z
 
 # 3D visualization of the building
 with col2:
-    building_fig = create_building_visualization(NS_dimension, EW_dimension, z)
+    building_fig = create_building_visualisation(NS_dimension, EW_dimension, z)
     st.plotly_chart(building_fig, use_container_width=True)
 
 # Section 3: WIND VELOCITY
