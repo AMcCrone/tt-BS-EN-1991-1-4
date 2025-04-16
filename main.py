@@ -344,7 +344,7 @@ if region == "United Kingdom":
     
     with col2:
         # Display NA.3 plot
-        display_single_plot(st, datasets, "NA.3", x_upwind_input, z_input)
+        display_single_plot(st, datasets, "NA.3", d_sea, z_input)
     
     # Set c_r based on user's choice
     if use_calculated and interpolated_c_r is not None:
