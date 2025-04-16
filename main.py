@@ -305,6 +305,7 @@ st.subheader("Mean Wind Velocity")
 region = st.session_state.inputs.get("region", "").lower()
 
 # Check the region selection
+region = st.session_state.inputs.get("region")
 if region == "United Kingdom":
     # For UK, let the user input a numerical value directly
     st.markdown("### Roughness Factor")
