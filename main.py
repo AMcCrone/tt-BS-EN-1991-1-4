@@ -184,26 +184,34 @@ with col2:
 st.subheader("Terrain Category")
 
 def render_terrain_category():
-    # Import correct terrain function based on region from session state
+    st.subheader("Terrain Category")
+
+    # Import correct terrain module based on region from session state
     region = st.session_state.inputs.get("region")
     if region == "United Kingdom":
         from calc_engine.uk import terrain as terrain_module
     else:
         from calc_engine.eu import terrain as terrain_module
 
-    # Get the terrain categories list
-    terrain_categories = terrain_module.get_terrain_categories()
+    # Get the terrain categories dictionary
+    terrain_dict = terrain_module.get_terrain_categories()
 
-    # Create a dropdown (selectbox) for terrain category selection
-    selected_category = st.selectbox("Select Terrain Category", terrain_categories)
-    st.session_state.inputs["terrain_category"] = selected_category
+    # Create a display list that combines the key and description
+    display_options = [f"{code} - {desc}" for code, desc in terrain_dict.items()]
+
+    # Create a dropdown (selectbox) for terrain category selection using full descriptions
+    selected_option = st.selectbox("Select Terrain Category", display_options)
+
+    # Extract the simplified category code by splitting at " - "
+    selected_code = selected_option.split(" - ")[0].strip()
+    st.session_state.inputs["terrain_category"] = selected_code
 
     # Display educational content if the toggle is enabled in the sidebar
     if st.session_state.get("show_educational", False):
         st.markdown("""<div class="educational-content print-friendly">""", unsafe_allow_html=True)
         # Display an image from the educational folder; adjust the path as needed.
         st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
-        # Import educational text (assuming the file educational/text_content.py contains a variable or function)
+        # Import educational text from educational/text_content.py (assuming it contains a variable named terrain_help)
         from educational import text_content
         st.write(text_content.terrain_help)
         st.markdown("</div>", unsafe_allow_html=True)
