@@ -204,7 +204,7 @@ def render_terrain_category():
         # st.image("educational/images/terrain_types.png", caption="Terrain Types")
         # # Import educational text (assuming the file educational/text_content.py contains a variable or function)
         from educational import text_content
-        st.write(text_content.terrain_help)  # Assume 'terrain_help' holds descriptive text for the terrain categories
+        help = text_content.terrain_help
         st.markdown("</div>", unsafe_allow_html=True)
 render_terrain_category()
 
