@@ -114,6 +114,22 @@ with col1:
         step=1.0
     )
 
+    alt_sea = st.number_input(
+        "Altitude Above Sea Level (m)",
+        min_value=1.0,
+        max_value=500.0,
+        value=float(st.session_state.inputs.get("alt_sea", 20.0)),
+        step=1.0
+    )
+
+    d_sea = st.number_input(
+        "Distance to Sea (km)",
+        min_value=1.0,
+        max_value=1000.0,
+        value=float(st.session_state.inputs.get("d_sea", 60.0)),
+        step=1.0
+    )
+
 # Save geometry inputs to session state
 st.session_state.inputs["NS_dimension"] = NS_dimension
 st.session_state.inputs["EW_dimension"] = EW_dimension
