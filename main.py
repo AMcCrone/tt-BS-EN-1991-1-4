@@ -183,8 +183,6 @@ with col2:
 st.subheader("Terrain Category")
 
 def render_terrain_category():
-    st.subheader("Terrain Category")
-
     # Import correct terrain function based on region from session state
     region = st.session_state.inputs.get("region")
     if region == "United Kingdom":
