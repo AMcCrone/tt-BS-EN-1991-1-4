@@ -4,6 +4,8 @@ from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
 from visualisation.building_viz import create_building_visualisation
 
+authenticate_user()
+
 # App version and metadata
 APP_VERSION = "1.0.0"
 LAST_UPDATED = "April 15, 2025"
