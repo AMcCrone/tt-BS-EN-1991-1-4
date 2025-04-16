@@ -200,11 +200,11 @@ def render_terrain_category():
     # Display educational content if the toggle is enabled in the sidebar
     if st.session_state.get("show_educational", False):
         st.markdown("""<div class="educational-content print-friendly">""", unsafe_allow_html=True)
-        # # Display an image from the educational folder; adjust the path as needed.
-        # st.image("educational/images/terrain_types.png", caption="Terrain Types")
-        # # Import educational text (assuming the file educational/text_content.py contains a variable or function)
+        # Display an image from the educational folder; adjust the path as needed.
+        st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
+        # Import educational text (assuming the file educational/text_content.py contains a variable or function)
         from educational import text_content
-        help = text_content.terrain_help
+        st.write(text_content.terrain_help)
         st.markdown("</div>", unsafe_allow_html=True)
 render_terrain_category()
 
