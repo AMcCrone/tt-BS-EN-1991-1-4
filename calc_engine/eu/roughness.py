@@ -51,7 +51,7 @@ def calculate_cr(z, terrain_category):
     }
 
     # Ensure terrain_category is a string and in uppercase form for lookup.
-    terrain_category = str(terrain_category).strip().upper()
+    terrain_category = str(terrain_category).strip()
     if terrain_category not in terrain_params:
         raise ValueError("Invalid terrain category. Must be one of: 0, I, II, III, IV.")
 
