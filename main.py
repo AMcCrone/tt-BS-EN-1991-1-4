@@ -181,8 +181,6 @@ with col2:
         step=1.0
     )
 
-st.subheader("Terrain Category")
-
 def render_terrain_category():
     st.subheader("Terrain Category")
 
@@ -313,11 +311,6 @@ if region != "uk":
 
     # Assume that a terrain category was selected via a dropdown earlier, stored in session_state
     terrain_category = st.session_state.inputs.get("terrain_category", "II")  # default to Category II if not set
-
-    # Assume 'z' (height) is input elsewhere; for this snippet, retrieve it from session_state or an input widget
-    # For example, if z is input in main.py:
-    z = st.number_input("Height (z) (m)", value=10.0)
-    st.session_state["z"] = z
 
     # Now call the roughness function
     try:
