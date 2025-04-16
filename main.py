@@ -307,26 +307,76 @@ region = st.session_state.inputs.get("region", "").lower()
 # Check the region selection
 region = st.session_state.inputs.get("region")
 if region == "United Kingdom":
-    # For UK, let the user input a numerical value directly
     st.markdown("### Roughness Factor")
     
-    # Direct numerical input for UK
-    c_r = st.number_input(
-        "Enter roughness factor value",
-        min_value=0.0,
-        max_value=5.0,
-        value=float(st.session_state.inputs.get("uk_roughness_factor", 1.0)),
-        step=0.01,
-        format="%.3f"
-    )
+    # Import the contour plot functions for UK
+    from calc_engine.uk.contour_plots import load_contour_data, get_interpolated_value, display_single_plot
+    
+    # Get required parameters from session state
+    z = st.session_state.inputs.get("height", 10.0)  # Get height from session state
+    x_upwind = st.session_state.inputs.get("distance_upwind", 10.0)  # Distance to shoreline
+    
+    # Create columns for layout
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        # Allow user to override the calculated value (optional)
+        use_calculated = st.checkbox("Use calculated value from contour plot", value=True)
+        
+        # Allow user to adjust parameters
+        z_input = st.number_input(
+            "Height above ground (m)",
+            min_value=2.0,
+            max_value=200.0,
+            value=z,
+            format="%.1f"
+        )
+        st.session_state.inputs["height"] = z_input
+        
+        x_upwind_input = st.number_input(
+            "Distance upwind to shoreline (km)",
+            min_value=0.1,
+            max_value=100.0,
+            value=x_upwind,
+            format="%.1f"
+        )
+        st.session_state.inputs["distance_upwind"] = x_upwind_input
+    
+    # Load the contour data
+    contour_data_path = "path/to/your/contour_data.xlsx"  # Adjust path as needed
+    datasets = load_contour_data(contour_data_path)
+    
+    # Get interpolated c_r(z) value from NA.3
+    interpolated_c_r = get_interpolated_value(datasets, "NA.3", x_upwind_input, z_input)
+    
+    with col2:
+        # Display NA.3 plot
+        display_single_plot(st, datasets, "NA.3", x_upwind_input, z_input)
+    
+    # Set c_r based on user's choice
+    if use_calculated and interpolated_c_r is not None:
+        c_r = interpolated_c_r
+        st.success(f"Using calculated value: c_r(z) = {c_r:.3f}")
+    else:
+        # If user chooses to enter manually or if interpolation failed
+        c_r = st.number_input(
+            "Enter roughness factor value manually",
+            min_value=0.0,
+            max_value=5.0,
+            value=float(st.session_state.inputs.get("uk_roughness_factor", 1.0)),
+            step=0.01,
+            format="%.3f"
+        )
     
     # Save the UK roughness factor to session state
     st.session_state.inputs["uk_roughness_factor"] = c_r
     
     st.latex(f"c_r(z) = {c_r:.3f}")
     
-    # Optional info message about UK calculation method
-    st.info("For UK projects, you can directly enter the roughness factor calculated according to BS EN 1991-1-4.")
+    # Additional information about the calculation method
+    with st.expander("About this calculation"):
+        st.info("The roughness factor c_r(z) is interpolated from Figure NA.3 in the UK National Annex to BS EN 1991-1-4. The value depends on the height above ground and the distance upwind to shoreline.")
+
 else:
     # Import the roughness function from the EU module
     from calc_engine.eu import roughness as roughness_module
