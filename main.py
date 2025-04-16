@@ -2,6 +2,7 @@ import streamlit as st
 import datetime
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
+from visualisation.building_viz import create_building_visualisation
 
 # App version and metadata
 APP_VERSION = "1.0.0"
@@ -83,6 +84,45 @@ st.markdown("---")
 # Section 2: GEOMETRY AND TERRAIN
 st.header("Geometry & Terrain")
 
+st.subheader("Geometry")
+# Building dimensions input
+col1, col2 = st.columns(2)
+
+with col1:
+    # Building dimensions
+    NS_dimension = st.number_input(
+        "North-South Dimension (m)",
+        min_value=1.0,
+        max_value=500.0,
+        value=float(st.session_state.inputs.get("NS_dimension", 20.0)),
+        step=1.0
+    )
+    
+    EW_dimension = st.number_input(
+        "East-West Dimension (m)",
+        min_value=1.0,
+        max_value=500.0,
+        value=float(st.session_state.inputs.get("EW_dimension", 15.0)),
+        step=1.0
+    )
+    
+    z = st.number_input(
+        "Building Height (m)",
+        min_value=1.0,
+        max_value=500.0,
+        value=float(st.session_state.inputs.get("z", 10.0)),
+        step=1.0
+    )
+
+# Save geometry inputs to session state
+st.session_state.inputs["NS_dimension"] = NS_dimension
+st.session_state.inputs["EW_dimension"] = EW_dimension
+st.session_state.inputs["z"] = z
+
+# 3D visualization of the building
+with col2:
+    building_fig = create_building_visualization(NS_dimension, EW_dimension, z)
+    st.plotly_chart(building_fig, use_container_width=True)
 
 # Section 3: WIND VELOCITY
 st.markdown("---")
