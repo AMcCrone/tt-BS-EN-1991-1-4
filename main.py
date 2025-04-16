@@ -16,8 +16,6 @@ st.set_page_config(
 # Initialize session state
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
-    st.session_state.region = None
-    st.session_state.current_page = "region_selection"
     st.session_state.inputs = {}
     st.session_state.results = {}
     st.session_state.show_educational = True
@@ -48,74 +46,67 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Project Location UI
-st.header("Project Information")
-
-# Create two columns for the form elements
+# Section 1: Project Information
+st.header("1. Project Information")
 col1, col2 = st.columns(2)
 
 with col1:
     # Project details
     project_name = st.text_input("Project Name", 
                           value=st.session_state.inputs.get("project_name", ""))
-    project_reference = st.text_input("Project Reference", 
-                          value=st.session_state.inputs.get("project_reference", ""))
-    
-    # Location details
-    location_name = st.text_input("Location", 
-                          value=st.session_state.inputs.get("location_name", ""))
-    
+    location = st.text_input("Location (City/Country)", 
+                      value=st.session_state.inputs.get("location", ""))
+
 with col2:
-    # Country selection
-    countries = ["United Kingdom", "Other European Country"]
-    country = st.selectbox("Country", 
-                   options=countries,
-                   index=countries.index(st.session_state.inputs.get("country", "United Kingdom")) 
-                   if st.session_state.inputs.get("country") in countries else 0)
-    
-    # Region or terrain selection based on country
-    if country == "United Kingdom":
-        uk_regions = ["England", "Scotland", "Wales", "Northern Ireland"]
-        region = st.selectbox("Region", 
-                     options=uk_regions,
-                     index=uk_regions.index(st.session_state.inputs.get("region", "England")) 
-                     if st.session_state.inputs.get("region") in uk_regions else 0)
-        
-        # Get UK terrain categories
-        uk_terrain_categories = get_uk_terrain()
-        terrain_category = st.selectbox(
-            "Terrain Category",
-            options=uk_terrain_categories,
-            index=uk_terrain_categories.index(st.session_state.inputs.get("terrain_category", uk_terrain_categories[0]))
-            if st.session_state.inputs.get("terrain_category") in uk_terrain_categories else 0
-        )
-    else:
-        # Get EU terrain categories
-        eu_terrain_categories = get_eu_terrain()
-        terrain_category = st.selectbox(
-            "Terrain Category",
-            options=eu_terrain_categories,
-            index=eu_terrain_categories.index(st.session_state.inputs.get("terrain_category", eu_terrain_categories[0]))
-            if st.session_state.inputs.get("terrain_category") in eu_terrain_categories else 0
-        )
+    # Project number and region
+    project_number = st.text_input("Project Number", 
+                           value=st.session_state.inputs.get("project_number", ""))
+    region_options = ["United Kingdom", "European Union"]
+    region = st.selectbox("Region", 
+                  options=region_options,
+                  index=region_options.index(st.session_state.inputs.get("region", "United Kingdom")) 
+                  if st.session_state.inputs.get("region") in region_options else 0)
 
-# Altitude information
-st.subheader("Altitude Information")
-col3, col4 = st.columns(2)
+# Save project info inputs to session state
+if project_name:
+    st.session_state.inputs["project_name"] = project_name
+if project_number:
+    st.session_state.inputs["project_number"] = project_number
+if location:
+    st.session_state.inputs["location"] = location
+if region:
+    st.session_state.inputs["region"] = region
 
-with col3:
-    altitude = st.number_input("Site Altitude Above Sea Level (m)", 
-                      min_value=0.0, max_value=1000.0, 
-                      value=float(st.session_state.inputs.get("altitude", 0.0)), 
-                      step=10.0)
+# Divider between sections
+st.markdown("---")
 
-with col4:
-    height_above_ground = st.number_input("Height Above Ground / Reference Height (m)", 
-                                min_value=0.0, max_value=500.0, 
-                                value=float(st.session_state.inputs.get("height_above_ground", 10.0)), 
-                                step=1.0)
+# Future sections will go here (terrain categories, building parameters, etc.)
+# Section 2: Terrain Categories
+st.header("2. Terrain Categories")
+st.info("Terrain category inputs will be added here")
 
-# Simple footer
+# Section 3: Building Parameters
+st.markdown("---")
+st.header("3. Building Parameters")
+st.info("Building parameter inputs will be added here")
+
+# Section 4: Site Conditions
+st.markdown("---")
+st.header("4. Site Conditions")
+st.info("Site condition inputs will be added here")
+
+# Section 5: Calculation Results
+st.markdown("---")
+st.header("5. Calculation Results")
+st.info("Calculation results will be displayed here")
+
+# Toggle educational content in sidebar
+st.sidebar.title("Options")
+show_educational = st.sidebar.checkbox("Show Educational Content", 
+                              value=st.session_state.show_educational)
+st.session_state.show_educational = show_educational
+
+# Footer Design
 st.markdown(f"""
 <div style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #f0f2f6; padding: 0.5rem; text-align: center; font-size: 0.8rem; color: #666; border-top: 1px solid #ddd;">
     Wind Load Calculator v{APP_VERSION} | © {datetime.datetime.now().year}
