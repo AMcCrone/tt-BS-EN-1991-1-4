@@ -164,7 +164,7 @@ with col2:
 
 col1, col2 = st.columns(2)
 with col1:
-        alt_sea = st.number_input(
+        altitude_factor = st.number_input(
         "Altitude Above Sea Level (m)",
         min_value=1.0,
         max_value=500.0,
