@@ -187,7 +187,7 @@ def render_terrain_category():
 
     # Import correct terrain function based on region from session state
     region = st.session_state.inputs.get("region")
-    if region and region.lower() == "United Kingdom":
+    if region == "United Kingdom":
         from calc_engine.uk import terrain as terrain_module
     else:
         from calc_engine.eu import terrain as terrain_module
