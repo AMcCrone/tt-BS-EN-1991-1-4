@@ -432,6 +432,22 @@ else:
 
 # Save for later calculations
 st.session_state.inputs["c_oz"] = c_oz
+
+st.markdown("#### Mean Wind Velocity $v_m(z)")
+
+# Retrieve stored values (or use the variables if still in scope)
+v_b   = st.session_state.inputs.get("V_b", 0.0)
+c_rz  = st.session_state.inputs.get("c_rz", 1.0)
+c_oz  = st.session_state.inputs.get("c_oz", 1.0)
+
+# Calculate mean wind velocity
+v_mean = v_b * c_rz * c_oz
+
+# Store in session state for later use
+st.session_state.inputs["v_mean"] = v_mean
+
+# Optionally display
+st.write(f"$$v_m(z) = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
         
 # Section 4: WIND PRESSURE
 st.markdown("---")
