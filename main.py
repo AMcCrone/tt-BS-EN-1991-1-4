@@ -413,47 +413,6 @@ else:
         st.latex(f"c_r(z) = {c_r:.3f}")
     except Exception as e:
         st.error(f"Error calculating roughness factor: {e}")
-
-# For debugging purposes
-st.markdown("### Debug: NA.3 Plot Test")
-
-# Check if file exists
-contour_data_path = "calc_engine/uk/contour_data.xlsx"  # Adjust path as needed
-
-# Load data directly for debugging
-try:
-    df = pd.read_excel(contour_data_path, sheet_name="NA.3")
-    st.write("Raw Excel data:", df.head())
-    
-    # Check column names
-    st.write("Column names:", df.columns.tolist())
-    
-    # Rename columns if needed
-    if len(df.columns) >= 3:
-        column_names = list(df.columns)
-        column_mapping = {
-            column_names[0]: 'x',
-            column_names[1]: 'y',
-            column_names[2]: 'z'
-        }
-        df = df.rename(columns=column_mapping)
-    
-    # Check data ranges
-    st.write("X range:", df['x'].min(), "to", df['x'].max())
-    st.write("Y range:", df['y'].min(), "to", df['y'].max())
-    
-    # Try creating plot
-    x_value = 10.0
-    y_value = 50.0
-    fig, value = create_contour_plot(df, "NA.3", x_value, y_value)
-    
-    st.write(f"Interpolated value: {value}")
-    st.plotly_chart(fig)
-    
-except Exception as e:
-    st.error(f"Error loading or processing data: {str(e)}")
-    import traceback
-    st.code(traceback.format_exc())
         
 # Section 4: WIND PRESSURE
 st.markdown("---")
