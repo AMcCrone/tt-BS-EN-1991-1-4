@@ -307,7 +307,7 @@ with col_result:
 st.subheader("Mean Wind Velocity")
 
 def calculate_displacement_height():
-    use_standard = st.checkbox("Use standard $h_dis$ = 15m")
+    use_standard = st.checkbox("Use standard $h_{dis}$ = 15m")
     
     if use_standard:
         h_dis = 15.0
@@ -336,8 +336,8 @@ h_dis = calculate_displacement_height()
 z = st.session_state.inputs.get("z", 10.0)
 z_minus_h_dis = z - h_dis
 
-st.write(f"Displacement height $h_dis$: {h_dis:.2f} m")
-st.write(f"Effective height $z - h_dis$): {z_minus_h_dis:.2f} m")
+st.write(f"Displacement height $h_{dis}$: {h_dis:.2f} m")
+st.write(f"Effective height $z - h_{dis}$): {z_minus_h_dis:.2f} m")
 
 # Check the region selection
 region = st.session_state.inputs.get("region")
@@ -443,7 +443,8 @@ st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.
 # Section 4: WIND PRESSURE
 st.markdown("---")
 st.header("Peak Wind Pressure")
-st.info("Peak Wind Pressure will be added here")
+
+air_density = 
 
 # Section 5: PRESSURE COEFFICIENTS
 st.markdown("---")
