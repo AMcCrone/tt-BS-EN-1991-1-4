@@ -656,7 +656,8 @@ else:
         st.error(f"Error calculating peak velocity pressure: {e}")
 
 # --- Section 5: Wind Pressure Profile ---
-st.subheader("Wind Pressure Profile")
+st.markdown("---")
+st.write("## Wind Pressure Profile")
 
 # Import the pressure profile functions
 from calc_engine.common.shape_velocity_profile import (
