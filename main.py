@@ -341,6 +341,9 @@ def calculate_displacement_height():
 
 # Check the region selection
 region = st.session_state.inputs.get("region")
+# Get the height parameter, which should be defined before this code
+z = st.session_state.inputs.get("z", 15.0)  # Add this line to define z with a default
+
 if region == "United Kingdom":
     st.markdown("#### Roughness Factor $C_r(z)$")
     
@@ -348,8 +351,8 @@ if region == "United Kingdom":
     from calc_engine.uk.contour_plots import load_contour_data, get_interpolated_value, display_single_plot
     
     # Get required parameters from session state
-    z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 15.0)  # Get height from session state
-    x_upwind = st.session_state.inputs.get("distance_upwind", 10.0)  # Distance to shoreline
+    z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 15.0)
+    x_upwind = st.session_state.inputs.get("distance_upwind", 10.0)
     
     # Create columns for layout
     col1, col2 = st.columns([0.3, 0.7])
@@ -363,7 +366,7 @@ if region == "United Kingdom":
             "z - h_dis (m)",
             min_value=1.0,
             max_value=200.0,
-            value=z,
+            value=z_minus_h_dis,  # Changed from z to z_minus_h_dis
             format="%.1f"
         )
         st.session_state.inputs["z_minus_h_dis"] = z_input
@@ -395,8 +398,10 @@ if region == "United Kingdom":
             format="%.3f"
         )
     
-    # Save the UK roughness factor to session state
+    # Save the roughness factor to session state (using consistent key)
     st.session_state.inputs["uk_roughness_factor"] = c_r
+    # Also save to the common c_r key for consistency
+    st.session_state.inputs["c_r"] = c_r
     
     st.latex(f"c_r(z) = {c_r:.3f}")
 else:
@@ -404,12 +409,14 @@ else:
     from calc_engine.eu import roughness as roughness_module
     
     # Assume that a terrain category was selected via a dropdown earlier, stored in session_state
-    terrain_category = st.session_state.inputs.get("terrain_category", "II")  # default to Category II if not set
+    terrain_category = st.session_state.inputs.get("terrain_category", "II")
     
     # Now call the roughness function
     try:
         c_r = roughness_module.calculate_cr(z, terrain_category)
-        st.session_state.inputs.get("c_r", 1.0)
+        # Save the calculated roughness factor
+        st.session_state.inputs["c_r"] = c_r  # Store the value
+        
         st.markdown("#### Roughness Factor $C_r(z)$")
         st.write(f"The roughness factor, \\(c_r(z)\\), for terrain category **{terrain_category}** and height **{z} m** is:")
         st.latex(f"c_r(z) = {c_r:.3f}")
