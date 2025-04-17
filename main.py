@@ -415,7 +415,6 @@ else:
         st.latex(f"c_r(z) = {c_r:.3f}")
     except Exception as e:
         st.error(f"Error calculating roughness factor: {e}")
-    st.session_state.inputs["c_r"] = c_r
 
 st.markdown("#### Orography Factor $C_o(z)$")
 
