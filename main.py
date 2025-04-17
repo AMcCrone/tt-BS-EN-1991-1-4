@@ -307,7 +307,7 @@ with col_result:
 st.subheader("Mean Wind Velocity")
 
 def calculate_displacement_height():
-    use_standard = st.checkbox("Use standard $h_{dis}$ = 15m")
+    use_standard = st.checkbox("Use standard $h_{{dis}}$ = 15m")
     
     if use_standard:
         h_dis = 15.0
@@ -336,8 +336,8 @@ h_dis = calculate_displacement_height()
 z = st.session_state.inputs.get("z", 10.0)
 z_minus_h_dis = z - h_dis
 
-st.write(f"Displacement height $h_{dis}$: {h_dis:.2f} m")
-st.write(f"Effective height $z - h_{dis}$): {z_minus_h_dis:.2f} m")
+st.write(f"Displacement height $h_{{dis}}$: {h_dis:.2f} m")
+st.write(f"Effective height $z - h_{{dis}}$): {z_minus_h_dis:.2f} m")
 
 # Check the region selection
 region = st.session_state.inputs.get("region")
