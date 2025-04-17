@@ -655,41 +655,42 @@ else:
     except Exception as e:
         st.error(f"Error calculating peak velocity pressure: {e}")
 
+# --- Section 5: Wind Pressure Profile ---
+st.subheader("Wind Pressure Profile")
+
+# Define TT colors
+TT_Orange = "rgb(211,69,29)"
+TT_LightBlue = "rgb(136,219,223)" 
+TT_MidBlue = "rgb(0,163,173)"
+TT_DarkBlue = "rgb(0,48,60)"
+TT_Grey = "rgb(99,102,105)"
+TT_LightLightBlue = "rgb(207,241,242)"
+TT_LightGrey = "rgb(223,224,225)"
+
 # Get the peak velocity pressure from previous calculations
 qp_value = st.session_state.inputs.get("qp_value", 0.0)
 
-# Building dimensions input
+# Get building height from session state
+h = st.session_state.inputs.get("z", 15.0)
+
+# Building dimensions input for NS and EW directions
 col1, col2 = st.columns(2)
+
 with col1:
-    h = st.number_input("Building Height (h) [m]", 
-                        min_value=1.0, 
-                        value=15.0, 
-                        step=0.5)
-    st.session_state.inputs["building_height"] = h
+    NS_dimension = st.number_input("Building Width in NS Direction [m]", 
+                          min_value=1.0, 
+                          value=10.0, 
+                          step=0.5)
+    st.session_state.inputs["NS_dimension"] = NS_dimension
 
 with col2:
-    b = st.number_input("Building Width (b) [m]", 
-                        min_value=1.0, 
-                        value=10.0, 
-                        step=0.5)
-    st.session_state.inputs["building_width"] = b
+    EW_dimension = st.number_input("Building Width in EW Direction [m]", 
+                          min_value=1.0, 
+                          value=12.0, 
+                          step=0.5)
+    st.session_state.inputs["EW_dimension"] = EW_dimension
 
-# Determine the case based on height-to-width ratio
-if h <= b:
-    profile_case = "Case 1: h ≤ b"
-elif b < h <= 2*b:
-    profile_case = "Case 2: b < h ≤ 2b"
-else:  # h > 2*b
-    profile_case = "Case 3: h > 2b"
-
-st.write(f"Building profile: **{profile_case}**")
-
-# Create the wind pressure profile visualization
-import matplotlib.pyplot as plt
-import numpy as np
-import io
-import base64
-
+# Function to calculate qp at a given height based on building dimensions
 def get_qp_at_height(z_height, building_height, building_width, qp_max):
     """Calculate q_p at a given height based on building dimensions."""
     h = building_height
@@ -718,150 +719,323 @@ def get_qp_at_height(z_height, building_height, building_width, qp_max):
         else:  # z_height > h - b
             return qp_max  # q_p(h)
 
-# Generate the plot
-fig, ax = plt.subplots(figsize=(10, 8))
+# Function to determine case based on height-to-width ratio
+def get_profile_case(h, b):
+    if h <= b:
+        return "Case 1: h ≤ b"
+    elif b < h <= 2*b:
+        return "Case 2: b < h ≤ 2b"
+    else:  # h > 2*b
+        return "Case 3: h > 2b"
 
-# Create height points for plotting
-z_points = np.linspace(0, h, 100)
-qp_points = [get_qp_at_height(z, h, b, qp_value) for z in z_points]
-
-# Create the building outline
-building_x = [0, b, b, 0, 0]
-building_y = [0, 0, h, h, 0]
-
-# Plot the building
-ax.plot(building_x, building_y, 'k-', linewidth=2)
-
-# Fill the building
-ax.fill(building_x, building_y, color='lightgray', alpha=0.3)
-
-# Plot pressure profile
-max_arrow_length = 3 * b  # Maximum length for pressure arrows
-arrow_scale = max_arrow_length / qp_value  # Scale factor for arrows
-
-# Reference point for arrows
-ref_x = b * 1.5
-
-# Draw arrows at different heights
-num_arrows = 20
-arrow_heights = np.linspace(0.05*h, 0.95*h, num_arrows)
-
-for z_height in arrow_heights:
-    qp_at_z = get_qp_at_height(z_height, h, b, qp_value)
-    arrow_length = qp_at_z * arrow_scale
-    ax.arrow(ref_x, z_height, arrow_length, 0, 
-             head_width=0.02*h, head_length=0.02*b, 
-             fc='blue', ec='blue', linewidth=1)
+# Function to create wind pressure profile plot
+def create_wind_pressure_plot(building_height, building_width, qp_value, direction):
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import numpy as np
     
-    # Add pressure value text for selected arrows (every 5th arrow)
-    if z_height in arrow_heights[::5]:
-        ax.text(ref_x + arrow_length + 0.1*b, z_height, 
-                f"{qp_at_z:.2f} N/m²", 
-                verticalalignment='center', fontsize=8)
-
-# Mark reference heights
-if h <= b:
-    # Case 1: Only mark h
-    ax.axhline(y=h, color='r', linestyle='--', alpha=0.7)
-    ax.text(0, h, f"$z_e = h = {h}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
+    # Determine the case based on height-to-width ratio
+    profile_case = get_profile_case(building_height, building_width)
     
-elif b < h <= 2*b:
-    # Case 2: Mark b and h
-    ax.axhline(y=b, color='r', linestyle='--', alpha=0.7)
-    ax.axhline(y=h, color='r', linestyle='--', alpha=0.7)
-    ax.text(0, b, f"$z_e = b = {b}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
-    ax.text(0, h, f"$z_e = h = {h}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
+    # Create height points for plotting
+    z_points = np.linspace(0, building_height, 100)
+    qp_points = [get_qp_at_height(z, building_height, building_width, qp_value) for z in z_points]
     
-    # Add hatching for the upper part
-    hatch_x = np.linspace(0, b, 10)
-    for i in range(5):
-        y1 = b + i * (h - b) / 5
-        y2 = b + (i + 1) * (h - b) / 5
-        for j in range(len(hatch_x)-1):
-            if i % 2 == j % 2:
-                ax.plot([hatch_x[j], hatch_x[j+1]], [y1, y2], 'k-', linewidth=0.5, alpha=0.5)
+    # Create the figure
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-else:  # h > 2*b
-    # Case 3: Mark b, h-b, and h
-    z_strip = h - b
-    ax.axhline(y=b, color='r', linestyle='--', alpha=0.7)
-    ax.axhline(y=z_strip, color='r', linestyle='--', alpha=0.7)
-    ax.axhline(y=h, color='r', linestyle='--', alpha=0.7)
-    ax.text(0, b, f"$z_e = b = {b}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
-    ax.text(0, z_strip, f"$z_e = z_{{strip}} = {z_strip:.1f}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
-    ax.text(0, h, f"$z_e = h = {h}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
+    # Define max arrow length and reference point
+    max_arrow_length = building_width * 1.5
+    ref_x = building_width * 1.5
+    arrow_scale = max_arrow_length / qp_value if qp_value > 0 else 1
     
-    # Add hatching for the middle part
-    hatch_x = np.linspace(0, b, 10)
-    for i in range(10):
-        y1 = b + i * (z_strip - b) / 10
-        y2 = b + (i + 1) * (z_strip - b) / 10
-        for j in range(len(hatch_x)-1):
-            if i % 2 == j % 2:
-                ax.plot([hatch_x[j], hatch_x[j+1]], [y1, y2], 'k-', linewidth=0.5, alpha=0.5)
+    # Create building outline
+    fig.add_trace(
+        go.Scatter(
+            x=[0, building_width, building_width, 0, 0],
+            y=[0, 0, building_height, building_height, 0],
+            fill='toself',
+            fillcolor=TT_LightGrey,
+            line=dict(color=TT_DarkBlue, width=2),
+            name='Building'
+        )
+    )
+    
+    # Draw pressure profile curve
+    fig.add_trace(
+        go.Scatter(
+            x=[ref_x + qp * arrow_scale for qp in qp_points],
+            y=z_points,
+            line=dict(color=TT_MidBlue, width=3),
+            name='Pressure Profile'
+        )
+    )
+    
+    # Draw arrows at different heights
+    num_arrows = 15
+    arrow_heights = np.linspace(0.1*building_height, 0.9*building_height, num_arrows)
+    
+    for i, z_height in enumerate(arrow_heights):
+        qp_at_z = get_qp_at_height(z_height, building_height, building_width, qp_value)
+        arrow_length = qp_at_z * arrow_scale
+        
+        # Draw arrow line
+        fig.add_trace(
+            go.Scatter(
+                x=[ref_x, ref_x + arrow_length],
+                y=[z_height, z_height],
+                line=dict(color=TT_Orange, width=1),
+                showlegend=False
+            )
+        )
+        
+        # Draw arrow head (triangle)
+        head_size = 0.02 * building_height
+        if i % 3 == 0:  # Add pressure text for every 3rd arrow
+            fig.add_annotation(
+                x=ref_x + arrow_length + 0.1*building_width,
+                y=z_height,
+                text=f"{qp_at_z:.2f} N/m²",
+                showarrow=False,
+                font=dict(size=10),
+                xanchor="left"
+            )
+        
+        # Add arrowhead annotation
+        fig.add_annotation(
+            x=ref_x + arrow_length,
+            y=z_height,
+            text="",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1.5,
+            arrowwidth=2,
+            arrowcolor=TT_Orange,
+            axref="x",
+            ayref="y",
+            ax=ref_x + arrow_length - 0.05*building_width,
+            ay=z_height
+        )
+    
+    # Add reference height lines
+    if building_height <= building_width:
+        # Case 1: Only mark h
+        fig.add_shape(
+            type="line",
+            x0=0, y0=building_height, 
+            x1=ref_x + max_arrow_length * 1.2, y1=building_height,
+            line=dict(color=TT_Orange, width=1, dash="dash")
+        )
+        fig.add_annotation(
+            x=0, y=building_height,
+            text=f"zₑ = h = {building_height} m",
+            showarrow=False,
+            font=dict(color=TT_Orange, size=10),
+            xanchor="left",
+            yanchor="bottom"
+        )
+        
+    elif building_width < building_height <= 2*building_width:
+        # Case 2: Mark b and h
+        fig.add_shape(
+            type="line",
+            x0=0, y0=building_width, 
+            x1=ref_x + max_arrow_length * 1.2, y1=building_width,
+            line=dict(color=TT_Orange, width=1, dash="dash")
+        )
+        fig.add_shape(
+            type="line",
+            x0=0, y0=building_height, 
+            x1=ref_x + max_arrow_length * 1.2, y1=building_height,
+            line=dict(color=TT_Orange, width=1, dash="dash")
+        )
+        fig.add_annotation(
+            x=0, y=building_width,
+            text=f"zₑ = b = {building_width} m",
+            showarrow=False,
+            font=dict(color=TT_Orange, size=10),
+            xanchor="left",
+            yanchor="bottom"
+        )
+        fig.add_annotation(
+            x=0, y=building_height,
+            text=f"zₑ = h = {building_height} m",
+            showarrow=False,
+            font=dict(color=TT_Orange, size=10),
+            xanchor="left",
+            yanchor="bottom"
+        )
+        
+        # Add rectangle for upper zone
+        fig.add_shape(
+            type="rect",
+            x0=0, y0=building_width,
+            x1=building_width, y1=building_height,
+            fillcolor=TT_LightLightBlue,
+            opacity=0.3,
+            line=dict(width=0)
+        )
+        
+    else:  # h > 2*b
+        # Case 3: Mark b, h-b, and h
+        z_strip = building_height - building_width
+        fig.add_shape(
+            type="line",
+            x0=0, y0=building_width, 
+            x1=ref_x + max_arrow_length * 1.2, y1=building_width,
+            line=dict(color=TT_Orange, width=1, dash="dash")
+        )
+        fig.add_shape(
+            type="line",
+            x0=0, y0=z_strip, 
+            x1=ref_x + max_arrow_length * 1.2, y1=z_strip,
+            line=dict(color=TT_Orange, width=1, dash="dash")
+        )
+        fig.add_shape(
+            type="line",
+            x0=0, y0=building_height, 
+            x1=ref_x + max_arrow_length * 1.2, y1=building_height,
+            line=dict(color=TT_Orange, width=1, dash="dash")
+        )
+        fig.add_annotation(
+            x=0, y=building_width,
+            text=f"zₑ = b = {building_width} m",
+            showarrow=False,
+            font=dict(color=TT_Orange, size=10),
+            xanchor="left",
+            yanchor="bottom"
+        )
+        fig.add_annotation(
+            x=0, y=z_strip,
+            text=f"zₑ = z_strip = {z_strip:.1f} m",
+            showarrow=False,
+            font=dict(color=TT_Orange, size=10),
+            xanchor="left",
+            yanchor="bottom"
+        )
+        fig.add_annotation(
+            x=0, y=building_height,
+            text=f"zₑ = h = {building_height} m",
+            showarrow=False,
+            font=dict(color=TT_Orange, size=10),
+            xanchor="left",
+            yanchor="bottom"
+        )
+        
+        # Add rectangle for middle zone
+        fig.add_shape(
+            type="rect",
+            x0=0, y0=building_width,
+            x1=building_width, y1=z_strip,
+            fillcolor=TT_LightLightBlue,
+            opacity=0.3,
+            line=dict(width=0)
+        )
+        
+        # Add rectangle for upper zone
+        fig.add_shape(
+            type="rect",
+            x0=0, y0=z_strip,
+            x1=building_width, y1=building_height,
+            fillcolor=TT_LightBlue,
+            opacity=0.3,
+            line=dict(width=0)
+        )
+    
+    # Update layout
+    fig.update_layout(
+        title=f'Wind Pressure Profile - {direction} Direction - {profile_case}',
+        xaxis_title='Distance [m]',
+        yaxis_title='Height [m]',
+        template='plotly_white',
+        height=600,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5
+        )
+    )
+    
+    # Set axes limits
+    fig.update_xaxes(range=[-0.5*building_width, ref_x + max_arrow_length * 1.2])
+    fig.update_yaxes(range=[-0.1*building_height, 1.1*building_height])
+    
+    return fig, profile_case
 
-# Set axis labels and title
-ax.set_xlabel('Distance [m]')
-ax.set_ylabel('Height [m]')
-ax.set_title(f'Wind Pressure Profile - {profile_case}')
+# Create and display plots for both directions
+st.write("### North-South Direction")
+NS_fig, NS_profile_case = create_wind_pressure_plot(h, NS_dimension, qp_value, "NS")
+st.plotly_chart(NS_fig, use_container_width=True)
 
-# Set axis limits
-ax.set_xlim(-0.5*b, ref_x + max_arrow_length + b)
-ax.set_ylim(-0.1*h, 1.1*h)
+st.write("### East-West Direction")
+EW_fig, EW_profile_case = create_wind_pressure_plot(h, EW_dimension, qp_value, "EW")
+st.plotly_chart(EW_fig, use_container_width=True)
 
-# Add a grid
-ax.grid(True, linestyle='--', alpha=0.3)
+# Function to create pressure values table
+def create_pressure_table(building_height, building_width, qp_value):
+    key_heights = []
+    if building_height <= building_width:
+        key_heights = [("Ground level", 0), (f"Top (h = {building_height} m)", building_height)]
+    elif building_width < building_height <= 2*building_width:
+        key_heights = [("Ground level", 0), (f"Width level (b = {building_width} m)", building_width), (f"Top (h = {building_height} m)", building_height)]
+    else:  # h > 2*b
+        key_heights = [
+            ("Ground level", 0), 
+            (f"Lower zone (b = {building_width} m)", building_width),
+            (f"Middle zone (z_strip = {building_height-building_width:.1f} m)", building_height-building_width),
+            (f"Top (h = {building_height} m)", building_height)
+        ]
 
-# Display the plot
-st.pyplot(fig)
+    # Create the table data
+    data = []
+    for label, z_height in key_heights:
+        if z_height > 0:  # Skip ground level for calculation
+            qp_at_z = get_qp_at_height(z_height, building_height, building_width, qp_value)
+            data.append([label, f"{z_height:.2f}", f"{qp_at_z:.2f}"])
+        else:
+            data.append([label, "0.00", "0.00"])  # Ground level has zero pressure
+            
+    import pandas as pd
+    df = pd.DataFrame(data, columns=["Position", "Height (m)", "q_p(z) (N/m²)"])
+    return df
 
-# Create a table showing pressure values at key heights
+# Function to calculate design pressure
+def calculate_design_pressure(building_height, building_width, qp_value):
+    if building_height <= building_width:
+        design_pressure = qp_value
+    elif building_width < building_height <= 2*building_width:
+        # Weighted average of the two zones
+        qp_b = qp_value * (building_width / building_height)
+        weighted_avg = (qp_b * building_width + qp_value * (building_height - building_width)) / building_height
+        design_pressure = weighted_avg
+    else:  # h > 2*b
+        # More complex calculation with three zones
+        qp_b = qp_value * (building_width / building_height)
+        qp_strip = qp_value * ((building_height - building_width) / building_height)
+        design_pressure = (qp_b * building_width + qp_strip * (building_height - 2*building_width) + qp_value * building_width) / building_height
+        
+    return design_pressure
+
+# Display tables and design pressures for both directions
 st.subheader("Wind Pressure Values at Key Heights")
 
-key_heights = []
-if h <= b:
-    key_heights = [("Ground level", 0), (f"Top (h = {h} m)", h)]
-elif b < h <= 2*b:
-    key_heights = [("Ground level", 0), (f"Width level (b = {b} m)", b), (f"Top (h = {h} m)", h)]
-else:  # h > 2*b
-    key_heights = [
-        ("Ground level", 0), 
-        (f"Lower zone (b = {b} m)", b),
-        (f"Middle zone (z_strip = {h-b:.1f} m)", h-b),
-        (f"Top (h = {h} m)", h)
-    ]
+# NS Direction
+st.write("### North-South Direction")
+NS_df = create_pressure_table(h, NS_dimension, qp_value)
+st.table(NS_df)
+NS_design_pressure = calculate_design_pressure(h, NS_dimension, qp_value)
+st.info(f"Design peak velocity pressure for NS direction: {NS_design_pressure:.2f} N/m²")
+st.session_state.inputs["NS_design_pressure"] = NS_design_pressure
 
-# Create and display the table
-data = []
-for label, z_height in key_heights:
-    if z_height > 0:  # Skip ground level for calculation
-        qp_at_z = get_qp_at_height(z_height, h, b, qp_value)
-        data.append([label, f"{z_height:.2f}", f"{qp_at_z:.2f}"])
-    else:
-        data.append([label, "0.00", "0.00"])  # Ground level has zero pressure
-
-import pandas as pd
-df = pd.DataFrame(data, columns=["Position", "Height (m)", "q_p(z) (N/m²)"])
-st.table(df)
-
-# Calculate the resulting pressure for design
-if h <= b:
-    design_pressure = qp_value
-elif b < h <= 2*b:
-    # Weighted average of the two zones
-    qp_b = qp_value * (b / h)
-    weighted_avg = (qp_b * b + qp_value * (h - b)) / h
-    design_pressure = weighted_avg
-else:  # h > 2*b
-    # More complex calculation with three zones
-    qp_b = qp_value * (b / h)
-    qp_strip = qp_value * ((h - b) / h)
-    design_pressure = (qp_b * b + qp_strip * (h - 2*b) + qp_value * b) / h
-
-st.info(f"Design peak velocity pressure for the entire building: {design_pressure:.2f} N/m²")
-
-# Store in session state for later use
-st.session_state.inputs["design_pressure"] = design_pressure
+# EW Direction
+st.write("### East-West Direction")
+EW_df = create_pressure_table(h, EW_dimension, qp_value)
+st.table(EW_df)
+EW_design_pressure = calculate_design_pressure(h, EW_dimension, qp_value)
+st.info(f"Design peak velocity pressure for EW direction: {EW_design_pressure:.2f} N/m²")
+st.session_state.inputs["EW_design_pressure"] = EW_design_pressure
 
 # Section 5: PRESSURE COEFFICIENTS
 st.markdown("---")
