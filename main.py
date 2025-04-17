@@ -551,16 +551,16 @@ if region == "United Kingdom":
                 )
                 st.session_state.inputs["distance_in_town"] = distance_in_town
             
-                # Get interpolated values from NA.7 and NA.8
-                # Display NA.7 plot (height factor) first
-                st.markdown("##### NA.7 Plot (Height Factor)")
-                display_single_plot(st, datasets, "NA.7", 0, z_input)
-                interpolated_height_factor = get_interpolated_value(datasets, "NA.7", 0, z_input)
-                
-                # Then display NA.8 plot (town factor) beneath it
-                st.markdown("##### NA.8 Plot (Town Factor)")
-                display_single_plot(st, datasets, "NA.8", distance_in_town, 0)
-                interpolated_town_factor = get_interpolated_value(datasets, "NA.8", distance_in_town, 0)
+            # Get interpolated values from NA.7 and NA.8
+            # Display NA.7 plot (height factor) first
+            st.markdown("##### NA.7 Plot (Height Factor)")
+            display_single_plot(st, datasets, "NA.7", 0, z_input)
+            interpolated_height_factor = get_interpolated_value(datasets, "NA.7", 0, z_input)
+            
+            # Then display NA.8 plot (town factor) beneath it
+            st.markdown("##### NA.8 Plot (Town Factor)")
+            display_single_plot(st, datasets, "NA.8", distance_in_town, 0)
+            interpolated_town_factor = get_interpolated_value(datasets, "NA.8", distance_in_town, 0)
             
             if interpolated_height_factor is not None and interpolated_town_factor is not None:
                 qp_value = interpolated_height_factor * interpolated_town_factor * q_b
