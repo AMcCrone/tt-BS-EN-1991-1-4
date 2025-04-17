@@ -5,5 +5,3 @@ matplotlib
 plotly
 scipy
 openpyxl
-io
-base64
