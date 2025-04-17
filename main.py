@@ -521,11 +521,11 @@ if region == "United Kingdom":
         st.markdown("#### Using NA.7 and NA.8 for non-significant orography")
         
         # Check if in town or country based on terrain category
-        terrain_category = st.session_state.inputs.get("terrain_category", "II")
-        in_town = terrain_category in ["III", "IV"]
+        terrain_category = st.session_state.inputs.get("terrain_category", "Town")
+        in_town = terrain_category in ["Town"]
         
         if in_town:
-            st.markdown("##### Town terrain (Categories III or IV)")
+            st.markdown("##### Town terrain")
             
             # Create columns for layout - just using one column for inputs now
             col1 = st.columns(1)[0]
@@ -573,7 +573,7 @@ if region == "United Kingdom":
                 st.error("Could not interpolate values from NA.7 or NA.8")
         
         else:
-            st.markdown("##### Country terrain (Categories 0, I, or II)")
+            st.markdown("##### Country terrain")
             
             # Create columns for layout
             col1, col2 = st.columns([0.3, 0.7])
