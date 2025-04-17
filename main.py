@@ -409,6 +409,7 @@ else:
     # Now call the roughness function
     try:
         c_r = roughness_module.calculate_cr(z, terrain_category)
+        st.session_state.inputs.get("c_r", 1.0)
         st.markdown("#### Roughness Factor $C_r(z)$")
         st.write(f"The roughness factor, \\(c_r(z)\\), for terrain category **{terrain_category}** and height **{z} m** is:")
         st.latex(f"c_r(z) = {c_r:.3f}")
