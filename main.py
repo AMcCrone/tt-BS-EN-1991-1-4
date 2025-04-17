@@ -343,8 +343,8 @@ if region == "United Kingdom":
     interpolated_c_r = get_interpolated_value(datasets, "NA.3", d_sea, z_input)
     
     with col2:
-        # Display NA.3 plot
-        display_single_plot(st, datasets, "NA.3", d_sea, z_input)
+        # Display NA.3 plot in column 2
+        display_single_plot(col2, datasets, "NA.3", d_sea, z_input)
     
     # Set c_r based on user's choice
     if use_calculated and interpolated_c_r is not None:
