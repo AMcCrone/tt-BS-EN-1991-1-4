@@ -525,52 +525,52 @@ if region == "United Kingdom":
         in_town = terrain_category in ["III", "IV"]
         
         if in_town:
-        st.markdown("##### Town terrain (Categories III or IV)")
-        
-        # Create columns for layout - just using one column for inputs now
-        col1 = st.columns(1)[0]
-        
-        with col1:
-            # Allow user to adjust parameters
-            z_input = st.number_input(
-                "Height z (m)",
-                min_value=1.0,
-                max_value=200.0,
-                value=z_minus_h_dis,
-                format="%.1f"
-            )
+            st.markdown("##### Town terrain (Categories III or IV)")
             
-            # Distance inside town terrain
-            distance_in_town = st.number_input(
-                "Distance inside town (km)",
-                min_value=0.0,
-                max_value=10.0,
-                value=1.0,
-                step=0.1,
-                format="%.1f"
-            )
-            st.session_state.inputs["distance_in_town"] = distance_in_town
-        
-        # Get interpolated values from NA.7 and NA.8
-        # Display NA.7 plot (height factor) first
-        st.markdown("##### NA.7 Plot (Height Factor)")
-        display_single_plot(st, datasets, "NA.7", 0, z_input)
-        interpolated_height_factor = get_interpolated_value(datasets, "NA.7", 0, z_input)
-        
-        # Then display NA.8 plot (town factor) beneath it
-        st.markdown("##### NA.8 Plot (Town Factor)")
-        display_single_plot(st, datasets, "NA.8", distance_in_town, 0)
-        interpolated_town_factor = get_interpolated_value(datasets, "NA.8", distance_in_town, 0)
-        
-        if interpolated_height_factor is not None and interpolated_town_factor is not None:
-            qp_value = interpolated_height_factor * interpolated_town_factor * q_b
-            st.session_state.inputs["qp_value"] = qp_value
+            # Create columns for layout - just using one column for inputs now
+            col1 = st.columns(1)[0]
             
-            st.write(f"Height factor from NA.7: {interpolated_height_factor:.3f}")
-            st.write(f"Town factor from NA.8: {interpolated_town_factor:.3f}")
-            st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
-        else:
-            st.error("Could not interpolate values from NA.7 or NA.8")
+            with col1:
+                # Allow user to adjust parameters
+                z_input = st.number_input(
+                    "Height z (m)",
+                    min_value=1.0,
+                    max_value=200.0,
+                    value=z_minus_h_dis,
+                    format="%.1f"
+                )
+                
+                # Distance inside town terrain
+                distance_in_town = st.number_input(
+                    "Distance inside town (km)",
+                    min_value=0.0,
+                    max_value=10.0,
+                    value=1.0,
+                    step=0.1,
+                    format="%.1f"
+                )
+                st.session_state.inputs["distance_in_town"] = distance_in_town
+            
+            # Get interpolated values from NA.7 and NA.8
+            # Display NA.7 plot (height factor) first
+            st.markdown("##### NA.7 Plot (Height Factor)")
+            display_single_plot(st, datasets, "NA.7", 0, z_input)
+            interpolated_height_factor = get_interpolated_value(datasets, "NA.7", 0, z_input)
+            
+            # Then display NA.8 plot (town factor) beneath it
+            st.markdown("##### NA.8 Plot (Town Factor)")
+            display_single_plot(st, datasets, "NA.8", distance_in_town, 0)
+            interpolated_town_factor = get_interpolated_value(datasets, "NA.8", distance_in_town, 0)
+            
+            if interpolated_height_factor is not None and interpolated_town_factor is not None:
+                qp_value = interpolated_height_factor * interpolated_town_factor * q_b
+                st.session_state.inputs["qp_value"] = qp_value
+                
+                st.write(f"Height factor from NA.7: {interpolated_height_factor:.3f}")
+                st.write(f"Town factor from NA.8: {interpolated_town_factor:.3f}")
+                st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
+            else:
+                st.error("Could not interpolate values from NA.7 or NA.8")
         
         else:
             st.markdown("##### Country terrain (Categories 0, I, or II)")
