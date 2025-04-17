@@ -302,7 +302,38 @@ with col_result:
 
 st.subheader("Mean Wind Velocity")
 
-region = st.session_state.inputs.get("region", "").lower()
+def calculate_displacement_height():
+    st.subheader("Displacement Height")
+    
+    use_standard = st.checkbox("Use standard h_dis = 15m")
+    
+    if use_standard:
+        h_dis = 15.0
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            x = st.number_input("Distance x (m)", value=10.0, min_value=0.0)
+        with col2:
+            h_ave = st.number_input("Average height h_ave (m)", value=5.0, min_value=0.1)
+        
+        h = st.number_input("Obstruction height h (m)", value=6.0, min_value=0.1)
+        
+        if x <= 2 * h_ave:
+            h_dis = min(0.8 * h_ave, 0.6 * h)
+        elif x < 6 * h_ave:
+            h_dis = min(1.2 * h_ave - 0.2 * x, 0.6 * h)
+        else:
+            h_dis = 0
+    
+    z = st.session_state.inputs.get("z", 10.0)
+    z_minus_h_dis = z - h_dis
+    
+    st.write(f"Displacement height (h_dis): {h_dis:.2f} m")
+    st.write(f"Effective height (z - h_dis): {z_minus_h_dis:.2f} m")
+    
+    # Update session state
+    st.session_state.inputs["h_dis"] = h_dis
+    st.session_state.inputs["z_minus_h_dis"] = z_minus_h_dis
 
 # Check the region selection
 region = st.session_state.inputs.get("region")
@@ -313,11 +344,11 @@ if region == "United Kingdom":
     from calc_engine.uk.contour_plots import load_contour_data, get_interpolated_value, display_single_plot
     
     # Get required parameters from session state
-    z = st.session_state.inputs.get("height", 10.0)  # Get height from session state
+    z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 15.0)  # Get height from session state
     x_upwind = st.session_state.inputs.get("distance_upwind", 10.0)  # Distance to shoreline
     
     # Create columns for layout
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([0.3, 0.7])
     
     with col1:
         # Allow user to override the calculated value (optional)
@@ -325,13 +356,13 @@ if region == "United Kingdom":
         
         # Allow user to adjust parameters
         z_input = st.number_input(
-            "Height above ground (m)",
-            min_value=2.0,
+            "z - h_dis (m)",
+            min_value=1.0,
             max_value=200.0,
             value=z,
             format="%.1f"
         )
-        st.session_state.inputs["height"] = z_input
+        st.session_state.inputs["z_minus_h_dis"] = z_input
         
         d_sea = st.session_state.inputs.get("d_sea", 60.0)
     
@@ -354,8 +385,8 @@ if region == "United Kingdom":
         # If user chooses to enter manually or if interpolation failed
         c_r = st.number_input(
             "Enter roughness factor value manually",
-            min_value=0.0,
-            max_value=5.0,
+            min_value=0.70,
+            max_value=1.75,
             value=float(st.session_state.inputs.get("uk_roughness_factor", 1.0)),
             step=0.01,
             format="%.3f"
