@@ -414,6 +414,24 @@ else:
         st.error(f"Error calculating roughness factor: {e}")
 
 st.markdown("#### Orography Factor $C_o(z)$")
+
+# Simple checkbox: if checked, assume flat and set Co = 1.0
+flat = st.checkbox("Site is flat and unobstructed (use $C_o(z)=1.0$)", value=True)
+
+if flat:
+    c_oz = 1.0
+else:
+    # Otherwise they must type in their own orography factor
+    c_oz = st.number_input(
+        "Enter orography factor $C_o(z)$",
+        min_value=0.5,
+        max_value=3.0,
+        step=0.01,
+        value=float(st.session_state.inputs.get("c_oz", 1.0))
+    )
+
+# Save for later calculations
+st.session_state.inputs["c_oz"] = c_oz
         
 # Section 4: WIND PRESSURE
 st.markdown("---")
