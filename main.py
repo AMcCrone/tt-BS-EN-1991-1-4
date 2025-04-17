@@ -340,7 +340,7 @@ def calculate_displacement_height():
 # Check the region selection
 region = st.session_state.inputs.get("region")
 if region == "United Kingdom":
-    st.markdown("### Roughness Factor $C_r(z)$")
+    st.markdown("#### Roughness Factor $C_r(z)$")
     
     # Import the contour plot functions for UK
     from calc_engine.uk.contour_plots import load_contour_data, get_interpolated_value, display_single_plot
@@ -382,7 +382,6 @@ if region == "United Kingdom":
     # Set c_r based on user's choice
     if use_calculated and interpolated_c_r is not None:
         c_r = interpolated_c_r
-        st.success(f"Using calculated value: c_r(z) = {c_r:.3f}")
     else:
         # If user chooses to enter manually or if interpolation failed
         c_r = st.number_input(
