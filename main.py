@@ -296,6 +296,8 @@ with col_result:
     
     # Basic Wind Speed with c_prob included
     V_b = V_b0 * c_dir * c_season * c_prob
+
+    st.session_state.inputs["V_b"] = V_b
     
     # Display the result
     st.markdown("**Calculated Basic Wind Speed**")
@@ -436,7 +438,7 @@ st.session_state.inputs["c_oz"] = c_oz
 st.markdown("#### Mean Wind Velocity $v_m(z)")
 
 # Retrieve stored values (or use the variables if still in scope)
-v_b   = st.session_state.inputs.get("V_b", 0.0)
+v_b   = st.session_state.inputs.get("V_b", 24.0)
 c_rz  = st.session_state.inputs.get("c_rz", 1.0)
 c_oz  = st.session_state.inputs.get("c_oz", 1.0)
 
