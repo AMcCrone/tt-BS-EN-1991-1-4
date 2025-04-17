@@ -670,24 +670,9 @@ from calc_engine.common.shape_velocity_profile import (
 qp_value = st.session_state.inputs.get("qp_value", 0.0)
 
 # Get building height from session state
-h = st.session_state.inputs.get("z", 15.0)
-
-# Building dimensions input for NS and EW directions
-col1, col2 = st.columns(2)
-
-with col1:
-    NS_dimension = st.number_input("Building Width in NS Direction [m]", 
-                          min_value=1.0, 
-                          value=10.0, 
-                          step=0.5)
-    st.session_state.inputs["NS_dimension"] = NS_dimension
-
-with col2:
-    EW_dimension = st.number_input("Building Width in EW Direction [m]", 
-                          min_value=1.0, 
-                          value=12.0, 
-                          step=0.5)
-    st.session_state.inputs["EW_dimension"] = EW_dimension
+h = st.session_state.inputs.get("z", 10.0)
+NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
+EW_dimension = st.session_state.inputs.get("EW_dimension", 15.0)
 
 # Create and display plots for both directions
 st.write("### North-South Direction")
