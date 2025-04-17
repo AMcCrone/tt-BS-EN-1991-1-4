@@ -307,7 +307,7 @@ with col_result:
 st.subheader("Mean Wind Velocity")
 
 def calculate_displacement_height():
-    use_standard = st.checkbox("Use standard h_dis = 15m")
+    use_standard = st.checkbox("Use standard $h_dis$ = 15m")
     
     if use_standard:
         h_dis = 15.0
@@ -336,13 +336,11 @@ h_dis = calculate_displacement_height()
 z = st.session_state.inputs.get("z", 10.0)
 z_minus_h_dis = z - h_dis
 
-st.write(f"Displacement height (h_dis): {h_dis:.2f} m")
-st.write(f"Effective height (z - h_dis): {z_minus_h_dis:.2f} m")
+st.write(f"Displacement height $h_dis$: {h_dis:.2f} m")
+st.write(f"Effective height $z - h_dis$): {z_minus_h_dis:.2f} m")
 
 # Check the region selection
 region = st.session_state.inputs.get("region")
-# Get the height parameter, which should be defined before this code
-z = st.session_state.inputs.get("z", 15.0)  # Add this line to define z with a default
 
 if region == "United Kingdom":
     st.markdown("#### Roughness Factor $C_r(z)$")
@@ -350,8 +348,7 @@ if region == "United Kingdom":
     # Import the contour plot functions for UK
     from calc_engine.uk.contour_plots import load_contour_data, get_interpolated_value, display_single_plot
     
-    # Get required parameters from session state
-    z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 15.0)
+    # Get required parameters from session state - use the freshly calculated values
     x_upwind = st.session_state.inputs.get("distance_upwind", 10.0)
     
     # Create columns for layout
@@ -361,14 +358,15 @@ if region == "United Kingdom":
         # Allow user to override the calculated value (optional)
         use_calculated = st.checkbox("Use calculated value from contour plot", value=True)
         
-        # Allow user to adjust parameters
+        # Display the effective height but allow adjustment
         z_input = st.number_input(
             "z - h_dis (m)",
             min_value=1.0,
             max_value=200.0,
-            value=z_minus_h_dis,  # Changed from z to z_minus_h_dis
+            value=z_minus_h_dis,  # Use the freshly calculated value
             format="%.1f"
         )
+        # Update session state with any user-adjusted value
         st.session_state.inputs["z_minus_h_dis"] = z_input
         
         d_sea = st.session_state.inputs.get("d_sea", 60.0)
@@ -393,15 +391,14 @@ if region == "United Kingdom":
             "Enter roughness factor value manually",
             min_value=0.70,
             max_value=1.75,
-            value=float(st.session_state.inputs.get("uk_roughness_factor", 1.0)),
+            value=float(st.session_state.inputs.get("c_r", 1.0)),  # Use the common c_r key
             step=0.01,
             format="%.3f"
         )
     
-    # Save the roughness factor to session state (using consistent key)
-    st.session_state.inputs["uk_roughness_factor"] = c_r
-    # Also save to the common c_r key for consistency
+    # Store calculated value with consistent naming
     st.session_state.inputs["c_r"] = c_r
+    st.session_state.inputs["c_rz"] = c_r  # Add for consistency with mean velocity calculation
     
     st.latex(f"c_r(z) = {c_r:.3f}")
 else:
@@ -413,42 +410,26 @@ else:
     
     # Now call the roughness function
     try:
-        c_r = roughness_module.calculate_cr(z, terrain_category)
-        # Save the calculated roughness factor
-        st.session_state.inputs["c_r"] = c_r  # Store the value
+        # Use z_minus_h_dis instead of z for consistent handling across regions
+        c_r = roughness_module.calculate_cr(z_minus_h_dis, terrain_category)
+        
+        # Store calculated value with consistent naming
+        st.session_state.inputs["c_r"] = c_r
+        st.session_state.inputs["c_rz"] = c_r  # Add for consistency with mean velocity calculation
         
         st.markdown("#### Roughness Factor $C_r(z)$")
-        st.write(f"The roughness factor, \\(c_r(z)\\), for terrain category **{terrain_category}** and height **{z} m** is:")
+        st.write(f"The roughness factor, \\(c_r(z)\\), for terrain category **{terrain_category}** and height **{z_minus_h_dis} m** is:")
         st.latex(f"c_r(z) = {c_r:.3f}")
     except Exception as e:
         st.error(f"Error calculating roughness factor: {e}")
 
-st.markdown("#### Orography Factor $C_o(z)$")
+# --- Section 3: Mean Wind Velocity ---
+st.markdown("#### Mean Wind Velocity")
 
-# Simple checkbox: if checked, assume flat and set Co = 1.0
-flat = st.checkbox("Site is flat and unobstructed (use $C_o(z)=1.0$)", value=True)
-
-if flat:
-    c_oz = 1.0
-else:
-    # Otherwise they must type in their own orography factor
-    c_oz = st.number_input(
-        "Enter orography factor $C_o(z)$",
-        min_value=0.5,
-        max_value=3.0,
-        step=0.01,
-        value=float(st.session_state.inputs.get("c_oz", 1.0))
-    )
-
-# Save for later calculations
-st.session_state.inputs["c_oz"] = c_oz
-
-st.markdown("#### Mean Wind Velocity $v_m(z)$")
-
-# Retrieve stored values (or use the variables if still in scope)
-v_b   = st.session_state.inputs.get("V_b", 0.0)
-c_rz  = st.session_state.inputs.get("c_rz", 1.0)
-c_oz  = st.session_state.inputs.get("c_oz", 1.0)
+# Retrieve stored values with consistent naming
+v_b = st.session_state.inputs.get("V_b", 0.0)
+c_rz = st.session_state.inputs.get("c_rz", 1.0)
+c_oz = st.session_state.inputs.get("c_oz", 1.0)
 
 # Calculate mean wind velocity
 v_mean = v_b * c_rz * c_oz
@@ -456,8 +437,8 @@ v_mean = v_b * c_rz * c_oz
 # Store in session state for later use
 st.session_state.inputs["v_mean"] = v_mean
 
-# Optionally display
-st.write(f"$$v_m(z) = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
+# Display the result
+st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_oz:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
         
 # Section 4: WIND PRESSURE
 st.markdown("---")
