@@ -396,11 +396,6 @@ if region == "United Kingdom":
     st.session_state.inputs["uk_roughness_factor"] = c_r
     
     st.latex(f"c_r(z) = {c_r:.3f}")
-    
-    # Additional information about the calculation method
-    with st.expander("About this calculation"):
-        st.info("The roughness factor c_r(z) is interpolated from Figure NA.3 in the UK National Annex to BS EN 1991-1-4. The value depends on the height above ground and the distance upwind to shoreline.")
-
 else:
     # Import the roughness function from the EU module
     from calc_engine.eu import roughness as roughness_module
