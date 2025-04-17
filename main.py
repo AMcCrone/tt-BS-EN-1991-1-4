@@ -1,6 +1,8 @@
 import streamlit as st
 import datetime
 import math
+import pandas as pd
+import openpyxl
 from auth import authenticate_user
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
@@ -420,7 +422,6 @@ contour_data_path = "calc_engine/uk/contour_data.xlsx"  # Adjust path as needed
 
 # Load data directly for debugging
 try:
-    import pandas as pd
     df = pd.read_excel(contour_data_path, sheet_name="NA.3")
     st.write("Raw Excel data:", df.head())
     
