@@ -444,7 +444,216 @@ st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.
 st.markdown("---")
 st.header("Peak Wind Pressure")
 
-air_density = 
+# Air density input
+rho_air = st.number_input(
+    "Air Density (kg/m³)",
+    min_value=1.0,
+    max_value=1.5,
+    value=1.25,
+    step=0.01,
+    format="%.2f"
+)
+st.session_state.inputs["rho_air"] = rho_air
+
+# Basic wind pressure calculation
+v_b = st.session_state.inputs.get("V_b", 0.0)
+q_b = 0.5 * rho_air * (v_b ** 2)
+st.session_state.inputs["q_b"] = q_b
+
+st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdot {rho_air:.2f} \\cdot {v_b:.2f}^2 = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
+
+# Check the region selection
+region = st.session_state.inputs.get("region")
+
+if region == "United Kingdom":
+    # UK-specific peak pressure calculation
+    st.markdown("### UK Peak Wind Pressure")
+    
+    # Import the contour plot functions for UK
+    from calc_engine.uk.contour_plots import load_contour_data, get_interpolated_value, display_single_plot
+    
+    # Check if orography is significant
+    is_orography_significant = st.checkbox("Orography is significant", value=False)
+    
+    # Get effective height from previous calculation
+    z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 10.0)
+    
+    # Load the contour data
+    contour_data_path = "calc_engine/uk/contour_data.xlsx"
+    datasets = load_contour_data(contour_data_path)
+    
+    if is_orography_significant:
+        # Case 1: UK with significant orography (use NA.5)
+        st.markdown("#### Using NA.5 for significant orography")
+        
+        # Get required parameters
+        d_sea = st.session_state.inputs.get("d_sea", 60.0)
+        
+        # Create columns for layout
+        col1, col2 = st.columns([0.3, 0.7])
+        
+        with col1:
+            # Allow user to adjust parameters
+            z_input = st.number_input(
+                "Height z (m)",
+                min_value=1.0,
+                max_value=200.0,
+                value=z_minus_h_dis,
+                format="%.1f"
+            )
+            
+            # Get interpolated value from NA.5
+            interpolated_qp = get_interpolated_value(datasets, "NA.5", d_sea, z_input)
+            
+            if interpolated_qp is not None:
+                qp_value = interpolated_qp * q_b
+                st.session_state.inputs["qp_value"] = qp_value
+                st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
+            else:
+                st.error("Could not interpolate value from NA.5")
+        
+        with col2:
+            # Display NA.5 plot
+            display_single_plot(col2, datasets, "NA.5", d_sea, z_input)
+    
+    else:
+        # Case 2: UK with non-significant orography
+        st.markdown("#### Using NA.7 and NA.8 for non-significant orography")
+        
+        # Check if in town or country based on terrain category
+        terrain_category = st.session_state.inputs.get("terrain_category", "II")
+        in_town = terrain_category in ["III", "IV"]
+        
+        if in_town:
+            st.markdown("##### Town terrain (Categories III or IV)")
+            
+            # Create columns for layout
+            col1, col2, col3 = st.columns([0.3, 0.35, 0.35])
+            
+            with col1:
+                # Allow user to adjust parameters
+                z_input = st.number_input(
+                    "Height z (m)",
+                    min_value=1.0,
+                    max_value=200.0,
+                    value=z_minus_h_dis,
+                    format="%.1f"
+                )
+                
+                # Distance inside town terrain
+                distance_in_town = st.number_input(
+                    "Distance inside town (km)",
+                    min_value=0.0,
+                    max_value=10.0,
+                    value=1.0,
+                    step=0.1,
+                    format="%.1f"
+                )
+                st.session_state.inputs["distance_in_town"] = distance_in_town
+            
+            # Get interpolated values from NA.7 and NA.8
+            with col2:
+                # Display NA.7 plot (height factor)
+                display_single_plot(col2, datasets, "NA.7", 0, z_input)
+                interpolated_height_factor = get_interpolated_value(datasets, "NA.7", 0, z_input)
+            
+            with col3:
+                # Display NA.8 plot (town factor)
+                display_single_plot(col3, datasets, "NA.8", distance_in_town, 0)
+                interpolated_town_factor = get_interpolated_value(datasets, "NA.8", distance_in_town, 0)
+            
+            if interpolated_height_factor is not None and interpolated_town_factor is not None:
+                qp_value = interpolated_height_factor * interpolated_town_factor * q_b
+                st.session_state.inputs["qp_value"] = qp_value
+                
+                st.write(f"Height factor from NA.7: {interpolated_height_factor:.3f}")
+                st.write(f"Town factor from NA.8: {interpolated_town_factor:.3f}")
+                st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
+            else:
+                st.error("Could not interpolate values from NA.7 or NA.8")
+        
+        else:
+            st.markdown("##### Country terrain (Categories 0, I, or II)")
+            
+            # Create columns for layout
+            col1, col2 = st.columns([0.3, 0.7])
+            
+            with col1:
+                # Allow user to adjust parameters
+                z_input = st.number_input(
+                    "Height z (m)",
+                    min_value=1.0,
+                    max_value=200.0,
+                    value=z_minus_h_dis,
+                    format="%.1f"
+                )
+            
+            # Get interpolated value from NA.7 only
+            with col2:
+                # Display NA.7 plot
+                display_single_plot(col2, datasets, "NA.7", 0, z_input)
+                interpolated_height_factor = get_interpolated_value(datasets, "NA.7", 0, z_input)
+            
+            if interpolated_height_factor is not None:
+                qp_value = interpolated_height_factor * q_b
+                st.session_state.inputs["qp_value"] = qp_value
+                
+                st.write(f"Height factor from NA.7: {interpolated_height_factor:.3f}")
+                st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
+            else:
+                st.error("Could not interpolate value from NA.7")
+
+else:
+    # Non-UK peak pressure calculation (EU standard)
+    st.markdown("### EU Peak Wind Pressure")
+    
+    # Import necessary functions
+    from calc_engine.eu.peak_pressure import calculate_qp
+    
+    # Get needed parameters
+    z = st.session_state.inputs.get("z_minus_h_dis", 10.0)
+    terrain_category = st.session_state.inputs.get("terrain_category", "II")
+    v_b = st.session_state.inputs.get("V_b", 0.0)
+    c_o = st.session_state.inputs.get("c_oz", 1.0)  # Orography factor
+    
+    # Calculate peak pressure
+    try:
+        qp_value = calculate_qp(z, terrain_category, v_b, rho_air, c_o)
+        st.session_state.inputs["qp_value"] = qp_value
+        
+        # Get the c_r value for display
+        c_r = st.session_state.inputs.get("c_r", 1.0)
+        
+        # Display calculation parameters and result
+        st.write(f"Basic wind pressure: $q_b = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
+        st.write(f"Roughness factor: $c_r(z) = {c_r:.3f}$")
+        st.write(f"Orography factor: $c_o(z) = {c_o:.3f}$")
+        
+        # Calculate turbulence intensity (used in EU approach)
+        k_I = 1.0  # turbulence factor (default value is 1.0)
+        terrain_params = {
+            '0': {'z0': 0.003, 'z_min': 1},
+            'I': {'z0': 0.01, 'z_min': 1},
+            'II': {'z0': 0.05, 'z_min': 2},
+            'III': {'z0': 0.3, 'z_min': 5},
+            'IV': {'z0': 1.0, 'z_min': 10},
+        }
+        z0 = terrain_params[terrain_category]['z0']
+        z_min = terrain_params[terrain_category]['z_min']
+        
+        # Calculate turbulence intensity
+        if z < z_min:
+            I_v = k_I / (c_o * math.log(z_min / z0))
+        else:
+            I_v = k_I / (c_o * math.log(z / z0))
+        
+        st.write(f"Turbulence intensity: $I_v(z) = {I_v:.3f}$")
+        
+        # Display the full formula and result
+        st.write(f"Peak velocity pressure: $q_p(z) = [1 + 7 \\cdot I_v(z)] \\cdot 0.5 \\cdot \\rho \\cdot v_m^2(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
+        
+    except Exception as e:
+        st.error(f"Error calculating peak velocity pressure: {e}")
 
 # Section 5: PRESSURE COEFFICIENTS
 st.markdown("---")
