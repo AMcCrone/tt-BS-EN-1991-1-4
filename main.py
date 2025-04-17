@@ -655,6 +655,214 @@ else:
     except Exception as e:
         st.error(f"Error calculating peak velocity pressure: {e}")
 
+# Get the peak velocity pressure from previous calculations
+qp_value = st.session_state.inputs.get("qp_value", 0.0)
+
+# Building dimensions input
+col1, col2 = st.columns(2)
+with col1:
+    h = st.number_input("Building Height (h) [m]", 
+                        min_value=1.0, 
+                        value=15.0, 
+                        step=0.5)
+    st.session_state.inputs["building_height"] = h
+
+with col2:
+    b = st.number_input("Building Width (b) [m]", 
+                        min_value=1.0, 
+                        value=10.0, 
+                        step=0.5)
+    st.session_state.inputs["building_width"] = b
+
+# Determine the case based on height-to-width ratio
+if h <= b:
+    profile_case = "Case 1: h ≤ b"
+elif b < h <= 2*b:
+    profile_case = "Case 2: b < h ≤ 2b"
+else:  # h > 2*b
+    profile_case = "Case 3: h > 2b"
+
+st.write(f"Building profile: **{profile_case}**")
+
+# Create the wind pressure profile visualization
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+import base64
+
+def get_qp_at_height(z_height, building_height, building_width, qp_max):
+    """Calculate q_p at a given height based on building dimensions."""
+    h = building_height
+    b = building_width
+    
+    if h <= b:
+        # Case 1: Constant pressure across entire height
+        return qp_max
+    
+    elif b < h <= 2*b:
+        # Case 2: Two pressure zones
+        if z_height <= b:
+            return qp_max * (b / h)  # q_p(b)
+        else:
+            return qp_max  # q_p(h)
+    
+    else:  # h > 2*b
+        # Case 3: Three pressure zones
+        if z_height <= b:
+            return qp_max * (b / h)  # q_p(b)
+        elif b < z_height <= h - b:
+            # Calculate z_strip relative position
+            z_strip = b + (z_height - b) / (h - 2*b) * b
+            # Linear interpolation between q_p(b) and q_p(h)
+            return qp_max * (z_strip / h)
+        else:  # z_height > h - b
+            return qp_max  # q_p(h)
+
+# Generate the plot
+fig, ax = plt.subplots(figsize=(10, 8))
+
+# Create height points for plotting
+z_points = np.linspace(0, h, 100)
+qp_points = [get_qp_at_height(z, h, b, qp_value) for z in z_points]
+
+# Create the building outline
+building_x = [0, b, b, 0, 0]
+building_y = [0, 0, h, h, 0]
+
+# Plot the building
+ax.plot(building_x, building_y, 'k-', linewidth=2)
+
+# Fill the building
+ax.fill(building_x, building_y, color='lightgray', alpha=0.3)
+
+# Plot pressure profile
+max_arrow_length = 3 * b  # Maximum length for pressure arrows
+arrow_scale = max_arrow_length / qp_value  # Scale factor for arrows
+
+# Reference point for arrows
+ref_x = b * 1.5
+
+# Draw arrows at different heights
+num_arrows = 20
+arrow_heights = np.linspace(0.05*h, 0.95*h, num_arrows)
+
+for z_height in arrow_heights:
+    qp_at_z = get_qp_at_height(z_height, h, b, qp_value)
+    arrow_length = qp_at_z * arrow_scale
+    ax.arrow(ref_x, z_height, arrow_length, 0, 
+             head_width=0.02*h, head_length=0.02*b, 
+             fc='blue', ec='blue', linewidth=1)
+    
+    # Add pressure value text for selected arrows (every 5th arrow)
+    if z_height in arrow_heights[::5]:
+        ax.text(ref_x + arrow_length + 0.1*b, z_height, 
+                f"{qp_at_z:.2f} N/m²", 
+                verticalalignment='center', fontsize=8)
+
+# Mark reference heights
+if h <= b:
+    # Case 1: Only mark h
+    ax.axhline(y=h, color='r', linestyle='--', alpha=0.7)
+    ax.text(0, h, f"$z_e = h = {h}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
+    
+elif b < h <= 2*b:
+    # Case 2: Mark b and h
+    ax.axhline(y=b, color='r', linestyle='--', alpha=0.7)
+    ax.axhline(y=h, color='r', linestyle='--', alpha=0.7)
+    ax.text(0, b, f"$z_e = b = {b}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
+    ax.text(0, h, f"$z_e = h = {h}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
+    
+    # Add hatching for the upper part
+    hatch_x = np.linspace(0, b, 10)
+    for i in range(5):
+        y1 = b + i * (h - b) / 5
+        y2 = b + (i + 1) * (h - b) / 5
+        for j in range(len(hatch_x)-1):
+            if i % 2 == j % 2:
+                ax.plot([hatch_x[j], hatch_x[j+1]], [y1, y2], 'k-', linewidth=0.5, alpha=0.5)
+    
+else:  # h > 2*b
+    # Case 3: Mark b, h-b, and h
+    z_strip = h - b
+    ax.axhline(y=b, color='r', linestyle='--', alpha=0.7)
+    ax.axhline(y=z_strip, color='r', linestyle='--', alpha=0.7)
+    ax.axhline(y=h, color='r', linestyle='--', alpha=0.7)
+    ax.text(0, b, f"$z_e = b = {b}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
+    ax.text(0, z_strip, f"$z_e = z_{{strip}} = {z_strip:.1f}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
+    ax.text(0, h, f"$z_e = h = {h}$ m", verticalalignment='bottom', horizontalalignment='left', color='r', fontsize=9)
+    
+    # Add hatching for the middle part
+    hatch_x = np.linspace(0, b, 10)
+    for i in range(10):
+        y1 = b + i * (z_strip - b) / 10
+        y2 = b + (i + 1) * (z_strip - b) / 10
+        for j in range(len(hatch_x)-1):
+            if i % 2 == j % 2:
+                ax.plot([hatch_x[j], hatch_x[j+1]], [y1, y2], 'k-', linewidth=0.5, alpha=0.5)
+
+# Set axis labels and title
+ax.set_xlabel('Distance [m]')
+ax.set_ylabel('Height [m]')
+ax.set_title(f'Wind Pressure Profile - {profile_case}')
+
+# Set axis limits
+ax.set_xlim(-0.5*b, ref_x + max_arrow_length + b)
+ax.set_ylim(-0.1*h, 1.1*h)
+
+# Add a grid
+ax.grid(True, linestyle='--', alpha=0.3)
+
+# Display the plot
+st.pyplot(fig)
+
+# Create a table showing pressure values at key heights
+st.subheader("Wind Pressure Values at Key Heights")
+
+key_heights = []
+if h <= b:
+    key_heights = [("Ground level", 0), (f"Top (h = {h} m)", h)]
+elif b < h <= 2*b:
+    key_heights = [("Ground level", 0), (f"Width level (b = {b} m)", b), (f"Top (h = {h} m)", h)]
+else:  # h > 2*b
+    key_heights = [
+        ("Ground level", 0), 
+        (f"Lower zone (b = {b} m)", b),
+        (f"Middle zone (z_strip = {h-b:.1f} m)", h-b),
+        (f"Top (h = {h} m)", h)
+    ]
+
+# Create and display the table
+data = []
+for label, z_height in key_heights:
+    if z_height > 0:  # Skip ground level for calculation
+        qp_at_z = get_qp_at_height(z_height, h, b, qp_value)
+        data.append([label, f"{z_height:.2f}", f"{qp_at_z:.2f}"])
+    else:
+        data.append([label, "0.00", "0.00"])  # Ground level has zero pressure
+
+import pandas as pd
+df = pd.DataFrame(data, columns=["Position", "Height (m)", "q_p(z) (N/m²)"])
+st.table(df)
+
+# Calculate the resulting pressure for design
+if h <= b:
+    design_pressure = qp_value
+elif b < h <= 2*b:
+    # Weighted average of the two zones
+    qp_b = qp_value * (b / h)
+    weighted_avg = (qp_b * b + qp_value * (h - b)) / h
+    design_pressure = weighted_avg
+else:  # h > 2*b
+    # More complex calculation with three zones
+    qp_b = qp_value * (b / h)
+    qp_strip = qp_value * ((h - b) / h)
+    design_pressure = (qp_b * b + qp_strip * (h - 2*b) + qp_value * b) / h
+
+st.info(f"Design peak velocity pressure for the entire building: {design_pressure:.2f} N/m²")
+
+# Store in session state for later use
+st.session_state.inputs["design_pressure"] = design_pressure
+
 # Section 5: PRESSURE COEFFICIENTS
 st.markdown("---")
 st.header("Pressure Coefficients")
