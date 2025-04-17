@@ -446,7 +446,7 @@ st.session_state.inputs["c_oz"] = c_oz
 st.markdown("#### Mean Wind Velocity $v_m(z)$")
 
 # Retrieve stored values (or use the variables if still in scope)
-v_b   = st.session_state.inputs.get("V_b", 24.0)
+v_b   = st.session_state.inputs.get("V_b", 0.0)
 c_rz  = st.session_state.inputs.get("c_rz", 1.0)
 c_oz  = st.session_state.inputs.get("c_oz", 1.0)
 
