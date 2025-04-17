@@ -319,9 +319,6 @@ def display_single_plot(st_container, datasets, sheet_name, x_input, y_input):
     
     df = datasets[sheet_name]
     
-    # Don't use with statement here - just use the st_container directly
-    st_container.markdown(f"### {section_heading}")
-    
     col1, col2 = st_container.columns([3, 1])
     
     with col1:
