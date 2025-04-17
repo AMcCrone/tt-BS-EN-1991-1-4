@@ -302,7 +302,7 @@ def display_single_plot(st_container, datasets, sheet_name, x_input, y_input):
     Display a single contour plot in a Streamlit container.
     
     Args:
-        st_container: Streamlit container to display the plot in
+        st_container: Streamlit module or container
         datasets (dict): Dictionary of DataFrames for each sheet
         sheet_name (str): Name of the sheet/plot to display
         x_input (float): X-coordinate value
@@ -319,25 +319,25 @@ def display_single_plot(st_container, datasets, sheet_name, x_input, y_input):
     
     df = datasets[sheet_name]
     
-    with st_container:
-        st.markdown(f"### {section_heading}")
+    # Don't use with statement here - just use the st_container directly
+    st_container.markdown(f"### {section_heading}")
+    
+    col1, col2 = st_container.columns([3, 1])
+    
+    with col1:
+        fig, interpolated_z = create_contour_plot(df, sheet_name, x_input, y_input)
+        st_container.plotly_chart(fig, use_container_width=True)
         
-        col1, col2 = st.columns([3, 1])
+    with col2:
+        st_container.write(f"X: **{x_input:.1f}** {x_name}")
+        st_container.write(f"Y: **{y_input:.1f}** {Y_AXIS_NAME}")
         
-        with col1:
-            fig, interpolated_z = create_contour_plot(df, sheet_name, x_input, y_input)
-            st.plotly_chart(fig, use_container_width=True)
-            
-        with col2:
-            st.write(f"X: **{x_input:.1f}** {x_name}")
-            st.write(f"Y: **{y_input:.1f}** {Y_AXIS_NAME}")
-            
-            if interpolated_z is not None:
-                st.metric(f"{var_name}", f"{interpolated_z:.3f}")
-            elif not df.empty:
-                st.write(f"{var_name}: Coordinates outside data range")
-            else:
-                st.write(f"{var_name}: No data available")
+        if interpolated_z is not None:
+            st_container.metric(f"{var_name}", f"{interpolated_z:.3f}")
+        elif not df.empty:
+            st_container.write(f"{var_name}: Coordinates outside data range")
+        else:
+            st_container.write(f"{var_name}: No data available")
 
 # -----------------------
 # Function to display all plots
