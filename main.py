@@ -407,13 +407,13 @@ else:
     # Now call the roughness function
     try:
         c_r = roughness_module.calculate_cr(z, terrain_category)
-        st.markdown("### Roughness Factor")
+        st.markdown("#### Roughness Factor $C_r(z)$")
         st.write(f"The roughness factor, \\(c_r(z)\\), for terrain category **{terrain_category}** and height **{z} m** is:")
         st.latex(f"c_r(z) = {c_r:.3f}")
     except Exception as e:
         st.error(f"Error calculating roughness factor: {e}")
 
-st.markdown("Orography Factor")
+st.markdown("#### Orography Factor $C_o(z)$")
         
 # Section 4: WIND PRESSURE
 st.markdown("---")
