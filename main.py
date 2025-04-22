@@ -730,7 +730,6 @@ st.markdown("---")
 st.header("Wind Zones")
 from visualisation.wind_zones import plot_wind_zones
 
-# When you need to display the wind zones
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
 
 # Display North-South Elevation
