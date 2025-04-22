@@ -728,7 +728,7 @@ st.session_state.inputs["EW_design_pressure"] = EW_design_pressure
 # Section 5: WIND ZONES
 st.markdown("---")
 st.header("Wind Zones")
-from visulualisation.wind_zones import plot_wind_zones
+from visualisation.wind_zones import plot_wind_zones
 
 # When you need to display the wind zones
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
