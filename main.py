@@ -744,23 +744,16 @@ region = st.session_state.inputs.get("region", "United Kingdom")
 if region == "United Kingdom":
     north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
-# Wind direction selection
-wind_direction = st.selectbox("Wind Direction", 
-                         options=["North", "South", "East", "West"],
-                         index=0)
-
-# Map to shorter codes
-wind_dir_map = {"North": "N", "South": "S", "East": "E", "West": "W"}
-wind_dir_code = wind_dir_map[wind_direction]
-
 # Calculate cp,e values based on region
 if st.button("Calculate External Pressure Coefficients"):
     if region == "United Kingdom":
-        cp_results = calculate_cpe_uk(wind_dir_code)
+        cp_results = calculate_cpe_uk()
     else:
-        cp_results = calculate_cpe_eu(wind_dir_code)
+        cp_results = calculate_cpe_eu()
     
     st.subheader("External Pressure Coefficients (cp,e)")
+    
+    # Show results for all wind directions
     st.dataframe(cp_results)
     
     # Store results for later use
