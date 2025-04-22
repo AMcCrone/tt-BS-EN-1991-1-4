@@ -73,50 +73,41 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
     # Create figure
     fig = go.Figure()
     
+    # Initialize zone boundaries and names
+    zone_boundaries = []
+    zone_names = []
+    
     # Determine zones based on relation between e and d
     if e < width:  # Three zones: A, B, C
-        # Calculate zone boundaries from left to right
-        zone_boundaries = []
-        zone_names = []
-        
-        # Left wind direction (from left to right)
-        # Zone A (left)
-        zone_boundaries.append((0, e/5))
-        zone_names.append('A')
-        
-        # Zone B (left)
-        zone_boundaries.append((e/5, e))
-        zone_names.append('B')
-        
-        # Zone C (middle)
-        zone_boundaries.append((e, width-e))
-        zone_names.append('C')
-        
-        # Zone B (right)
-        zone_boundaries.append((width-e, width-e/5))
-        zone_names.append('B')
-        
-        # Zone A (right)
-        zone_boundaries.append((width-e/5, width))
-        zone_names.append('A')
-        
-        # Check and fix any overlapping zones
-        # If e/5 from both ends would overlap
-        if width < 2*(e/5):
-            # Single zone A for the whole width
-            zone_boundaries = [(0, width)]
-            zone_names = ['A']
-        # If zones B would overlap with C
-        elif width < 2*e:
-            # We have A zones at both ends, B zones meet in middle
+        # Check if zones would overlap
+        if width < 2*e:  # Zones would overlap in the middle
+            # If e/5 from both ends would overlap (very narrow building)
+            if width <= 2*(e/5):
+                # Single zone A for the whole width
+                zone_boundaries = [(0, width)]
+                zone_names = ['A']
+            else:
+                # A-B-A pattern (simplified from A-B-B-A)
+                # Calculate width for zone B
+                b_width = width - 2*(e/5)
+                
+                zone_boundaries = [
+                    (0, e/5),                  # Left A
+                    (e/5, width - e/5),        # Middle B
+                    (width - e/5, width)       # Right A
+                ]
+                zone_names = ['A', 'B', 'A']
+        else:
+            # Standard case with A, B, C, B, A
             zone_boundaries = [
-                (0, e/5),              # Left A
-                (e/5, width/2),        # Left B
-                (width/2, width-e/5),  # Right B
-                (width-e/5, width)     # Right A
+                (0, e/5),                      # Left A
+                (e/5, e),                      # Left B
+                (e, width - e),                # Middle C
+                (width - e, width - e/5),      # Right B
+                (width - e/5, width)           # Right A
             ]
-            zone_names = ['A', 'B', 'B', 'A']
-        
+            zone_names = ['A', 'B', 'C', 'B', 'A']
+    
     elif e >= width and e < 5*width:  # Two zones: A, B
         # For e >= d but < 5d, we have A zones on each end, B in middle
         zone_a_width = e/5
