@@ -1,5 +1,4 @@
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 def plot_wind_zones(session_state):
     """
@@ -19,11 +18,6 @@ def plot_wind_zones(session_state):
     NS_dimension = session_state.inputs["NS_dimension"]
     EW_dimension = session_state.inputs["EW_dimension"]
     z = session_state.inputs["z"]  # Building height
-    
-    # Define colors - using the same color scheme as in the example
-    TT_LightBlue = "rgb(136,219,223)"
-    TT_MidBlue = "rgb(0,163,173)"
-    TT_DarkBlue = "rgb(0,48,60)"
     
     # Zone colors with gradient from darkest (A) to lightest (C)
     zone_colors = {
@@ -81,73 +75,103 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
     
     # Determine zones based on relation between e and d
     if e < width:  # Three zones: A, B, C
-        zone_widths = [e/5, 4*e/5, width-e]
-        zone_names = ['A', 'B', 'C', 'B', 'A']
+        # Calculate zone boundaries from left to right
+        zone_boundaries = []
+        zone_names = []
         
-        # Left side (wind from left)
-        x_positions = [0]
-        for w in zone_widths:
-            x_positions.append(x_positions[-1] + w)
+        # Left wind direction (from left to right)
+        # Zone A (left)
+        zone_boundaries.append((0, e/5))
+        zone_names.append('A')
         
-        # Right side (wind from right) - mirror the zones
-        x_positions_right = [width - x for x in x_positions]
-        x_positions_right.reverse()
+        # Zone B (left)
+        zone_boundaries.append((e/5, e))
+        zone_names.append('B')
         
-        # If zones overlap in the middle, adjust them
-        if e > width/2:
-            # Calculate the midpoint
-            mid = width / 2
-            # Find where zone B starts on the left side
-            left_b_start = e/5
-            # Find where zone B starts on the right side (coming from the right)
-            right_b_start = width - e/5
-            
-            # If zones overlap
-            if left_b_start < mid and right_b_start > mid:
-                # Simplified: just meet at the middle
-                zone_names = ['A', 'B', 'B', 'A']
-                x_positions = [0, e/5, mid, width-e/5, width]
-            else:
-                # Non-overlapping case
-                x_positions = x_positions + x_positions_right[1:]
-        else:
-            # Non-overlapping case
-            x_positions = x_positions + x_positions_right[1:]
+        # Zone C (middle)
+        zone_boundaries.append((e, width-e))
+        zone_names.append('C')
+        
+        # Zone B (right)
+        zone_boundaries.append((width-e, width-e/5))
+        zone_names.append('B')
+        
+        # Zone A (right)
+        zone_boundaries.append((width-e/5, width))
+        zone_names.append('A')
+        
+        # Check and fix any overlapping zones
+        # If e/5 from both ends would overlap
+        if width < 2*(e/5):
+            # Single zone A for the whole width
+            zone_boundaries = [(0, width)]
+            zone_names = ['A']
+        # If zones B would overlap with C
+        elif width < 2*e:
+            # We have A zones at both ends, B zones meet in middle
+            zone_boundaries = [
+                (0, e/5),              # Left A
+                (e/5, width/2),        # Left B
+                (width/2, width-e/5),  # Right B
+                (width-e/5, width)     # Right A
+            ]
+            zone_names = ['A', 'B', 'B', 'A']
         
     elif e >= width and e < 5*width:  # Two zones: A, B
-        # Calculate zone widths
+        # For e >= d but < 5d, we have A zones on each end, B in middle
         zone_a_width = e/5
-        zone_b_width = width - 2*(e/5) if width - 2*(e/5) > 0 else 0
         
-        x_positions = [0, zone_a_width, zone_a_width + zone_b_width, width]
-        zone_names = ['A', 'B', 'A']
+        # If building is narrow compared to e, A zones might overlap
+        if width <= 2*(e/5):
+            # Only zone A across entire width
+            zone_boundaries = [(0, width)]
+            zone_names = ['A']
+        else:
+            # Normal case with A-B-A
+            zone_boundaries = [
+                (0, e/5),              # Left A
+                (e/5, width-e/5),      # Middle B
+                (width-e/5, width)     # Right A
+            ]
+            zone_names = ['A', 'B', 'A']
         
-    else:  # One zone: A
-        x_positions = [0, width]
+    else:  # e >= 5*width, One zone: A
+        zone_boundaries = [(0, width)]
         zone_names = ['A']
     
     # Draw the zones
-    for i in range(len(zone_names)):
-        if i < len(x_positions) - 1:  # Check if there's a corresponding position segment
-            fig.add_shape(
-                type="rect",
-                x0=x_positions[i],
-                y0=0,
-                x1=x_positions[i+1],
-                y1=height,
-                line=dict(width=1, color="black"),
-                fillcolor=zone_colors[zone_names[i]],
-                opacity=0.7,
-                layer="below"
-            )
-            
-            # Add zone label
+    for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
+        # Draw zone rectangle
+        fig.add_shape(
+            type="rect",
+            x0=x0,
+            y0=0,
+            x1=x1,
+            y1=height,
+            line=dict(width=1, color="black"),
+            fillcolor=zone_colors[zone_name],
+            opacity=0.7,
+            layer="below"
+        )
+        
+        # Add zone label
+        zone_width = x1 - x0
+        fig.add_annotation(
+            x=(x0 + x1)/2,
+            y=height/2,
+            text=zone_name,
+            showarrow=False,
+            font=dict(size=24, color="white")
+        )
+        
+        # Add zone width label
+        if zone_width > 0.05 * width:  # Only add label if zone is wide enough
             fig.add_annotation(
-                x=(x_positions[i] + x_positions[i+1])/2,
-                y=height/2,
-                text=zone_names[i],
+                x=(x0 + x1)/2,
+                y=height/4,
+                text=f"{zone_width:.2f}",
                 showarrow=False,
-                font=dict(size=24, color="white")
+                font=dict(size=12, color="white")
             )
     
     # Add building outline
@@ -174,54 +198,17 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
         layer="above"
     )
     
-    # Add wind arrows on both sides
-    # Left side arrow
-    fig.add_annotation(
-        x=-0.05*width,
-        y=height/2,
-        ax=0.05*width,
-        ay=height/2,
-        xref="x",
-        yref="y",
-        axref="x",
-        ayref="y",
-        text="",
-        showarrow=True,
-        arrowhead=2,
-        arrowsize=1.5,
-        arrowwidth=2,
-        arrowcolor="black"
-    )
-    
-    # Right side arrow
-    fig.add_annotation(
-        x=1.05*width,
-        y=height/2,
-        ax=0.95*width,
-        ay=height/2,
-        xref="x",
-        yref="y",
-        axref="x",
-        ayref="y",
-        text="",
-        showarrow=True,
-        arrowhead=2,
-        arrowsize=1.5,
-        arrowwidth=2,
-        arrowcolor="black"
-    )
-    
     # Add e and d dimensions as annotations
     fig.add_annotation(
         x=width/2,
-        y=-0.1*height,
+        y=-0.05*height,
         text=f"d = {width:.2f}",
         showarrow=False,
         font=dict(size=12)
     )
     
     fig.add_annotation(
-        x=-0.15*width,
+        x=-0.05*width,
         y=height/2,
         text=f"h = {height:.2f}",
         showarrow=False,
@@ -231,7 +218,7 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
     
     fig.add_annotation(
         x=width/2,
-        y=1.1*height,
+        y=1.05*height,
         text=f"e = {e:.2f} ({'<' if e < width else '≥'} d)",
         showarrow=False,
         font=dict(size=12, color="black")
@@ -245,13 +232,13 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
             showgrid=False,
             zeroline=False,
             showticklabels=False,
-            range=[-0.2*width, 1.2*width]
+            range=[-0.1*width, 1.1*width]
         ),
         yaxis=dict(
             showgrid=False,
             zeroline=False,
             showticklabels=False,
-            range=[-0.2*height, 1.2*height],
+            range=[-0.1*height, 1.1*height],
             scaleanchor="x",
             scaleratio=1
         ),
