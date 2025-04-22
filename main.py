@@ -728,12 +728,50 @@ st.session_state.inputs["EW_design_pressure"] = EW_design_pressure
 # Section 5: WIND ZONES
 st.markdown("---")
 st.header("Wind Zones")
-from visualisation.wind_zones import plot_wind_zones
 
+# Import required modules
+from visualisation.wind_zones import plot_wind_zones
+from calc_engine.uk.external_pressure import calculate_cpe_uk, display_funnelling_inputs
+from calc_engine.eu.external_pressure import calculate_cpe_eu
+
+# External Pressure Coefficients Section
+st.subheader("External Pressure Coefficients")
+
+# Get region from session state
+region = st.session_state.inputs.get("region", "United Kingdom")
+
+# If UK region is selected, display funnelling inputs
+if region == "United Kingdom":
+    north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
+
+# Wind direction selection
+wind_direction = st.selectbox("Wind Direction", 
+                         options=["North", "South", "East", "West"],
+                         index=0)
+
+# Map to shorter codes
+wind_dir_map = {"North": "N", "South": "S", "East": "E", "West": "W"}
+wind_dir_code = wind_dir_map[wind_direction]
+
+# Calculate cp,e values based on region
+if st.button("Calculate External Pressure Coefficients"):
+    if region == "United Kingdom":
+        cp_results = calculate_cpe_uk(wind_dir_code)
+    else:
+        cp_results = calculate_cpe_eu(wind_dir_code)
+    
+    st.subheader("External Pressure Coefficients (cp,e)")
+    st.dataframe(cp_results)
+    
+    # Store results for later use
+    st.session_state.cp_results = cp_results
+
+# Display wind zone plots (using your existing function)
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
 
 # Display North-South Elevation
 st.plotly_chart(ns_elevation_fig, use_container_width=True)
+
 # Display East-West Elevation
 st.plotly_chart(ew_elevation_fig, use_container_width=True)
 
