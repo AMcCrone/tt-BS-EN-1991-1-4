@@ -44,10 +44,32 @@ st.markdown("""
         display: none !important;
     }
     
+    /* Hide number input +/- buttons and help icons */
+    .stNumberInput button, .stNumberInput svg,
+    [data-testid="stToolbar"], 
+    .stTooltipIcon,
+    .stTabs button[data-baseweb="tab-list"] {
+        display: none !important;
+    }
+    
     /* Format printable content */
     .print-friendly {
         page-break-inside: avoid;
         margin: 20px 0;
+    }
+    
+    /* Prevent images and charts from being split across pages */
+    img, svg, figure, 
+    .stPlot, .element-container, 
+    [data-testid="stImage"], [data-testid="stPlotlyChart"],
+    [data-testid="stDecoration"], [data-testid="stMetric"] {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    
+    /* Additional print optimization */
+    @page {
+        margin: 1cm;
     }
 }
 </style>
@@ -718,10 +740,3 @@ st.sidebar.title("Options")
 show_educational = st.sidebar.checkbox("Show Educational Content", 
                               value=st.session_state.show_educational)
 st.session_state.show_educational = show_educational
-
-# Footer Design
-st.markdown(f"""
-<div style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #f0f2f6; padding: 0.5rem; text-align: center; font-size: 0.8rem; color: #666; border-top: 1px solid #ddd;">
-    Wind Load Calculator v{APP_VERSION} | © {datetime.datetime.now().year}
-</div>
-""", unsafe_allow_html=True)
