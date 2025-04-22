@@ -733,11 +733,9 @@ from visualisation.wind_zones import plot_wind_zones
 # When you need to display the wind zones
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
 
-# Display in your Streamlit app
-st.subheader("Wind Zones - North-South Elevation")
+# Display North-South Elevation
 st.plotly_chart(ns_elevation_fig, use_container_width=True)
-
-st.subheader("Wind Zones - East-West Elevation")
+# Display East-West Elevation
 st.plotly_chart(ew_elevation_fig, use_container_width=True)
 
 # Section 6: RESULTS SUMMARY
