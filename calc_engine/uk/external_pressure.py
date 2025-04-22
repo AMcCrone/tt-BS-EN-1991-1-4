@@ -11,6 +11,7 @@ TT_LightBlue = "rgb(136,219,223)"
 TT_MidBlue = "rgb(0,163,173)"
 TT_DarkBlue = "rgb(0,48,60)"
 TT_Grey = "rgb(99,102,105)"
+TT_LightGrey = "rgb(229,229,229)"  # Lighter grey for the donut building
 
 def display_funnelling_inputs():
     """Display inputs for funnelling effect calculations"""
@@ -43,12 +44,47 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
     EW_dimension = st.session_state.inputs.get("EW_dimension", 40.0)
     
-    # Calculate coordinates
+    # Calculate coordinates for main building
     building_x = [-EW_dimension/2, EW_dimension/2, EW_dimension/2, -EW_dimension/2, -EW_dimension/2]
     building_y = [-NS_dimension/2, -NS_dimension/2, NS_dimension/2, NS_dimension/2, -NS_dimension/2]
     
     # Create the figure
     fig = go.Figure()
+    
+    # Create a donut shape for surrounding buildings
+    # Outer boundary (very large to extend beyond view)
+    plot_size = max(NS_dimension, EW_dimension) * 2
+    outer_x = [-plot_size, plot_size, plot_size, -plot_size, -plot_size]
+    outer_y = [-plot_size, -plot_size, plot_size, plot_size, -plot_size]
+    
+    # Inner boundary (just around the main building with gaps)
+    inner_x = [
+        -EW_dimension/2 - west_gap, # Bottom left
+        EW_dimension/2 + east_gap,  # Bottom right
+        EW_dimension/2 + east_gap,  # Top right
+        -EW_dimension/2 - west_gap, # Top left
+        -EW_dimension/2 - west_gap  # Back to start
+    ]
+    inner_y = [
+        -NS_dimension/2 - south_gap, # Bottom left
+        -NS_dimension/2 - south_gap, # Bottom right
+        NS_dimension/2 + north_gap,  # Top right
+        NS_dimension/2 + north_gap,  # Top left
+        -NS_dimension/2 - south_gap  # Back to start
+    ]
+    
+    # Add donut shape (surrounding buildings)
+    fig.add_trace(go.Scatter(
+        x=outer_x + [None] + inner_x[::-1],  # Outer shape and reversed inner shape with None to create a break
+        y=outer_y + [None] + inner_y[::-1],
+        fill='toself',
+        fillcolor=TT_LightGrey,
+        line=dict(color=TT_Grey, width=1),
+        name="Surrounding Buildings",
+        hoverinfo="text",
+        hovertext="Surrounding Buildings",
+        mode="lines"  # Just lines, no markers
+    ))
     
     # Main building
     fig.add_trace(go.Scatter(
@@ -60,91 +96,47 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
         name="Main Building",
         hoverinfo="text",
         hovertext="Main Building",
-        mode="none"  # No markers or lines, just fill
+        mode="lines"  # Just lines, no markers
     ))
     
-    # Add surrounding buildings if they exist
-    adjacent_size = 10  # Size of adjacent buildings for visualization
+    # Add building labels
+    # North building label
+    fig.add_annotation(
+        x=0,
+        y=NS_dimension/2 + north_gap + 10,
+        text="North Building",
+        showarrow=False,
+        font=dict(color=TT_Grey, size=12)
+    )
     
-    # North building if applicable
-    if north_gap < 50:  # Only show if relatively close
-        north_building_x = [-EW_dimension/2-adjacent_size, EW_dimension/2+adjacent_size, 
-                         EW_dimension/2+adjacent_size, -EW_dimension/2-adjacent_size, -EW_dimension/2-adjacent_size]
-        north_building_y = [NS_dimension/2+north_gap, NS_dimension/2+north_gap,
-                         NS_dimension/2+north_gap+adjacent_size, NS_dimension/2+north_gap+adjacent_size, 
-                         NS_dimension/2+north_gap]
-        fig.add_trace(go.Scatter(
-            x=north_building_x,
-            y=north_building_y,
-            fill="toself",
-            fillcolor=TT_Grey,
-            opacity=0.7,
-            line=dict(color=TT_Grey, width=1),
-            name="North Building",
-            hoverinfo="text",
-            hovertext=f"North Building (Gap: {north_gap}m)",
-            mode="none"  # No markers or lines, just fill
-        ))
-
-    # South building if applicable
-    if south_gap < 50:
-        south_building_x = [-EW_dimension/2-adjacent_size, EW_dimension/2+adjacent_size, 
-                          EW_dimension/2+adjacent_size, -EW_dimension/2-adjacent_size, -EW_dimension/2-adjacent_size]
-        south_building_y = [-NS_dimension/2-south_gap, -NS_dimension/2-south_gap,
-                          -NS_dimension/2-south_gap-adjacent_size, -NS_dimension/2-south_gap-adjacent_size, 
-                          -NS_dimension/2-south_gap]
-        fig.add_trace(go.Scatter(
-            x=south_building_x,
-            y=south_building_y,
-            fill="toself",
-            fillcolor=TT_Grey,
-            opacity=0.7,
-            line=dict(color=TT_Grey, width=1),
-            name="South Building",
-            hoverinfo="text",
-            hovertext=f"South Building (Gap: {south_gap}m)",
-            mode="none"  # No markers or lines, just fill
-        ))
-
-    # East building if applicable
-    if east_gap < 50:
-        east_building_x = [EW_dimension/2+east_gap, EW_dimension/2+east_gap+adjacent_size, 
-                         EW_dimension/2+east_gap+adjacent_size, EW_dimension/2+east_gap, EW_dimension/2+east_gap]
-        east_building_y = [-NS_dimension/2-adjacent_size, -NS_dimension/2-adjacent_size,
-                         NS_dimension/2+adjacent_size, NS_dimension/2+adjacent_size, -NS_dimension/2-adjacent_size]
-        fig.add_trace(go.Scatter(
-            x=east_building_x,
-            y=east_building_y,
-            fill="toself",
-            fillcolor=TT_Grey,
-            opacity=0.7,
-            line=dict(color=TT_Grey, width=1),
-            name="East Building",
-            hoverinfo="text",
-            hovertext=f"East Building (Gap: {east_gap}m)",
-            mode="none"  # No markers or lines, just fill
-        ))
-
-    # West building if applicable
-    if west_gap < 50:
-        west_building_x = [-EW_dimension/2-west_gap, -EW_dimension/2-west_gap-adjacent_size, 
-                          -EW_dimension/2-west_gap-adjacent_size, -EW_dimension/2-west_gap, -EW_dimension/2-west_gap]
-        west_building_y = [-NS_dimension/2-adjacent_size, -NS_dimension/2-adjacent_size,
-                          NS_dimension/2+adjacent_size, NS_dimension/2+adjacent_size, -NS_dimension/2-adjacent_size]
-        fig.add_trace(go.Scatter(
-            x=west_building_x,
-            y=west_building_y,
-            fill="toself",
-            fillcolor=TT_Grey,
-            opacity=0.7,
-            line=dict(color=TT_Grey, width=1),
-            name="West Building",
-            hoverinfo="text",
-            hovertext=f"West Building (Gap: {west_gap}m)",
-            mode="none"  # No markers or lines, just fill
-        ))
+    # South building label
+    fig.add_annotation(
+        x=0,
+        y=-NS_dimension/2 - south_gap - 10,
+        text="South Building",
+        showarrow=False,
+        font=dict(color=TT_Grey, size=12)
+    )
     
-    # Highlight the gap with orange if funnelling occurs
+    # East building label
+    fig.add_annotation(
+        x=EW_dimension/2 + east_gap + 10,
+        y=0,
+        text="East Building",
+        showarrow=False,
+        font=dict(color=TT_Grey, size=12)
+    )
+    
+    # West building label
+    fig.add_annotation(
+        x=-EW_dimension/2 - west_gap - 10,
+        y=0,
+        text="West Building",
+        showarrow=False,
+        font=dict(color=TT_Grey, size=12)
+    )
+    
+    # Highlight the gaps with orange if funnelling applies
     for direction, gap, dimension, is_ns in [
         ("North", north_gap, EW_dimension, True),
         ("South", south_gap, EW_dimension, True),
@@ -184,8 +176,25 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
                 name=f"{direction} Funnelling Zone",
                 hoverinfo="text",
                 hovertext=f"{direction} Funnelling (Factor: {factor:.2f})",
-                mode="none"  # No markers or lines, just fill
+                mode="lines"  # Just lines, no markers
             ))
+            
+            # Add a funnelling effect label if applicable
+            if is_ns:
+                label_x = 0
+                label_y = NS_dimension/2 + gap/2 if direction == "North" else -NS_dimension/2 - gap/2
+            else:
+                label_x = EW_dimension/2 + gap/2 if direction == "East" else -EW_dimension/2 - gap/2
+                label_y = 0
+                
+            fig.add_annotation(
+                x=label_x,
+                y=label_y,
+                text=f"Funnelling\nGap: {gap:.1f}m",
+                showarrow=False,
+                font=dict(color=TT_Orange, size=10),
+                bgcolor="rgba(255,255,255,0.7)"
+            )
     
     # Layout settings
     fig.update_layout(
