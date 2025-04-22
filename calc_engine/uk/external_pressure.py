@@ -16,29 +16,16 @@ def display_funnelling_inputs():
     """Display inputs for funnelling effect calculations"""
     st.subheader("Building Proximity (Funnelling)")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        north_gap = st.number_input("North Gap [m]", 
-                                  min_value=0.0, 
-                                  value=st.session_state.inputs.get("north_gap", 10.0),
-                                  help="Distance to nearest building from North face")
-        
-        south_gap = st.number_input("South Gap [m]", 
-                                  min_value=0.0, 
-                                  value=st.session_state.inputs.get("south_gap", 10.0),
-                                  help="Distance to nearest building from South face")
-    
+        north_gap = st.number_input("North Gap [m]", min_value=0.0, value=st.session_state.inputs.get("north_gap", 10.0), help="Distance to nearest building from North face")
     with col2:
-        east_gap = st.number_input("East Gap [m]", 
-                                 min_value=0.0, 
-                                 value=st.session_state.inputs.get("east_gap", 10.0),
-                                 help="Distance to nearest building from East face")
-        
-        west_gap = st.number_input("West Gap [m]", 
-                                 min_value=0.0, 
-                                 value=st.session_state.inputs.get("west_gap", 10.0),
-                                 help="Distance to nearest building from West face")
+        south_gap = st.number_input("South Gap [m]", min_value=0.0, value=st.session_state.inputs.get("south_gap", 10.0), help="Distance to nearest building from South face")
+    with col3:
+        east_gap = st.number_input("East Gap [m]", min_value=0.0, value=st.session_state.inputs.get("east_gap", 10.0), help="Distance to nearest building from East face")
+    with col4:
+        west_gap = st.number_input("West Gap [m]", min_value=0.0, value=st.session_state.inputs.get("west_gap", 10.0), help="Distance to nearest building from West face")
     
     # Save values to session state
     st.session_state.inputs["north_gap"] = north_gap
@@ -70,7 +57,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
         fill="toself",
         fillcolor=TT_MidBlue,
         line=dict(color=TT_DarkBlue, width=2),
-        name="Main Building"
+        name="Main Building",
+        hoverinfo="text",
+        hovertext="Main Building",
+        mode="none"  # No markers or lines, just fill
     ))
     
     # Add surrounding buildings if they exist
@@ -90,7 +80,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
             fillcolor=TT_Grey,
             opacity=0.7,
             line=dict(color=TT_Grey, width=1),
-            name="North Building"
+            name="North Building",
+            hoverinfo="text",
+            hovertext=f"North Building (Gap: {north_gap}m)",
+            mode="none"  # No markers or lines, just fill
         ))
 
     # South building if applicable
@@ -107,7 +100,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
             fillcolor=TT_Grey,
             opacity=0.7,
             line=dict(color=TT_Grey, width=1),
-            name="South Building"
+            name="South Building",
+            hoverinfo="text",
+            hovertext=f"South Building (Gap: {south_gap}m)",
+            mode="none"  # No markers or lines, just fill
         ))
 
     # East building if applicable
@@ -123,7 +119,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
             fillcolor=TT_Grey,
             opacity=0.7,
             line=dict(color=TT_Grey, width=1),
-            name="East Building"
+            name="East Building",
+            hoverinfo="text",
+            hovertext=f"East Building (Gap: {east_gap}m)",
+            mode="none"  # No markers or lines, just fill
         ))
 
     # West building if applicable
@@ -139,7 +138,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
             fillcolor=TT_Grey,
             opacity=0.7,
             line=dict(color=TT_Grey, width=1),
-            name="West Building"
+            name="West Building",
+            hoverinfo="text",
+            hovertext=f"West Building (Gap: {west_gap}m)",
+            mode="none"  # No markers or lines, just fill
         ))
     
     # Highlight the gap with orange if funnelling occurs
@@ -171,6 +173,7 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
                     x = [-EW_dimension/2, -EW_dimension/2-gap, -EW_dimension/2-gap, -EW_dimension/2, -EW_dimension/2]
                     y = [-dimension/2, -dimension/2, dimension/2, dimension/2, -dimension/2]
             
+            factor = (e - gap) / (e - e/4)
             fig.add_trace(go.Scatter(
                 x=x,
                 y=y,
@@ -178,131 +181,152 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
                 fillcolor=TT_Orange,
                 opacity=0.3,
                 line=dict(color=TT_Orange, width=1),
-                name=f"{direction} Funnelling Zone"
+                name=f"{direction} Funnelling Zone",
+                hoverinfo="text",
+                hovertext=f"{direction} Funnelling (Factor: {factor:.2f})",
+                mode="none"  # No markers or lines, just fill
             ))
     
     # Layout settings
     fig.update_layout(
         title="Building Layout (Plan View)",
-        xaxis_title="East-West Direction [m]",
-        yaxis_title="North-South Direction [m]",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+        showlegend=False,
         autosize=False,
         width=600,
         height=500,
         margin=dict(l=50, r=50, b=50, t=50),
     )
     
-    # Make sure axes are equal scale
+    # Make sure axes are equal scale and hide axes
     fig.update_yaxes(
         scaleanchor="x",
         scaleratio=1,
+        showgrid=False,
+        zeroline=False,
+        showticklabels=False,
+        showline=False
+    )
+    
+    fig.update_xaxes(
+        showgrid=False,
+        zeroline=False,
+        showticklabels=False,
+        showline=False
     )
     
     st.plotly_chart(fig)
 
-def calculate_cpe_uk(wind_direction, elevation_face=None):
+def calculate_cpe_uk():
     """
-    Calculate external pressure coefficients (cp,e) for UK projects
-    
-    Parameters:
-    - wind_direction: Direction of wind (N, S, E, W)
-    - elevation_face: Face being analyzed (N, S, E, W)
+    Calculate external pressure coefficients (cp,e) for UK projects for all wind directions
     
     Returns:
-    - DataFrame of cp,e values for different zones
+    - DataFrame of cp,e values for different zones and wind directions
     """
     h = st.session_state.inputs.get("z", 10.0)  # Building height
     NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
     EW_dimension = st.session_state.inputs.get("EW_dimension", 40.0)
     
-    # Determine h/d ratio based on wind direction
-    if wind_direction in ["N", "S"]:
-        d = NS_dimension
-    else:  # E or W
-        d = EW_dimension
+    # Calculate for all wind directions
+    wind_directions = ["N", "S", "E", "W"]
+    all_results = []
     
-    h_d_ratio = h / d
-    
-    # Interpolate cp,e values based on h/d ratio
-    # Values from BS EN 1991-1-4 Table 7.1
-    h_d_points = [0.25, 1.0, 5.0]
-    
-    # Base values for each zone at different h/d ratios
-    zone_A_values = [-1.2, -1.2, -1.2]
-    zone_B_values = [-0.8, -0.8, -0.8]
-    zone_C_values = [-0.5, -0.5, -0.5]
-    zone_D_values = [0.8, 0.8, 0.8]  # Windward
-    zone_E_values = [-0.5, -0.5, -0.7]  # Leeward
-    
-    # Linear interpolation for h/d ratio
-    if h_d_ratio <= 0.25:
-        cp_A = zone_A_values[0]
-        cp_B = zone_B_values[0]
-        cp_C = zone_C_values[0]
-        cp_D = zone_D_values[0]
-        cp_E = zone_E_values[0]
-    elif h_d_ratio >= 5.0:
-        cp_A = zone_A_values[2]
-        cp_B = zone_B_values[2]
-        cp_C = zone_C_values[2]
-        cp_D = zone_D_values[2]
-        cp_E = zone_E_values[2]
-    else:
-        # Interpolate between known points
-        for i in range(len(h_d_points)-1):
-            if h_d_points[i] <= h_d_ratio <= h_d_points[i+1]:
-                factor = (h_d_ratio - h_d_points[i]) / (h_d_points[i+1] - h_d_points[i])
-                cp_A = zone_A_values[i] + factor * (zone_A_values[i+1] - zone_A_values[i])
-                cp_B = zone_B_values[i] + factor * (zone_B_values[i+1] - zone_B_values[i])
-                cp_C = zone_C_values[i] + factor * (zone_C_values[i+1] - zone_C_values[i])
-                cp_D = zone_D_values[i] + factor * (zone_D_values[i+1] - zone_D_values[i])
-                cp_E = zone_E_values[i] + factor * (zone_E_values[i+1] - zone_E_values[i])
-                break
-    
-    # Check for funnelling effect based on wind direction
-    if wind_direction == "N":
-        gap = st.session_state.inputs.get("south_gap", 10.0)
-        dimension = EW_dimension
-    elif wind_direction == "S":
-        gap = st.session_state.inputs.get("north_gap", 10.0)
-        dimension = EW_dimension
-    elif wind_direction == "E":
-        gap = st.session_state.inputs.get("west_gap", 10.0)
-        dimension = NS_dimension
-    else:  # "W"
-        gap = st.session_state.inputs.get("east_gap", 10.0)
-        dimension = NS_dimension
-    
-    # Calculate e (the smaller of b or 2h)
-    b = dimension  # Width of face perpendicular to wind
-    e = min(b, 2*h)
-    
-    # Check if funnelling applies
-    funnelling_factor = 0.0  # No funnelling by default
-    if e/4 <= gap <= e:
-        # Linear interpolation for funnelling effect
-        # When gap = e/4, max funnelling (factor = 1.0)
-        # When gap = e, no funnelling (factor = 0.0)
-        funnelling_factor = (e - gap) / (e - e/4)
+    for wind_direction in wind_directions:    
+        # Determine h/d ratio based on wind direction
+        if wind_direction in ["N", "S"]:
+            d = NS_dimension
+        else:  # E or W
+            d = EW_dimension
         
-        # Apply funnelling effect (increase absolute value of pressure coefficients by up to 1.2)
-        if funnelling_factor > 0:
-            # Increase magnitude of negative coefficients for suction zones
-            cp_A = cp_A - 1.2 * funnelling_factor
-            cp_B = cp_B - 1.2 * funnelling_factor
-            cp_C = cp_C - 1.2 * funnelling_factor
-            # For positive pressure on windward face
-            cp_D = cp_D + 1.2 * funnelling_factor
-            # For negative pressure on leeward face
-            cp_E = cp_E - 1.2 * funnelling_factor
+        h_d_ratio = h / d
+        
+        # Interpolate cp,e values based on h/d ratio
+        # Values from BS EN 1991-1-4 Table 7.1
+        h_d_points = [0.25, 1.0, 5.0]
+        
+        # Base values for each zone at different h/d ratios
+        zone_A_values = [-1.2, -1.2, -1.2]
+        zone_B_values = [-0.8, -0.8, -0.8]
+        zone_C_values = [-0.5, -0.5, -0.5]
+        zone_D_values = [0.8, 0.8, 0.8]  # Windward
+        zone_E_values = [-0.5, -0.5, -0.7]  # Leeward
+        
+        # Linear interpolation for h/d ratio
+        if h_d_ratio <= 0.25:
+            cp_A = zone_A_values[0]
+            cp_B = zone_B_values[0]
+            cp_C = zone_C_values[0]
+            cp_D = zone_D_values[0]
+            cp_E = zone_E_values[0]
+        elif h_d_ratio >= 5.0:
+            cp_A = zone_A_values[2]
+            cp_B = zone_B_values[2]
+            cp_C = zone_C_values[2]
+            cp_D = zone_D_values[2]
+            cp_E = zone_E_values[2]
+        else:
+            # Interpolate between known points
+            for i in range(len(h_d_points)-1):
+                if h_d_points[i] <= h_d_ratio <= h_d_points[i+1]:
+                    factor = (h_d_ratio - h_d_points[i]) / (h_d_points[i+1] - h_d_points[i])
+                    cp_A = zone_A_values[i] + factor * (zone_A_values[i+1] - zone_A_values[i])
+                    cp_B = zone_B_values[i] + factor * (zone_B_values[i+1] - zone_B_values[i])
+                    cp_C = zone_C_values[i] + factor * (zone_C_values[i+1] - zone_C_values[i])
+                    cp_D = zone_D_values[i] + factor * (zone_D_values[i+1] - zone_D_values[i])
+                    cp_E = zone_E_values[i] + factor * (zone_E_values[i+1] - zone_E_values[i])
+                    break
+        
+        # Check for funnelling effect based on wind direction
+        if wind_direction == "N":
+            gap = st.session_state.inputs.get("south_gap", 10.0)
+            dimension = EW_dimension
+        elif wind_direction == "S":
+            gap = st.session_state.inputs.get("north_gap", 10.0)
+            dimension = EW_dimension
+        elif wind_direction == "E":
+            gap = st.session_state.inputs.get("west_gap", 10.0)
+            dimension = NS_dimension
+        else:  # "W"
+            gap = st.session_state.inputs.get("east_gap", 10.0)
+            dimension = NS_dimension
+        
+        # Calculate e (the smaller of b or 2h)
+        b = dimension  # Width of face perpendicular to wind
+        e = min(b, 2*h)
+        
+        # Check if funnelling applies
+        funnelling_factor = 0.0  # No funnelling by default
+        if e/4 <= gap <= e:
+            # Linear interpolation for funnelling effect
+            # When gap = e/4, max funnelling (factor = 1.0)
+            # When gap = e, no funnelling (factor = 0.0)
+            funnelling_factor = (e - gap) / (e - e/4)
+            
+            # Apply funnelling effect (increase absolute value of pressure coefficients by up to 1.2)
+            if funnelling_factor > 0:
+                # Increase magnitude of negative coefficients for suction zones
+                cp_A = cp_A - 1.2 * funnelling_factor
+                cp_B = cp_B - 1.2 * funnelling_factor
+                cp_C = cp_C - 1.2 * funnelling_factor
+                # For positive pressure on windward face
+                cp_D = cp_D + 1.2 * funnelling_factor
+                # For negative pressure on leeward face
+                cp_E = cp_E - 1.2 * funnelling_factor
+        
+        # Map the direction code to full name for display
+        dir_map = {"N": "North", "S": "South", "E": "East", "W": "West"}
+        direction_name = dir_map[wind_direction]
+        
+        # Add to results
+        all_results.extend([
+            {"Wind Direction": direction_name, "Zone": "A", "cp,e": cp_A, "Description": "Side Suction (Edge)"},
+            {"Wind Direction": direction_name, "Zone": "B", "cp,e": cp_B, "Description": "Side Suction"},
+            {"Wind Direction": direction_name, "Zone": "C", "cp,e": cp_C, "Description": "Side Suction (Center)"},
+            {"Wind Direction": direction_name, "Zone": "D", "cp,e": cp_D, "Description": "Windward Face"},
+            {"Wind Direction": direction_name, "Zone": "E", "cp,e": cp_E, "Description": "Leeward Face"}
+        ])
     
-    # Create DataFrame of results
-    results = pd.DataFrame({
-        'Zone': ['A', 'B', 'C', 'D', 'E'],
-        'cp,e': [cp_A, cp_B, cp_C, cp_D, cp_E],
-        'Description': ['Side Suction (Edge)', 'Side Suction', 'Side Suction (Center)', 
-                      'Windward Face', 'Leeward Face']
-    })
+    # Create DataFrame of all results
+    results_df = pd.DataFrame(all_results)
     
-    return results
+    return results_df
