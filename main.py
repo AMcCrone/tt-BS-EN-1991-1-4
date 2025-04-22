@@ -740,7 +740,7 @@ st.plotly_chart(ew_elevation_fig, use_container_width=True)
 # Section 6: RESULTS SUMMARY
 st.markdown("---")
 st.header("Results Summary")
-st.info("Calculation results will be displayed here")
+st.info("Final calculation results will be displayed here with a 3D gradient plot showing the wind pressures on all 4 elevations.")
 
 # Toggle educational content in sidebar
 st.sidebar.title("Options")
