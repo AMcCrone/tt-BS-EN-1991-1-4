@@ -725,10 +725,20 @@ EW_design_pressure = calculate_design_pressure(h, EW_dimension, qp_value)
 st.info(f"Design peak velocity pressure for EW direction: {EW_design_pressure:.2f} N/m²")
 st.session_state.inputs["EW_design_pressure"] = EW_design_pressure
 
-# Section 5: PRESSURE COEFFICIENTS
+# Section 5: WIND ZONES
 st.markdown("---")
-st.header("Pressure Coefficients")
-st.info("Pressure Coefficients will be displayed here")
+st.header("Wind Zones")
+from visulualisation.wind_zones import plot_wind_zones
+
+# When you need to display the wind zones
+ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
+
+# Display in your Streamlit app
+st.subheader("Wind Zones - North-South Elevation")
+st.plotly_chart(ns_elevation_fig, use_container_width=True)
+
+st.subheader("Wind Zones - East-West Elevation")
+st.plotly_chart(ew_elevation_fig, use_container_width=True)
 
 # Section 6: RESULTS SUMMARY
 st.markdown("---")
