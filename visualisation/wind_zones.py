@@ -1,9 +1,8 @@
 import plotly.graph_objects as go
-import numpy as np
 
-def create_3d_wind_zones(session_state):
+def plot_wind_zones(session_state):
     """
-    Create a 3D visualization of the building with wind zones.
+    Create plots showing wind zones on building elevations according to Eurocode 1991-1-4.
     
     Parameters:
     -----------
@@ -12,8 +11,8 @@ def create_3d_wind_zones(session_state):
     
     Returns:
     --------
-    plotly.graph_objects.Figure
-        3D figure showing the building with wind zones
+    tuple
+        (NS_elevation_fig, EW_elevation_fig) - Plotly figures for N-S and E-W elevations
     """
     # Extract building dimensions from session state
     NS_dimension = session_state.inputs["NS_dimension"]
@@ -27,240 +26,28 @@ def create_3d_wind_zones(session_state):
         'C': 'rgb(136,219,223)'   # Lightest - Zone C
     }
     
-    # Calculate parameter e according to Eurocode for both directions
-    e_NS = min(EW_dimension, 2 * z)  # For North-South face, crosswind is EW
-    e_EW = min(NS_dimension, 2 * z)  # For East-West face, crosswind is NS
-    
-    # Create figure
-    fig = go.Figure()
-    
-    # Create the base building
-    # Bottom face
-    fig.add_trace(go.Mesh3d(
-        x=[0, NS_dimension, NS_dimension, 0],
-        y=[0, 0, EW_dimension, EW_dimension],
-        z=[0, 0, 0, 0],
-        i=[0], j=[1], k=[2],
-        color='white',
-        opacity=0.7,
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    fig.add_trace(go.Mesh3d(
-        x=[0, NS_dimension, 0],
-        y=[EW_dimension, EW_dimension, 0],
-        z=[0, 0, 0],
-        i=[0], j=[1], k=[2],
-        color='white',
-        opacity=0.7,
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    
-    # Top face
-    fig.add_trace(go.Mesh3d(
-        x=[0, NS_dimension, NS_dimension, 0],
-        y=[0, 0, EW_dimension, EW_dimension],
-        z=[z, z, z, z],
-        i=[0], j=[1], k=[2],
-        color='white',
-        opacity=0.7,
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    fig.add_trace(go.Mesh3d(
-        x=[0, NS_dimension, 0],
-        y=[EW_dimension, EW_dimension, 0],
-        z=[z, z, z],
-        i=[0], j=[1], k=[2],
-        color='white',
-        opacity=0.7,
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    
-    # Calculate zone boundaries for North-South elevations (front and back)
-    NS_zone_data = calculate_zone_data(NS_dimension, z, e_NS)
-    
-    # Calculate zone boundaries for East-West elevations (left and right)
-    EW_zone_data = calculate_zone_data(EW_dimension, z, e_EW)
-    
-    # Draw North face (y=0) zones
-    for zone in NS_zone_data:
-        zone_name, x_start, x_end = zone
-        
-        fig.add_trace(go.Mesh3d(
-            x=[x_start, x_end, x_end, x_start],
-            y=[0, 0, 0, 0],
-            z=[0, 0, z, z],
-            i=[0], j=[1], k=[2],
-            color=zone_colors[zone_name],
-            opacity=0.9,
-            showlegend=False,
-            hoverinfo='text',
-            hovertext=f"Zone {zone_name}: Width={x_end-x_start:.2f}"
-        ))
-        
-        # Add zone label for North face
-        if x_end - x_start > 0.1 * NS_dimension:  # Only add label if zone is wide enough
-            fig.add_trace(go.Scatter3d(
-                x=[(x_start + x_end) / 2],
-                y=[0],
-                z=[z / 2],
-                mode='text',
-                text=[zone_name],
-                textfont=dict(size=18, color='white'),
-                showlegend=False
-            ))
-    
-    # Draw South face (y=EW_dimension) zones
-    for zone in NS_zone_data:
-        zone_name, x_start, x_end = zone
-        
-        fig.add_trace(go.Mesh3d(
-            x=[x_start, x_end, x_end, x_start],
-            y=[EW_dimension, EW_dimension, EW_dimension, EW_dimension],
-            z=[0, 0, z, z],
-            i=[0], j=[1], k=[2],
-            color=zone_colors[zone_name],
-            opacity=0.9,
-            showlegend=False,
-            hoverinfo='text',
-            hovertext=f"Zone {zone_name}: Width={x_end-x_start:.2f}"
-        ))
-        
-        # Add zone label for South face
-        if x_end - x_start > 0.1 * NS_dimension:  # Only add label if zone is wide enough
-            fig.add_trace(go.Scatter3d(
-                x=[(x_start + x_end) / 2],
-                y=[EW_dimension],
-                z=[z / 2],
-                mode='text',
-                text=[zone_name],
-                textfont=dict(size=18, color='white'),
-                showlegend=False
-            ))
-    
-    # Draw West face (x=0) zones
-    for zone in EW_zone_data:
-        zone_name, y_start, y_end = zone
-        
-        fig.add_trace(go.Mesh3d(
-            x=[0, 0, 0, 0],
-            y=[y_start, y_end, y_end, y_start],
-            z=[0, 0, z, z],
-            i=[0], j=[1], k=[2],
-            color=zone_colors[zone_name],
-            opacity=0.9,
-            showlegend=False,
-            hoverinfo='text',
-            hovertext=f"Zone {zone_name}: Width={y_end-y_start:.2f}"
-        ))
-        
-        # Add zone label for West face
-        if y_end - y_start > 0.1 * EW_dimension:  # Only add label if zone is wide enough
-            fig.add_trace(go.Scatter3d(
-                x=[0],
-                y=[(y_start + y_end) / 2],
-                z=[z / 2],
-                mode='text',
-                text=[zone_name],
-                textfont=dict(size=18, color='white'),
-                showlegend=False
-            ))
-    
-    # Draw East face (x=NS_dimension) zones
-    for zone in EW_zone_data:
-        zone_name, y_start, y_end = zone
-        
-        fig.add_trace(go.Mesh3d(
-            x=[NS_dimension, NS_dimension, NS_dimension, NS_dimension],
-            y=[y_start, y_end, y_end, y_start],
-            z=[0, 0, z, z],
-            i=[0], j=[1], k=[2],
-            color=zone_colors[zone_name],
-            opacity=0.9,
-            showlegend=False,
-            hoverinfo='text',
-            hovertext=f"Zone {zone_name}: Width={y_end-y_start:.2f}"
-        ))
-        
-        # Add zone label for East face
-        if y_end - y_start > 0.1 * EW_dimension:  # Only add label if zone is wide enough
-            fig.add_trace(go.Scatter3d(
-                x=[NS_dimension],
-                y=[(y_start + y_end) / 2],
-                z=[z / 2],
-                mode='text',
-                text=[zone_name],
-                textfont=dict(size=18, color='white'),
-                showlegend=False
-            ))
-    
-    # Add building edge lines for better visibility
-    edges_x = [0, NS_dimension, NS_dimension, 0, 0, 0, NS_dimension, NS_dimension, 0, 0, NS_dimension, NS_dimension]
-    edges_y = [0, 0, EW_dimension, EW_dimension, 0, 0, 0, EW_dimension, EW_dimension, 0, 0, EW_dimension]
-    edges_z = [0, 0, 0, 0, z, 0, 0, 0, 0, z, z, z]
-    
-    fig.add_trace(go.Scatter3d(
-        x=edges_x,
-        y=edges_y,
-        z=edges_z,
-        mode='lines',
-        line=dict(color='black', width=4),
-        showlegend=False
-    ))
-    
-    # Add more edge lines
-    fig.add_trace(go.Scatter3d(
-        x=[0, 0, NS_dimension, NS_dimension],
-        y=[EW_dimension, EW_dimension, EW_dimension, EW_dimension],
-        z=[0, z, z, 0],
-        mode='lines',
-        line=dict(color='black', width=4),
-        showlegend=False
-    ))
-    
-    # Add title and other information
-    fig.update_layout(
-        title=dict(
-            text="3D Building with Wind Zones",
-            x=0.5,
-            y=0.95
-        ),
-        scene=dict(
-            xaxis=dict(title="North-South Dimension"),
-            yaxis=dict(title="East-West Dimension"),
-            zaxis=dict(title="Height"),
-            aspectmode='data'
-        ),
-        margin=dict(l=0, r=0, t=30, b=0),
-        scene_camera=dict(
-            eye=dict(x=1.8, y=1.8, z=1.2)
-        ),
-        height=600
+    # Create figures for both elevations
+    NS_elevation_fig = create_elevation_plot(
+        width=NS_dimension,
+        height=z,
+        crosswind_dim=EW_dimension,
+        zone_colors=zone_colors,
+        title="North-South Elevation Wind Zones"
     )
     
-    # Add building dimensions annotation
-    fig.add_annotation(
-        x=0.02,
-        y=0.98,
-        xref="paper",
-        yref="paper",
-        text=f"Building: {NS_dimension:.1f}m × {EW_dimension:.1f}m × {z:.1f}m<br>e_NS = {e_NS:.1f}m, e_EW = {e_EW:.1f}m",
-        showarrow=False,
-        font=dict(size=12),
-        bgcolor="white",
-        opacity=0.8,
-        bordercolor="black",
-        borderwidth=1
+    EW_elevation_fig = create_elevation_plot(
+        width=EW_dimension,
+        height=z,
+        crosswind_dim=NS_dimension,
+        zone_colors=zone_colors,
+        title="East-West Elevation Wind Zones"
     )
     
-    return fig
+    return NS_elevation_fig, EW_elevation_fig
 
-def calculate_zone_data(width, height, e):
+def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
     """
-    Calculate the zone boundaries and names for a given elevation.
+    Create a single elevation plot with wind zones.
     
     Parameters:
     -----------
@@ -268,56 +55,194 @@ def calculate_zone_data(width, height, e):
         Width of elevation (d)
     height : float
         Height of elevation (h)
-    e : float
-        Parameter e = min(b, 2h)
+    crosswind_dim : float
+        Crosswind dimension (b)
+    zone_colors : dict
+        Dictionary of colors for each zone
+    title : str
+        Plot title
     
     Returns:
     --------
-    list
-        List of tuples (zone_name, x_start, x_end)
+    plotly.graph_objects.Figure
+        Figure with the elevation and wind zones
     """
-    zones = []
+    # Calculate parameter e according to Eurocode
+    e = min(crosswind_dim, 2 * height)
     
-    # Determine zones based on relation between e and width
+    # Create figure
+    fig = go.Figure()
+    
+    # Initialize zone boundaries and names
+    zone_boundaries = []
+    zone_names = []
+    
+    # Determine zones based on relation between e and d
     if e < width:  # Three zones: A, B, C
         # Check if zones would overlap
         if width < 2*e:  # Zones would overlap in the middle
             # If e/5 from both ends would overlap (very narrow building)
             if width <= 2*(e/5):
                 # Single zone A for the whole width
-                zones.append(('A', 0, width))
+                zone_boundaries = [(0, width)]
+                zone_names = ['A']
             else:
                 # A-B-A pattern (simplified from A-B-B-A)
-                zones.append(('A', 0, e/5))
-                zones.append(('B', e/5, width - e/5))
-                zones.append(('A', width - e/5, width))
+                # Calculate width for zone B
+                b_width = width - 2*(e/5)
+                
+                zone_boundaries = [
+                    (0, e/5),                  # Left A
+                    (e/5, width - e/5),        # Middle B
+                    (width - e/5, width)       # Right A
+                ]
+                zone_names = ['A', 'B', 'A']
         else:
             # Standard case with A, B, C, B, A
-            zones.append(('A', 0, e/5))
-            zones.append(('B', e/5, e))
-            zones.append(('C', e, width - e))
-            zones.append(('B', width - e, width - e/5))
-            zones.append(('A', width - e/5, width))
+            zone_boundaries = [
+                (0, e/5),                      # Left A
+                (e/5, e),                      # Left B
+                (e, width - e),                # Middle C
+                (width - e, width - e/5),      # Right B
+                (width - e/5, width)           # Right A
+            ]
+            zone_names = ['A', 'B', 'C', 'B', 'A']
     
     elif e >= width and e < 5*width:  # Two zones: A, B
+        # For e >= d but < 5d, we have A zones on each end, B in middle
+        zone_a_width = e/5
+        
         # If building is narrow compared to e, A zones might overlap
         if width <= 2*(e/5):
             # Only zone A across entire width
-            zones.append(('A', 0, width))
+            zone_boundaries = [(0, width)]
+            zone_names = ['A']
         else:
             # Normal case with A-B-A
-            zones.append(('A', 0, e/5))
-            zones.append(('B', e/5, width - e/5))
-            zones.append(('A', width - e/5, width))
+            zone_boundaries = [
+                (0, e/5),              # Left A
+                (e/5, width-e/5),      # Middle B
+                (width-e/5, width)     # Right A
+            ]
+            zone_names = ['A', 'B', 'A']
         
     else:  # e >= 5*width, One zone: A
-        zones.append(('A', 0, width))
+        zone_boundaries = [(0, width)]
+        zone_names = ['A']
     
-    return zones
+    # Draw the zones
+    for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
+        # Draw zone rectangle
+        fig.add_shape(
+            type="rect",
+            x0=x0,
+            y0=0,
+            x1=x1,
+            y1=height,
+            line=dict(width=1, color="black"),
+            fillcolor=zone_colors[zone_name],
+            opacity=0.7,
+            layer="below"
+        )
+        
+        # Add zone label
+        zone_width = x1 - x0
+        fig.add_annotation(
+            x=(x0 + x1)/2,
+            y=height/2,
+            text=zone_name,
+            showarrow=False,
+            font=dict(size=24, color="white")
+        )
+        
+        # Add zone width label
+        if zone_width > 0.05 * width:  # Only add label if zone is wide enough
+            fig.add_annotation(
+                x=(x0 + x1)/2,
+                y=height/4,
+                text=f"{zone_width:.2f}",
+                showarrow=False,
+                font=dict(size=12, color="white")
+            )
+    
+    # Add building outline
+    fig.add_shape(
+        type="rect",
+        x0=0,
+        y0=0,
+        x1=width,
+        y1=height,
+        line=dict(width=2, color="black"),
+        fillcolor=None,
+        opacity=1,
+        layer="above"
+    )
+    
+    # Add ground line
+    fig.add_shape(
+        type="line",
+        x0=-0.1*width,
+        y0=0,
+        x1=1.1*width,
+        y1=0,
+        line=dict(width=3, color="black"),
+        layer="above"
+    )
+    
+    # Add e and d dimensions as annotations
+    fig.add_annotation(
+        x=width/2,
+        y=-0.05*height,
+        text=f"d = {width:.2f}",
+        showarrow=False,
+        font=dict(size=12)
+    )
+    
+    fig.add_annotation(
+        x=-0.05*width,
+        y=height/2,
+        text=f"h = {height:.2f}",
+        showarrow=False,
+        font=dict(size=12),
+        textangle=-90
+    )
+    
+    fig.add_annotation(
+        x=width/2,
+        y=1.05*height,
+        text=f"e = {e:.2f} ({'<' if e < width else '≥'} d)",
+        showarrow=False,
+        font=dict(size=12, color="black")
+    )
+    
+    # Update layout
+    fig.update_layout(
+        title=title,
+        showlegend=False,
+        xaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            range=[-0.1*width, 1.1*width]
+        ),
+        yaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            range=[-0.1*height, 1.1*height],
+            scaleanchor="x",
+            scaleratio=1
+        ),
+        margin=dict(l=50, r=50, t=80, b=50),
+        plot_bgcolor="white",
+        height=400
+    )
+    
+    return fig
 
-def integrate_3d_with_streamlit(session_state):
+def integrate_with_streamlit(session_state):
     """
-    Example of how to integrate the 3D visualization with Streamlit
+    Example of how to integrate with Streamlit
     
     Parameters:
     -----------
@@ -326,9 +251,12 @@ def integrate_3d_with_streamlit(session_state):
     """
     import streamlit as st
     
-    # Get the 3D plot
-    fig_3d = create_3d_wind_zones(session_state)
+    # Get the elevation plots
+    ns_fig, ew_fig = plot_wind_zones(session_state)
     
     # Display in Streamlit
-    st.subheader("3D Building with Wind Zones")
-    st.plotly_chart(fig_3d, use_container_width=True)
+    st.subheader("Wind Zones - North-South Elevation")
+    st.plotly_chart(ns_fig, use_container_width=True)
+    
+    st.subheader("Wind Zones - East-West Elevation")
+    st.plotly_chart(ew_fig, use_container_width=True)
