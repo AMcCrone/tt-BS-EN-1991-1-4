@@ -38,19 +38,20 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
         # Apply additional correction for UK town terrain with significant orography
         if terrain == "town":            
             # Display plot and get interpolated NA.6 value
-            na6_factor = display_contour_plot_with_override(
+            d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
+            k_IT = display_contour_plot_with_override(
                 st, 
                 datasets, 
                 "NA.6", 
-                d_sea, 
+                d_town_terrain, 
                 z_minus_h_dis, 
                 "Terrain Orography Correction Factor", 
-                "NA.6 Factor", 
-                "na6_factor"
+                "Turbulence Correction Factor $k_{I,T}$", 
+                "k_IT"
             )
             
             # Calculate peak pressure with NA.6 correction
-            qp_value = factor * na6_factor * q_b
+            qp_value = factor * k_IT * q_b
             store_session_value(st, "qp_value", qp_value)
             
             # Display result with equation
