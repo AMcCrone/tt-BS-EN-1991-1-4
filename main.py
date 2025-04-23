@@ -339,7 +339,7 @@ with col_result:
 
 # Import needed modules
 from calc_engine.common.displacement import calculate_displacement_height, display_displacement_results
-from calc_engine.common.session_utils import get_session_value, store_session_value
+from calc_engine.common.util import get_session_value, store_session_value
 
 def wind_velocity_section():
     """Display the Mean Wind Velocity section."""
