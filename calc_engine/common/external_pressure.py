@@ -46,43 +46,73 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     building_x = [-EW_dimension/2, EW_dimension/2, EW_dimension/2, -EW_dimension/2, -EW_dimension/2]
     building_y = [-NS_dimension/2, -NS_dimension/2, NS_dimension/2, NS_dimension/2, -NS_dimension/2]
     
+    # Determine plot size based on building dimensions and gaps
+    # Add a margin factor to ensure everything fits nicely
+    margin_factor = 1.2
+    max_north = NS_dimension/2 + north_gap * margin_factor
+    max_south = NS_dimension/2 + south_gap * margin_factor
+    max_east = EW_dimension/2 + east_gap * margin_factor
+    max_west = EW_dimension/2 + west_gap * margin_factor
+    
+    # Set plot boundaries based on the maximum extents in each direction
+    plot_size_x = max(max_east, max_west) * 1.5
+    plot_size_y = max(max_north, max_south) * 1.5
+    
     # Create the figure
     fig = go.Figure()
     
-    # Create a donut shape for surrounding buildings
-    # Outer boundary (very large to extend beyond view)
-    plot_size = max(NS_dimension, EW_dimension) * 2
-    outer_x = [-plot_size, plot_size, plot_size, -plot_size, -plot_size]
-    outer_y = [-plot_size, -plot_size, plot_size, plot_size, -plot_size]
+    # Define adjacent building sizes
+    # Width of adjacent buildings is proportional to the main building dimension
+    north_building_height = max(north_gap * 0.8, 5)  # Height of north building
+    south_building_height = max(south_gap * 0.8, 5)  # Height of south building
+    east_building_width = max(east_gap * 0.8, 5)     # Width of east building
+    west_building_width = max(west_gap * 0.8, 5)     # Width of west building
     
-    # Inner boundary (just around the main building with gaps)
-    inner_x = [
-        -EW_dimension/2 - west_gap, # Bottom left
-        EW_dimension/2 + east_gap,  # Bottom right
-        EW_dimension/2 + east_gap,  # Top right
-        -EW_dimension/2 - west_gap, # Top left
-        -EW_dimension/2 - west_gap  # Back to start
-    ]
-    inner_y = [
-        -NS_dimension/2 - south_gap, # Bottom left
-        -NS_dimension/2 - south_gap, # Bottom right
-        NS_dimension/2 + north_gap,  # Top right
-        NS_dimension/2 + north_gap,  # Top left
-        -NS_dimension/2 - south_gap  # Back to start
+    # Add the four surrounding buildings as individual rectangular shapes
+    # North building
+    north_x = [-EW_dimension/2 - west_gap/2, EW_dimension/2 + east_gap/2, 
+              EW_dimension/2 + east_gap/2, -EW_dimension/2 - west_gap/2, -EW_dimension/2 - west_gap/2]
+    north_y = [NS_dimension/2 + north_gap, NS_dimension/2 + north_gap,
+              NS_dimension/2 + north_gap + north_building_height, 
+              NS_dimension/2 + north_gap + north_building_height, NS_dimension/2 + north_gap]
+    
+    # South building
+    south_x = [-EW_dimension/2 - west_gap/2, EW_dimension/2 + east_gap/2, 
+              EW_dimension/2 + east_gap/2, -EW_dimension/2 - west_gap/2, -EW_dimension/2 - west_gap/2]
+    south_y = [-NS_dimension/2 - south_gap - south_building_height, -NS_dimension/2 - south_gap - south_building_height,
+              -NS_dimension/2 - south_gap, -NS_dimension/2 - south_gap, -NS_dimension/2 - south_gap - south_building_height]
+    
+    # East building
+    east_x = [EW_dimension/2 + east_gap, EW_dimension/2 + east_gap + east_building_width, 
+             EW_dimension/2 + east_gap + east_building_width, EW_dimension/2 + east_gap, EW_dimension/2 + east_gap]
+    east_y = [-NS_dimension/2 - south_gap/2, -NS_dimension/2 - south_gap/2,
+             NS_dimension/2 + north_gap/2, NS_dimension/2 + north_gap/2, -NS_dimension/2 - south_gap/2]
+    
+    # West building
+    west_x = [-EW_dimension/2 - west_gap - west_building_width, -EW_dimension/2 - west_gap, 
+             -EW_dimension/2 - west_gap, -EW_dimension/2 - west_gap - west_building_width, -EW_dimension/2 - west_gap - west_building_width]
+    west_y = [-NS_dimension/2 - south_gap/2, -NS_dimension/2 - south_gap/2,
+             NS_dimension/2 + north_gap/2, NS_dimension/2 + north_gap/2, -NS_dimension/2 - south_gap/2]
+    
+    # Add the surrounding buildings to the plot
+    buildings_data = [
+        (north_x, north_y, "North Building"),
+        (south_x, south_y, "South Building"),
+        (east_x, east_y, "East Building"),
+        (west_x, west_y, "West Building")
     ]
     
-    # Add donut shape (surrounding buildings)
-    fig.add_trace(go.Scatter(
-        x=outer_x + [None] + inner_x[::-1],  # Outer shape and reversed inner shape with None to create a break
-        y=outer_y + [None] + inner_y[::-1],
-        fill='toself',
-        fillcolor=TT_LightGrey,
-        line=dict(color=TT_Grey, width=1),
-        name="Surrounding Buildings",
-        hoverinfo="text",
-        hovertext="Surrounding Buildings",
-        mode="lines"  # Just lines, no markers
-    ))
+    for x_coords, y_coords, name in buildings_data:
+        fig.add_trace(go.Scatter(
+            x=x_coords, y=y_coords,
+            fill="toself",
+            fillcolor=TT_LightGrey,
+            line=dict(color=TT_Grey, width=1),
+            name=name,
+            hoverinfo="text",
+            hovertext=name,
+            mode="lines"
+        ))
     
     # Main building
     fig.add_trace(go.Scatter(
@@ -94,45 +124,25 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
         name="Main Building",
         hoverinfo="text",
         hovertext="Main Building",
-        mode="lines"  # Just lines, no markers
+        mode="lines"
     ))
     
-    # Add building labels
-    # North building label
-    fig.add_annotation(
-        x=0,
-        y=NS_dimension/2 + north_gap + 10,
-        text="North Building",
-        showarrow=False,
-        font=dict(color=TT_Grey, size=12)
-    )
+    # Add building labels - position them better to avoid overlap
+    # Adaptive positioning based on building size and gaps
+    labels_data = [
+        (0, NS_dimension/2 + north_gap + north_building_height/2, "North Building"),
+        (0, -NS_dimension/2 - south_gap - south_building_height/2, "South Building"),
+        (EW_dimension/2 + east_gap + east_building_width/2, 0, "East Building"),
+        (-EW_dimension/2 - west_gap - west_building_width/2, 0, "West Building")
+    ]
     
-    # South building label
-    fig.add_annotation(
-        x=0,
-        y=-NS_dimension/2 - south_gap - 10,
-        text="South Building",
-        showarrow=False,
-        font=dict(color=TT_Grey, size=12)
-    )
-    
-    # East building label
-    fig.add_annotation(
-        x=EW_dimension/2 + east_gap + 10,
-        y=0,
-        text="East Building",
-        showarrow=False,
-        font=dict(color=TT_Grey, size=12)
-    )
-    
-    # West building label
-    fig.add_annotation(
-        x=-EW_dimension/2 - west_gap - 10,
-        y=0,
-        text="West Building",
-        showarrow=False,
-        font=dict(color=TT_Grey, size=12)
-    )
+    for x, y, text in labels_data:
+        fig.add_annotation(
+            x=x, y=y,
+            text=text,
+            showarrow=False,
+            font=dict(color=TT_Grey, size=12)
+        )
     
     # Highlight the gaps with orange if funnelling applies
     for direction, gap, dimension, is_ns in [
@@ -183,10 +193,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
                 name=f"{direction} Funnelling Zone",
                 hoverinfo="text",
                 hovertext=f"{direction} Funnelling Zone - {intensity_text}",
-                mode="lines"  # Just lines, no markers
+                mode="lines"
             ))
             
-            # Add a funnelling effect label if applicable
+            # Add a funnelling effect label - improved positioning to prevent overlap
             if is_ns:
                 label_x = 0
                 label_y = NS_dimension/2 + gap/2 if direction == "North" else -NS_dimension/2 - gap/2
@@ -200,17 +210,26 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
                 text=f"Funnelling\nGap: {gap:.1f}m",
                 showarrow=False,
                 font=dict(color=TT_Orange, size=10),
-                bgcolor="rgba(255,255,255,0.7)"
+                bgcolor="rgba(255,255,255,0.8)",
+                bordercolor=TT_Orange,
+                borderwidth=1,
+                borderpad=4
             )
     
-    # Layout settings
+    # Calculate optimal range for axes to ensure everything is visible
+    x_range = [-plot_size_x, plot_size_x]
+    y_range = [-plot_size_y, plot_size_y]
+    
+    # Layout settings with dynamic sizing
     fig.update_layout(
         title="Building Layout (Plan View)",
         showlegend=False,
         autosize=False,
-        width=800,
+        width=600,
         height=500,
         margin=dict(l=50, r=50, b=50, t=50),
+        xaxis=dict(range=x_range),
+        yaxis=dict(range=y_range)
     )
     
     # Make sure axes are equal scale and hide axes
