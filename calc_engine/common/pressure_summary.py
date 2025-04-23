@@ -389,7 +389,6 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             showscale=True,
             colorbar=dict(
                 title="Suction (N/m²)",
-                titleside="right",
                 x=1.05,
                 y=0.5,
                 lenmode="fraction",
