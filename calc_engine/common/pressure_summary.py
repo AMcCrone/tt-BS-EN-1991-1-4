@@ -333,12 +333,19 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             # Only show every nth point to avoid overcrowding
             step = max(1, int(len(x_flat) / 500))
             
+            # Define a mapping of zone names to valid Plotly marker symbols
+            zone_symbol_map = {
+                'A': 'circle',
+                'B': 'square',
+                'C': 'diamond'
+            }
+            
             fig.add_trace(go.Scatter(
                 x=x_flat[::step],
                 y=y_flat[::step],
                 mode='markers',
                 marker=dict(
-                    symbol=zone_name,  # Use zone name as symbol identifier
+                    symbol=zone_symbol_map.get(zone_name, 'circle'),  # Use valid symbol based on zone
                     size=8,
                     color='white',
                     opacity=0.3,
@@ -427,7 +434,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                     mode='markers',
                     marker=dict(
                         size=10,
-                        symbol=zone,
+                        symbol=zone_symbol_map.get(zone, 'circle'),  # Use valid symbol based on zone
                         color='white',
                         line=dict(color='black', width=1)
                     ),
