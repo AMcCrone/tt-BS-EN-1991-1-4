@@ -393,15 +393,41 @@ if region == "United Kingdom":
     # Load the contour data
     contour_data_path = "calc_engine/uk/contour_data.xlsx"
     datasets = load_contour_data(contour_data_path)
-    
+    st.markdown("##### NA.3 Plot (Town Roughness Factor $C_r(z)$)")
     # Display NA.3 plot and compute interpolation
-    st.markdown("##### NA.3 Plot")
     display_single_plot(st, datasets, "NA.3", d_sea, z_minus_h_dis)
     interpolated_c_rz = get_interpolated_value(datasets, "NA.3", d_sea, z_minus_h_dis)
     
     # Let user choose between calculated or manual c_r(z)
     if use_calculated and interpolated_c_rz is not None:
         c_rz = interpolated_c_rz
+
+    # --- NA.4: town roughness, only if user is in UK and terrain = Town ---
+    terrain = st.session_state.inputs.get("terrain_category", "").lower()
+    if terrain == "town":
+        # retrieve the town‐distance
+        d_town_terrain = st.session_state.inputs.get("d_town_terrain", 5.0)
+        st.session_state.inputs["d_town_terrain"] = d_town_terrain
+
+        st.markdown("##### NA.4 Plot (Town Roughness Factor $C_{r,T}$)")
+        display_single_plot(st, datasets, "NA.4", d_town_terrain, z_minus_h_dis)
+        interpolated_c_rT = get_interpolated_value(datasets, "NA.4", d_town_terrain, z_minus_h_dis)
+
+        # manual override for town roughness
+        if use_calculated and interpolated_c_rT is not None:
+            c_rT = interpolated_c_rT
+        else:
+            c_rT = st.number_input(
+                "Enter town roughness factor value manually",
+                min_value=0.70,
+                max_value=1.75,
+                value=float(st.session_state.inputs.get("c_rT", 1.00)),
+                step=0.01,
+                format="%.3f"
+            )
+
+        st.session_state.inputs["c_rT"] = c_rT
+        st.latex(f"C_{{r,T}} = {c_rT:.3f}")
     else:
         c_rz = st.number_input(
             "Enter roughness factor value manually",
