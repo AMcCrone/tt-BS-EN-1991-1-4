@@ -230,14 +230,14 @@ def render_terrain_category():
 
     if region == "United Kingdom" and selected_code.lower() == "town":
         d_default = float(st.session_state.inputs.get("d_town_terrain", 5.0))
-        d_town = st.number_input(
+        d_town_terrain = st.number_input(
             "Distance inside Town Terrain (km)",
             min_value=0.1,
             max_value=50.0,
             value=d_default,
             step=0.1,
         )
-        st.session_state.inputs["d_town_terrain"] = d_town
+        st.session_state.inputs["d_town_terrain"] = d_town_terrain
 
     # Display educational content if the toggle is enabled in the sidebar
     if st.session_state.get("show_educational", False):
