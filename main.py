@@ -187,7 +187,7 @@ with col2:
     )
     st.plotly_chart(building_fig, use_container_width=True)
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
         altitude_factor = st.number_input(
         "Altitude Above Sea Level (m)",
@@ -197,12 +197,20 @@ with col1:
         step=1.0
     )
 with col2:
-    d_sea = st.number_input(
+        d_sea = st.number_input(
         "Distance to Sea (km)",
         min_value=1.0,
         max_value=1000.0,
         value=float(st.session_state.inputs.get("d_sea", 60.0)),
         step=1.0
+    )
+with col3:
+        d_town_terrain = st.number_input(
+        "Distance inside Town Terrain (km)",
+        min_value=0.1,
+        max_value=50.0,
+        value=float(st.session_state.inputs.get("d_town_terrain", 5.0)),
+        step=0.1
     )
 
 def render_terrain_category():
