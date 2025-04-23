@@ -187,7 +187,7 @@ with col2:
     )
     st.plotly_chart(building_fig, use_container_width=True)
 
-col1, col2, col2 = st.columns(2)
+col1, col2 = st.columns(2)
 with col1:
         altitude_factor = st.number_input(
         "Altitude Above Sea Level (m)",
