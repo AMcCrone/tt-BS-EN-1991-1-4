@@ -381,6 +381,18 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             layer="above"
         )
         
+        # Add zone boundary lines
+        for x_boundary in [boundary[0] for boundary in zone_boundaries[1:]]:
+            fig.add_shape(
+                type="line",
+                x0=x_boundary,
+                y0=0,
+                x1=x_boundary,
+                y1=height,
+                line=dict(width=1.5, color="black", dash="solid"),
+                layer="above"
+            )
+        
         # Add ground line
         fig.add_shape(
             type="line",
