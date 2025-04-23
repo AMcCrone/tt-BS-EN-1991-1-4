@@ -1,7 +1,7 @@
 import math
 import streamlit as st
 from calc_engine.uk.plot_display import display_contour_plot_with_override
-from calc_engine.common.session_utils import get_session_value, store_session_value
+from calc_engine.common.util import get_session_value, store_session_value
 
 def calculate_uk_peak_pressure(st, datasets, q_b):
     """Calculate peak velocity pressure according to UK standard.
