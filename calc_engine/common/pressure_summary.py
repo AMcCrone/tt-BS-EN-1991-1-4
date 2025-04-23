@@ -21,8 +21,6 @@ def create_pressure_summary(session_state, results_by_direction):
     """
     # Extract dimensions and peak velocity pressure
     h = session_state.inputs.get("z", 10.0)  # Building height
-    NS_dimension = session_state.inputs.get("NS_dimension", 20.0)
-    EW_dimension = session_state.inputs.get("EW_dimension", 40.0)
     qp_value = session_state.inputs.get("qp_value", 1000.0)  # Peak velocity pressure in N/m²
     
     # Define cp,i values
@@ -46,79 +44,43 @@ def create_pressure_summary(session_state, results_by_direction):
             wi_positive = qp_value * cp_i_positive
             wi_negative = qp_value * cp_i_negative
             
-            # Calculate net pressures
-            net_positive = we + wi_positive  # External + Internal positive
-            net_negative = we + wi_negative  # External + Internal negative
+            # Calculate net pressures - most onerous combination
+            net_positive = max(we + wi_positive, we - wi_negative)  # Maximum positive pressure
+            net_negative = min(we + wi_negative, we - wi_positive)  # Maximum negative pressure
             
-            # For suction zones (A, B, C) - use the minimum (most negative) value
-            # For pressure zones (D, E) - use the maximum (most positive) value
-            if zone in ['A', 'B', 'C']:
-                net_pressure = min(net_positive, net_negative)
-                action_type = "Suction"
+            # Determine the governing case (maximum absolute value)
+            if abs(net_positive) > abs(net_negative):
+                net_pressure = net_positive
+                # Determine which internal pressure was used
+                if net_positive == (we + wi_positive):
+                    cp_i_used = cp_i_positive
+                    wi_used = wi_positive
+                else:
+                    cp_i_used = cp_i_negative
+                    wi_used = wi_negative
             else:
-                net_pressure = max(net_positive, net_negative)
-                action_type = "Pressure"
+                net_pressure = net_negative
+                # Determine which internal pressure was used
+                if net_negative == (we + wi_negative):
+                    cp_i_used = cp_i_negative
+                    wi_used = wi_negative
+                else:
+                    cp_i_used = cp_i_positive
+                    wi_used = wi_positive
             
-            # Calculate dimensions of the zone based on direction and zone
-            if direction in ["North", "South"]:
-                width = EW_dimension
-                e = min(width, 2*h)
-                
-                if zone == 'A':
-                    area = e/5 * h
-                elif zone == 'B':
-                    # Adjust B zone width based on building width
-                    if width <= e:
-                        area = 0  # No B zone for very narrow buildings
-                    elif width <= 2*e:
-                        area = (width - 2*e/5) * h  # Simplified B zone
-                    else:
-                        area = (e - e/5) * h  # Standard B zone on each side
-                elif zone == 'C':
-                    if width <= e:
-                        area = 0  # No C zone for very narrow buildings
-                    elif width <= 2*e:
-                        area = 0  # No C zone for medium width buildings
-                    else:
-                        area = (width - 2*e) * h  # Standard C zone
-                elif zone == 'D' or zone == 'E':
-                    area = width * h  # Full facade
-            else:  # East or West
-                width = NS_dimension
-                e = min(width, 2*h)
-                
-                # Similar zone area calculations for E-W orientation
-                if zone == 'A':
-                    area = e/5 * h
-                elif zone == 'B':
-                    if width <= e:
-                        area = 0
-                    elif width <= 2*e:
-                        area = (width - 2*e/5) * h
-                    else:
-                        area = (e - e/5) * h
-                elif zone == 'C':
-                    if width <= e:
-                        area = 0
-                    elif width <= 2*e:
-                        area = 0
-                    else:
-                        area = (width - 2*e) * h
-                elif zone == 'D' or zone == 'E':
-                    area = width * h
+            # Determine action type based on net pressure
+            action_type = "Pressure" if net_pressure > 0 else "Suction"
             
             # Add to summary data
             summary_data.append({
                 "Direction": direction,
                 "Zone": zone,
                 "cp,e": cp_e,
-                "cp,i (used)": cp_i_positive if net_pressure == net_positive else cp_i_negative,
+                "cp,i (used)": cp_i_used,
                 "We (N/m²)": we,
-                "Wi (N/m²)": wi_positive if net_pressure == net_positive else wi_negative,
+                "Wi (N/m²)": wi_used,
                 "Net (N/m²)": net_pressure,
-                "Action": action_type,
-                "Area (m²)": area,
-                "Total Force (kN)": abs(net_pressure * area / 1000)  # Convert N to kN
+                "Action": action_type
             })
     
     # Create DataFrame
