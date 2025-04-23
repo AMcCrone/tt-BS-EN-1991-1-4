@@ -777,6 +777,24 @@ st.plotly_chart(ew_elevation_fig, use_container_width=True)
 # Section 6: RESULTS SUMMARY
 st.markdown("---")
 st.header("Results Summary")
+from calc_engine.common.pressure_summary import (
+    create_pressure_summary,
+    plot_elevation_with_pressures,
+    visualize_wind_pressures
+)
+
+results_by_direction = calculate_cpe()  # Make sure this function exists
+summary_df = create_pressure_summary(st.session_state, results_by_direction)
+elevation_figures = plot_elevation_with_pressures(st.session_state, results_by_direction)
+
+# Display results manually
+st.subheader("Pressure Summary")
+st.dataframe(summary_df)
+
+# Display figures
+for direction, fig in elevation_figures.items():
+    st.plotly_chart(fig)
+
 st.info("Final calculation results will be displayed here with a 3D gradient plot showing the wind pressures on all 4 elevations.")
 
 # Toggle educational content in sidebar
