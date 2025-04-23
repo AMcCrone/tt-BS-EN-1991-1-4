@@ -1,6 +1,6 @@
 import math
 
-def calculate_cr(z, terrain_category):
+def calculate_crz(z, terrain_category):
     """
     Calculate the roughness factor c_r(z) for a given height z and terrain category,
     based on the EU standard (BS EN 1991-1-4).
@@ -37,7 +37,7 @@ def calculate_cr(z, terrain_category):
 
     Returns:
     --------
-    c_r : float
+    c_rz : float
         The roughness factor at height z.
     """
 
@@ -67,9 +67,58 @@ def calculate_cr(z, terrain_category):
     # Calculate c_r(z)
     if z < z_min:
         # For z below the minimum height, use the value at z_min
-        c_r = k_t * math.log(z_min / z0)
+        c_rz = k_t * math.log(z_min / z0)
     else:
         # For z between z_min and z_max (and above), use the logarithmic formula.
-        c_r = k_t * math.log(z / z0)
+        c_rz = k_t * math.log(z / z0)
 
-    return c_r
+    return c_rz
+
+# Keep your existing calculate_cr function
+
+def display_eu_roughness_calculation(st, z_minus_h_dis, terrain_category):
+    """Display EU roughness calculation with explanation.
+    
+    Args:
+        st: Streamlit object
+        z_minus_h_dis: Effective height
+        terrain_category: The terrain category
+        
+    Returns:
+        float: The calculated roughness factor
+    """
+    # Calculate roughness factor using your existing function
+    c_rz = calculate_cr(z_minus_h_dis, terrain_category)
+    
+    # Store in session state
+    st.session_state.inputs["c_rz"] = c_rz
+    
+    # Get terrain parameters for explanation
+    terrain_params = {
+        '0': {'z0': 0.003, 'z_min': 1},
+        'I': {'z0': 0.01, 'z_min': 1},
+        'II': {'z0': 0.05, 'z_min': 2},
+        'III': {'z0': 0.3, 'z_min': 5},
+        'IV': {'z0': 1.0, 'z_min': 10},
+    }
+    z0 = terrain_params[terrain_category]['z0']
+    z_min = terrain_params[terrain_category]['z_min']
+    z0_II = 0.05
+    kr = 0.19 * (z0 / z0_II) ** 0.07
+    
+    # Display explanation and results
+    st.markdown("#### Roughness Factor $C_r(z)$")
+    st.write(f"The roughness factor, $c_r(z)$, for terrain category **{terrain_category}** and height **{z_minus_h_dis:.2f} m** is:")
+    
+    st.write("#### Parameter Values:")
+    st.write(f"- Roughness length $z_0 = {z0:.3f}$ m")
+    st.write(f"- Minimum height $z_{{min}} = {z_min}$ m")
+    st.write(f"- Terrain factor $k_r = 0.19 \\cdot (\\frac{{z_0}}{{z_{{0,II}}}})^{{0.07}} = 0.19 \\cdot (\\frac{{{z0:.3f}}}{{{z0_II}}})^{{0.07}} = {kr:.3f}$")
+    
+    # Show appropriate formula based on height comparison
+    if z_minus_h_dis < z_min:
+        st.latex(f"c_r(z) = k_r \\cdot \\ln(\\frac{{z_{{min}}}}{{z_0}}) = {kr:.3f} \\cdot \\ln(\\frac{{{z_min}}}{{{z0:.3f}}}) = {c_rz:.3f}")
+    else:
+        st.latex(f"c_r(z) = k_r \\cdot \\ln(\\frac{{z}}{{z_0}}) = {kr:.3f} \\cdot \\ln(\\frac{{{z_minus_h_dis:.2f}}}{{{z0:.3f}}}) = {c_rz:.3f}")
+    
+    return c_rz
