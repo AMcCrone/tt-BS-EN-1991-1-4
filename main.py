@@ -731,36 +731,41 @@ st.header("Wind Zones")
 # Import required modules
 from visualisation.wind_zones import plot_wind_zones
 from calc_engine.common.external_pressure import calculate_cpe, display_funnelling_inputs
-
 # External Pressure Coefficients Section
 st.subheader("External Pressure Coefficients")
-
 # Display funnelling inputs regardless of region
 north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
-# Calculate cp,e values - now using common function
-if st.button("Calculate External Pressure Coefficients"):
-    cp_results_by_direction = calculate_cpe()
-    
-    st.subheader("External Pressure Coefficients (cp,e)")
-    
-    # Create tabs for each wind direction
-    tabs = st.tabs(["North", "South", "East", "West"])
-    
-    # Show results for each wind direction in its own tab
-    for i, direction in enumerate(["North", "South", "East", "West"]):
-        with tabs[i]:
-            st.write(f"### {direction} Wind")
-            st.dataframe(cp_results_by_direction[direction])
-    
-    # Store overall results for later use (combine all directions)
-    all_results = []
-    for direction, df in cp_results_by_direction.items():
-        df_with_direction = df.copy()
-        df_with_direction["Wind Direction"] = direction
-        all_results.append(df_with_direction)
-    
-    st.session_state.cp_results = pd.concat(all_results)
+# Automatically calculate cp,e values without requiring a button click
+cp_results_by_direction = calculate_cpe()
+
+st.subheader("External Pressure Coefficients (cp,e)")
+
+# Display results for each wind direction in separate sections
+# North Wind Direction
+st.write("### North Wind")
+st.dataframe(cp_results_by_direction["North"])
+
+# East Wind Direction
+st.write("### East Wind")
+st.dataframe(cp_results_by_direction["East"])
+
+# South Wind Direction
+st.write("### South Wind")
+st.dataframe(cp_results_by_direction["South"])
+
+# West Wind Direction
+st.write("### West Wind")
+st.dataframe(cp_results_by_direction["West"])
+
+# Store overall results for later use (combine all directions)
+all_results = []
+for direction, df in cp_results_by_direction.items():
+    df_with_direction = df.copy()
+    df_with_direction["Wind Direction"] = direction
+    all_results.append(df_with_direction)
+
+st.session_state.cp_results = pd.concat(all_results)
 
 # Display wind zone plots (using your existing function)
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
