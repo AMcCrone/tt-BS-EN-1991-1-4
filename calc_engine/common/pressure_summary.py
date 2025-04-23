@@ -35,7 +35,15 @@ def create_pressure_summary(session_state, results_by_direction):
         # For each zone in this direction
         for _, row in cp_df.iterrows():
             zone = row['Zone']
+            
+            # Skip Zone E
+            if zone == 'E':
+                continue
+                
             cp_e = row['cp,e']
+            
+            # Round cp,e to 2 decimal places
+            cp_e = round(cp_e, 2)
             
             # Calculate external pressure
             we = qp_value * cp_e
@@ -68,6 +76,14 @@ def create_pressure_summary(session_state, results_by_direction):
                     cp_i_used = cp_i_positive
                     wi_used = wi_positive
             
+            # Round cp,i to 2 decimal places
+            cp_i_used = round(cp_i_used, 2)
+            
+            # Convert N/m² to kPa and round to 2 decimal places
+            we_kpa = round(we / 1000, 2)
+            wi_kpa = round(wi_used / 1000, 2)
+            net_kpa = round(net_pressure / 1000, 2)
+            
             # Determine action type based on net pressure
             action_type = "Pressure" if net_pressure > 0 else "Suction"
             
@@ -77,9 +93,9 @@ def create_pressure_summary(session_state, results_by_direction):
                 "Zone": zone,
                 "cp,e": cp_e,
                 "cp,i (used)": cp_i_used,
-                "We (N/m²)": we,
-                "Wi (N/m²)": wi_used,
-                "Net (N/m²)": net_pressure,
+                "We (kPa)": we_kpa,
+                "Wi (kPa)": wi_kpa,
+                "Net (kPa)": net_kpa,
                 "Action": action_type
             })
     
