@@ -208,7 +208,7 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
         title="Building Layout (Plan View)",
         showlegend=False,
         autosize=False,
-        width=600,
+        width=800,
         height=500,
         margin=dict(l=50, r=50, b=50, t=50),
     )
