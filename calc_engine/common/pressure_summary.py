@@ -403,7 +403,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                     y=y_value,
                     text=f"{net_pressure:.0f} N/m²",
                     showarrow=False,
-                    font=dict(size=10, color="white", bgcolor="rgba(0,0,0,0.5)"),
+                    font=dict(size=10, color="white"),
                     xanchor="center",
                     yanchor="middle",
                     bordercolor="white",
