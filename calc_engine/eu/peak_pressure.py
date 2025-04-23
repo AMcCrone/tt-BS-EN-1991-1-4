@@ -1,6 +1,7 @@
 # calc_engine/eu/peak_pressure.py
 
 import math
+import streamlit as st
 
 def calculate_qp(z, terrain_category, v_b, rho_air=1.25, c_o=1.0):
     """
@@ -98,7 +99,7 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
     st.session_state.inputs["q_b"] = q_b
     
     # Calculate roughness factor
-    from calc_engine.eu.roughness import calculate_cr
+    from calc_engine.eu.roughness import calculate_crz
     c_r = calculate_cr(z_minus_h_dis, terrain_category)
     st.session_state.inputs["c_r"] = c_r
     
