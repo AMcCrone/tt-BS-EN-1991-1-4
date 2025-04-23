@@ -16,16 +16,13 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
     """
     # User options
     is_orography_significant = st.checkbox("Orography is significant", value=False)
-
     # Retrieve inputs from session state
     z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
     d_sea = get_session_value(st, "d_sea", 60.0)
     terrain = get_session_value(st, "terrain_category", "").lower()
     
     if is_orography_significant:
-        # NA.5 approach for significant orography
-        st.markdown("#### NA.5 (Turbulence Intensity $I_{v}(z)$)")
-        
+        # NA.5 approach for significant orography       
         # Display plot and get interpolated value
         factor = display_contour_plot_with_override(
             st, 
@@ -38,12 +35,33 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             "i_v"
         )
         
-        # Calculate peak pressure
-        qp_value = factor * q_b
-        store_session_value(st, "qp_value", qp_value)
-        
-        # Display result with equation
-        st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot I_v(z) = {q_b:.2f} \\cdot {factor:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+        # Apply additional correction for UK town terrain with significant orography
+        if terrain == "town":            
+            # Display plot and get interpolated NA.6 value
+            na6_factor = display_contour_plot_with_override(
+                st, 
+                datasets, 
+                "NA.6", 
+                d_sea, 
+                z_minus_h_dis, 
+                "Terrain Orography Correction Factor", 
+                "NA.6 Factor", 
+                "na6_factor"
+            )
+            
+            # Calculate peak pressure with NA.6 correction
+            qp_value = factor * na6_factor * q_b
+            store_session_value(st, "qp_value", qp_value)
+            
+            # Display result with equation
+            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot I_v(z) \\cdot \\text{{NA.6}} = {q_b:.2f} \\cdot {factor:.3f} \\cdot {na6_factor:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+        else:
+            # Calculate peak pressure without NA.6 correction
+            qp_value = factor * q_b
+            store_session_value(st, "qp_value", qp_value)
+            
+            # Display result with equation
+            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot I_v(z) = {q_b:.2f} \\cdot {factor:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
     
     else:
         # Standard approach using exposure factors
