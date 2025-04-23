@@ -106,7 +106,8 @@ def create_pressure_summary(session_state, results_by_direction):
 
 def plot_elevation_with_pressures(session_state, results_by_direction):
     """
-    Create plots for all four elevations showing wind zones A, B, C with pressure gradients.
+    Create plots for all four elevations showing wind zones A, B, C with pressure gradients
+    that vary with height according to the building's height-to-width ratio.
     
     Parameters:
     -----------
@@ -120,17 +121,17 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     dict
         Dictionary of plotly figures for each elevation
     """
+    import numpy as np
+    import plotly.graph_objects as go
+    import plotly.colors as pc
+    
     # Extract dimensions and peak velocity pressure
     h = session_state.inputs.get("z", 10.0)  # Building height
     NS_dimension = session_state.inputs.get("NS_dimension", 20.0)
     EW_dimension = session_state.inputs.get("EW_dimension", 40.0)
-    qp_value = session_state.inputs.get("qp_value", 1000.0)  # Peak velocity pressure in N/m²
-    
-    # Define colors for pressure gradient (suction)
-    import plotly.colors as pc
+    qp_reference = session_state.inputs.get("qp_value", 1000.0)  # Reference peak velocity pressure in N/m²
     
     # Create a continuous color scale for pressure
-    # We'll use a blue color scale from light to dark for increasing suction
     colorscale = pc.sequential.Blues_r
     
     # Define cp,i values
@@ -149,19 +150,26 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
         if direction in ["North", "South"]:
             width = EW_dimension
             height = h
+            building_width = EW_dimension  # Width perpendicular to wind direction
+            crosswind_dim = NS_dimension
             title = f"{direction} Elevation - Wind Suction Zones"
         else:  # East or West
             width = NS_dimension
             height = h
+            building_width = NS_dimension  # Width perpendicular to wind direction
+            crosswind_dim = EW_dimension
             title = f"{direction} Elevation - Wind Suction Zones"
         
         # Calculate parameter e according to Eurocode
-        if direction in ["North", "South"]:
-            crosswind_dim = NS_dimension
-        else:
-            crosswind_dim = EW_dimension
-        
         e = min(crosswind_dim, 2 * height)
+        
+        # Determine profile case based on building dimensions
+        if height <= building_width:
+            profile_case = "Case 1: h ≤ b"
+        elif building_width < height <= 2 * building_width:
+            profile_case = "Case 2: b < h ≤ 2b"
+        else:
+            profile_case = "Case 3: h > 2b"
         
         # Create figure
         fig = go.Figure()
@@ -223,108 +231,137 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             zone_boundaries = [(0, width)]
             zone_names = ['A']
         
-        # Find the maximum suction (most negative) for color scaling
+        # Define a function to get pressure at a specific height
+        def get_qp_at_height(z, h, b, qp_reference):
+            """Calculate qp at height z for a building with height h and width b."""
+            if h <= b:  # Case 1
+                return qp_reference  # Constant for entire height
+            elif b < h <= 2*b:  # Case 2
+                if z <= b:
+                    return qp_reference
+                else:
+                    # Linear interpolation between qp_reference and qp_reference*1.2
+                    return qp_reference + (qp_reference*0.2) * (z - b) / (h - b)
+            else:  # Case 3: h > 2b
+                if z <= b:
+                    return qp_reference
+                elif b < z <= (h - b):
+                    # Middle section: linear from qp_reference to qp_reference*1.35
+                    return qp_reference + (qp_reference*0.35) * (z - b) / ((h - b) - b)
+                else:
+                    # Top section: linear from qp_reference*1.35 to qp_reference*1.5
+                    return qp_reference*1.35 + (qp_reference*0.15) * (z - (h - b)) / (h - (h - b))
+        
+        # Find the maximum and minimum pressure values across all heights for color scaling
         max_suction = 0
         min_suction = 0
+        height_samples = 20  # Number of vertical segments to check
         
-        # Calculate external pressures and find max suction
-        for zone_name in set(zone_names):
-            cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
-            we = qp_value * cp_e
+        for z in np.linspace(0, height, height_samples):
+            qp_value = get_qp_at_height(z, height, building_width, qp_reference)
             
-            # Calculate internal pressures
-            wi_positive = qp_value * cp_i_positive
-            wi_negative = qp_value * cp_i_negative
-            
-            # Calculate net pressures (we're only interested in suction for A, B, C)
-            net_pressure = min(we + wi_positive, we + wi_negative)
-            
-            # Update max suction
-            max_suction = min(max_suction, net_pressure)
-            if net_pressure > min_suction:
-                min_suction = net_pressure
+            for zone_name in set(zone_names):
+                cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
+                we = qp_value * cp_e
+                
+                # Calculate internal pressures
+                wi_positive = qp_value * cp_i_positive
+                wi_negative = qp_value * cp_i_negative
+                
+                # Calculate net pressures (we're only interested in suction for A, B, C)
+                net_pressure = min(we + wi_positive, we + wi_negative)
+                
+                max_suction = min(max_suction, net_pressure)
+                min_suction = max(min_suction, net_pressure)
         
         # Ensure we have some range to avoid division by zero
         if max_suction == min_suction:
             max_suction = min_suction - 1
         
-        # Create a zone-pattern mapping to ensure we can distinguish zones
-        # even with color gradient
-        zone_patterns = {
-            'A': '/',    # Forward slash pattern for zone A
-            'B': '\\',   # Backslash pattern for zone B
-            'C': 'x'     # Cross-hatch pattern for zone C
+        # Define a mapping of zone names to valid Plotly marker symbols
+        zone_symbol_map = {
+            'A': 'circle',
+            'B': 'square',
+            'C': 'diamond'
         }
         
-        # Draw the zones
+        # For each zone, create a heatmap to show pressure variation with height
         for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
-            # Get the pressure value for this zone
+            # Get the cp_e value for this zone
             cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
-            we = qp_value * cp_e
             
-            # Calculate net pressure (minimum of two internal pressure cases)
-            net_positive = we + qp_value * cp_i_positive
-            net_negative = we + qp_value * cp_i_negative
-            net_pressure = min(net_positive, net_negative)
+            # Create a grid for the heatmap
+            x_steps = 10  # horizontal resolution
+            y_steps = 50  # vertical resolution
             
-            # Calculate color intensity based on pressure
-            # Normalize to 0-1 range for color mapping
-            if max_suction == min_suction:
-                color_intensity = 0.5
-            else:
-                # More negative (stronger suction) = darker color
-                color_intensity = (net_pressure - min_suction) / (max_suction - min_suction)
+            x_vals = np.linspace(x0, x1, x_steps)
+            y_vals = np.linspace(0, height, y_steps)
             
-            # Convert to RGB color
-            color_rgb = pc.sample_colorscale(colorscale, [1-color_intensity])[0]
+            # Create meshgrid for heatmap
+            X, Y = np.meshgrid(x_vals, y_vals)
+            Z = np.zeros((y_steps, x_steps))
             
-            # Draw zone rectangle
-            fig.add_shape(
-                type="rect",
-                x0=x0,
-                y0=0,
-                x1=x1,
-                y1=height,
-                line=dict(width=1, color="black"),
-                fillcolor=color_rgb,
-                opacity=0.8,
-                layer="below"
-            )
+            # Fill Z with pressure values that vary with height
+            for j, y in enumerate(y_vals):
+                qp_value = get_qp_at_height(y, height, building_width, qp_reference)
+                we = qp_value * cp_e
+                
+                # Calculate internal pressures
+                wi_positive = qp_value * cp_i_positive
+                wi_negative = qp_value * cp_i_negative
+                
+                # Calculate net pressure (minimum of two internal pressure cases)
+                net_pressure = min(we + wi_positive, we + wi_negative)
+                
+                # Fill the entire row with the same pressure value
+                Z[j, :] = net_pressure
             
-            # Add zone label with pressure value
+            # Create heatmap for this zone
+            fig.add_trace(go.Heatmap(
+                z=Z,
+                x=x_vals,
+                y=y_vals,
+                colorscale=colorscale,
+                showscale=(i == 0),  # Only show colorbar for the first zone
+                colorbar=dict(
+                    title="Suction (N/m²)",
+                    x=1.05,
+                    y=0.5,
+                    lenmode="fraction",
+                    len=0.9
+                ),
+                zmin=max_suction,
+                zmax=min_suction,
+                name=f"Zone {zone_name}"
+            ))
+            
+            # Add zone label
             fig.add_annotation(
                 x=(x0 + x1)/2,
                 y=height/2,
-                text=f"Zone {zone_name}<br>{net_pressure:.0f} N/m²",
+                text=f"Zone {zone_name}",
                 showarrow=False,
                 font=dict(size=16, color="white")
             )
             
             # Add pattern overlay to help distinguish zones
-            # We can simulate this with a scatter plot using a marker
-            x_points = np.linspace(x0, x1, int((x1-x0)+1))
-            y_points = np.linspace(0, height, int(height+1))
-            x_grid, y_grid = np.meshgrid(x_points, y_points)
+            # Sample points for the overlay pattern
+            x_pattern = np.linspace(x0, x1, int((x1-x0)+1))
+            y_pattern = np.linspace(0, height, int(height+1))
+            x_grid, y_grid = np.meshgrid(x_pattern, y_pattern)
             x_flat = x_grid.flatten()
             y_flat = y_grid.flatten()
             
             # Only show every nth point to avoid overcrowding
             step = max(1, int(len(x_flat) / 500))
             
-            # Define a mapping of zone names to valid Plotly marker symbols
-            zone_symbol_map = {
-                'A': 'circle',
-                'B': 'square',
-                'C': 'diamond'
-            }
-            
             fig.add_trace(go.Scatter(
                 x=x_flat[::step],
                 y=y_flat[::step],
                 mode='markers',
                 marker=dict(
-                    symbol=zone_symbol_map.get(zone_name, 'circle'),  # Use valid symbol based on zone
-                    size=8,
+                    symbol=zone_symbol_map.get(zone_name, 'circle'),
+                    size=6,
                     color='white',
                     opacity=0.3,
                     line=dict(width=0)
@@ -334,6 +371,47 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 showlegend=False
             ))
         
+        # Add pressure profile samples to show variation with height
+        sample_heights = np.linspace(height*0.1, height*0.9, 5)
+        for y_value in sample_heights:
+            qp_value = get_qp_at_height(y_value, height, building_width, qp_reference)
+            
+            # Pick a zone (preferably B or C if available) to show sample pressure
+            sample_zone = 'B' if 'B' in set(zone_names) else ('C' if 'C' in set(zone_names) else 'A')
+            
+            # Find x-coordinate for the sample point (middle of the chosen zone)
+            sample_x = None
+            for (x0, x1), zone in zip(zone_boundaries, zone_names):
+                if zone == sample_zone:
+                    sample_x = (x0 + x1) / 2
+                    break
+            
+            if sample_x is not None:
+                cp_e = cp_df[cp_df['Zone'] == sample_zone]['cp,e'].values[0]
+                we = qp_value * cp_e
+                
+                # Calculate internal pressures
+                wi_positive = qp_value * cp_i_positive
+                wi_negative = qp_value * cp_i_negative
+                
+                # Calculate net pressure
+                net_pressure = min(we + wi_positive, we + wi_negative)
+                
+                # Add annotation with the pressure value
+                fig.add_annotation(
+                    x=sample_x,
+                    y=y_value,
+                    text=f"{net_pressure:.0f} N/m²",
+                    showarrow=False,
+                    font=dict(size=10, color="white", bgcolor="rgba(0,0,0,0.5)"),
+                    xanchor="center",
+                    yanchor="middle",
+                    bordercolor="white",
+                    borderwidth=1,
+                    borderpad=2,
+                    opacity=0.8
+                )
+        
         # Add building outline
         fig.add_shape(
             type="rect",
@@ -342,7 +420,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             x1=width,
             y1=height,
             line=dict(width=2, color="black"),
-            fillcolor=None,
+            fillcolor="rgba(0,0,0,0)",
             opacity=1,
             layer="above"
         )
@@ -358,70 +436,122 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             layer="above"
         )
         
-        # Add colorbar for pressure gradient
-        fig.add_trace(go.Contour(
-            z=[[min_suction, max_suction], [min_suction, max_suction]],
-            x=[0, 0.01],  # Small dummy x range
-            y=[0, 0.01],  # Small dummy y range
-            colorscale=colorscale,
-            showscale=True,
-            colorbar=dict(
-                title="Suction (N/m²)",
-                x=1.05,
-                y=0.5,
-                lenmode="fraction",
-                len=0.9
-            ),
-            zmin=max_suction,
-            zmax=min_suction
-        ))
+        # Add reference height lines and annotations
+        if height <= building_width:
+            # Case 1: Only mark h
+            fig.add_shape(
+                type="line",
+                x0=-0.05*width, y0=height, 
+                x1=0, y1=height,
+                line=dict(color="black", width=1)
+            )
+            fig.add_annotation(
+                x=-0.02*width, y=height,
+                text=f"h = {height:.1f}m",
+                showarrow=False,
+                font=dict(size=12),
+                xanchor="right",
+                yanchor="middle"
+            )
+            
+        elif building_width < height <= 2*building_width:
+            # Case 2: Mark b and h
+            fig.add_shape(
+                type="line",
+                x0=-0.05*width, y0=building_width, 
+                x1=0, y1=building_width,
+                line=dict(color="black", width=1)
+            )
+            fig.add_shape(
+                type="line",
+                x0=-0.05*width, y0=height, 
+                x1=0, y1=height,
+                line=dict(color="black", width=1)
+            )
+            fig.add_annotation(
+                x=-0.02*width, y=building_width,
+                text=f"b = {building_width:.1f}m",
+                showarrow=False,
+                font=dict(size=12),
+                xanchor="right",
+                yanchor="middle"
+            )
+            fig.add_annotation(
+                x=-0.02*width, y=height,
+                text=f"h = {height:.1f}m",
+                showarrow=False,
+                font=dict(size=12),
+                xanchor="right",
+                yanchor="middle"
+            )
+            
+        else:  # h > 2*b
+            # Case 3: Mark b, h-b, and h
+            z_strip = height - building_width
+            fig.add_shape(
+                type="line",
+                x0=-0.05*width, y0=building_width, 
+                x1=0, y1=building_width,
+                line=dict(color="black", width=1)
+            )
+            fig.add_shape(
+                type="line",
+                x0=-0.05*width, y0=z_strip, 
+                x1=0, y1=z_strip,
+                line=dict(color="black", width=1)
+            )
+            fig.add_shape(
+                type="line",
+                x0=-0.05*width, y0=height, 
+                x1=0, y1=height,
+                line=dict(color="black", width=1)
+            )
+            fig.add_annotation(
+                x=-0.02*width, y=building_width,
+                text=f"b = {building_width:.1f}m",
+                showarrow=False,
+                font=dict(size=12),
+                xanchor="right",
+                yanchor="middle"
+            )
+            fig.add_annotation(
+                x=-0.02*width, y=z_strip,
+                text=f"h-b = {z_strip:.1f}m",
+                showarrow=False,
+                font=dict(size=12),
+                xanchor="right",
+                yanchor="middle"
+            )
+            fig.add_annotation(
+                x=-0.02*width, y=height,
+                text=f"h = {height:.1f}m",
+                showarrow=False,
+                font=dict(size=12),
+                xanchor="right",
+                yanchor="middle"
+            )
         
         # Add e and d dimensions as annotations
         fig.add_annotation(
             x=width/2,
             y=-0.05*height,
-            text=f"d = {width:.2f}",
+            text=f"d = {width:.2f}m",
             showarrow=False,
             font=dict(size=12)
         )
         
-        fig.add_annotation(
-            x=-0.05*width,
-            y=height/2,
-            text=f"h = {height:.2f}",
-            showarrow=False,
-            font=dict(size=12),
-            textangle=-90
-        )
-        
+        # Add annotation for e value
         fig.add_annotation(
             x=width/2,
             y=1.05*height,
-            text=f"e = {e:.2f} ({'<' if e < width else '≥'} d)",
+            text=f"e = {e:.2f}m ({'<' if e < width else '≥'} d)",
             showarrow=False,
             font=dict(size=12, color="black")
         )
         
-        # Add a legend for the zone patterns
-        for zone in ['A', 'B', 'C']:
-            if zone in set(zone_names):
-                fig.add_trace(go.Scatter(
-                    x=[None],
-                    y=[None],
-                    mode='markers',
-                    marker=dict(
-                        size=10,
-                        symbol=zone_symbol_map.get(zone, 'circle'),  # Use valid symbol based on zone
-                        color='white',
-                        line=dict(color='black', width=1)
-                    ),
-                    name=f"Zone {zone}",
-                    showlegend=True
-                ))
-        
-        # Update layout
+        # Add title with profile case
         fig.update_layout(
-            title=title,
+            title=f"{title}<br><sup>{profile_case}</sup>",
             showlegend=True,
             legend=dict(
                 orientation="h",
@@ -448,6 +578,23 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             plot_bgcolor="white",
             height=600
         )
+        
+        # Add a legend for the zone patterns
+        for zone in ['A', 'B', 'C']:
+            if zone in set(zone_names):
+                fig.add_trace(go.Scatter(
+                    x=[None],
+                    y=[None],
+                    mode='markers',
+                    marker=dict(
+                        size=10,
+                        symbol=zone_symbol_map.get(zone, 'circle'),
+                        color='white',
+                        line=dict(color='black', width=1)
+                    ),
+                    name=f"Zone {zone}",
+                    showlegend=True
+                ))
         
         # Store the figure
         figures[direction] = fig
