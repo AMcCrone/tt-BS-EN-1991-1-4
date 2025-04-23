@@ -503,90 +503,65 @@ st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdo
 region = st.session_state.inputs.get("region")
 
 if region == "United Kingdom":
-    # UK-specific peak pressure calculation
     st.markdown("### UK Peak Wind Pressure")
-    
-    # Import the contour plot functions for UK
-    from calc_engine.uk.contour_plots import load_contour_data, get_interpolated_value, display_single_plot
-    
-    # Check if orography is significant
+
+    # Import UK contour plot functions
+    from calc_engine.uk.contour_plots import (
+        load_contour_data,
+        get_interpolated_value,
+        display_single_plot,
+    )
+
+    # User options
     is_orography_significant = st.checkbox("Orography is significant", value=False)
-    
-    # Get effective height from previous calculation
+
+    # Retrieve and store inputs
     z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 10.0)
-    
+    st.session_state.inputs["z_minus_h_dis"] = z_minus_h_dis
+
+    d_sea = st.session_state.inputs.get("d_sea", 60.0)
+    st.session_state.inputs["d_sea"] = d_sea
+
+    d_town_terrain = st.session_state.inputs.get("d_town_terrain", 5.0)
+    st.session_state.inputs["d_town_terrain"] = d_town_terrain
+
     # Load the contour data
     contour_data_path = "calc_engine/uk/contour_data.xlsx"
     datasets = load_contour_data(contour_data_path)
-    
+
     if is_orography_significant:
-        # Case 1: UK with significant orography (use NA.5)
-        st.markdown("#### Using NA.5 for significant orography")
-        
-        # Get required parameters
-        d_sea = st.session_state.inputs.get("d_sea", 60.0)
-        
-        # Create columns for layout
-        col1, col2 = st.columns([0.3, 0.7])
-        
-        with col1:
-            # Allow user to adjust parameters
-            z_input = st.number_input(
-                "Height z (m)",
-                min_value=1.0,
-                max_value=200.0,
-                value=z_minus_h_dis,
-                format="%.1f"
-            )
-            
-            # Get interpolated value from NA.5
-            interpolated_qp = get_interpolated_value(datasets, "NA.5", d_sea, z_input)
-            
-            if interpolated_qp is not None:
-                qp_value = interpolated_qp * q_b
-                st.session_state.inputs["qp_value"] = qp_value
-                st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
-            else:
-                st.error("Could not interpolate value from NA.5")
-        
-        with col2:
-            # Display NA.5 plot
-            display_single_plot(col2, datasets, "NA.5", d_sea, z_input)
-    
+        st.markdown("#### NA.5 (Turbulence Intensity $I_{v}(z)$)")
+        # Interpolate and compute peak velocity pressure
+        interpolated_qp = get_interpolated_value(datasets, "NA.5", d_sea, z_minus_h_dis)
+        if interpolated_qp is not None:
+            qp_value = interpolated_qp * q_b
+            st.session_state.inputs["qp_value"] = qp_value
+            st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+        else:
+            st.error("Could not interpolate value from NA.5")
+        # Plot NA.5
+        display_single_plot(st, datasets, "NA.5", d_sea, z_input)
+
     else:
-        # Case 2: UK with non-significant orography
-        st.markdown("#### Using NA.7 and NA.8 for non-significant orography")
-        
-        # Check if in town or country based on terrain category
-        terrain_category = st.session_state.inputs.get("terrain_category", "Town")
-        in_town = terrain_category in ["Town"]
-        
-        if in_town:
-            st.markdown("##### Town terrain")
-            
-            st.session_state.inputs["d_sea"] = d_sea
-            st.session_state.inputs["d_town_terrain"] = d_town_terrain
-            
-            # Get interpolated values from NA.7 and NA.8
-            # Display NA.7 plot (height factor) first
-            st.markdown("##### NA.7 Plot (Height Factor)")
-            display_single_plot(st, datasets, "NA.7", d_sea, z_input)
-            interpolated_height_factor = get_interpolated_value(datasets, "NA.7", d_sea, z_input)
-            
-            # Then display NA.8 plot (town factor) beneath it
-            st.markdown("##### NA.8 Plot (Town Factor)")
-            display_single_plot(st, datasets, "NA.8", d_town_terrain, z_input)
-            interpolated_town_factor = get_interpolated_value(datasets, "NA.8", d_town_terrain, z_input)
-            
-            if interpolated_height_factor is not None and interpolated_town_factor is not None:
-                qp_value = interpolated_height_factor * interpolated_town_factor * q_b
-                st.session_state.inputs["qp_value"] = qp_value
-                
-                st.write(f"Height factor from NA.7: {interpolated_height_factor:.3f}")
-                st.write(f"Town factor from NA.8: {interpolated_town_factor:.3f}")
-                st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
-            else:
-                st.error("Could not interpolate values from NA.7 or NA.8")
+        terrain = st.session_state.inputs.get("terrain_category", "").lower()
+        # Interpolate NA.7
+        st.markdown("##### NA.7 Plot (Exposure Factor $C_{e}(z)$)")
+        display_single_plot(st, datasets, "NA.7", d_sea, z_minus_h_dis)
+        interpolated_c_ez = get_interpolated_value(datasets, "NA.7", d_sea, z_minus_h_dis)
+        qp_value = interpolated_c_ez * q_b
+        st.write(f"Height factor (NA.7): {interpolated_height_factor:.3f}")
+
+        if terrain == "town":
+            # Interpolate NA.8
+            st.markdown("##### NA.8 Plot (Exposure Factor Correction $C_{e,T}$)")
+            display_single_plot(st, datasets, "NA.8", d_town_terrain, z_minus_h_dis)
+            interpolated_c_eT = get_interpolated_value(datasets, "NA.8", d_town_terrain, z_minus_h_dis)
+            qp_value = interpolated_c_ez * interpolated_c_eT * q_b
+            st.write(f"Town factor (NA.8): {interpolated_town_factor:.3f}")
+            st.session_state.inputs["qp_value"] = qp_value
+
+        st.session_state.inputs["qp_value"] = qp_value
+        st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
         
         else:
             st.markdown("##### Country terrain")
