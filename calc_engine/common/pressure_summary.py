@@ -1,6 +1,7 @@
+import numpy as np
 import pandas as pd
 import streamlit as st
-
+import plotly.graph_objects as go
 
 def create_pressure_summary(session_state, results_by_direction):
     """
