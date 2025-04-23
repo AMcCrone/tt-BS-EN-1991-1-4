@@ -38,7 +38,7 @@ def display_contour_plot_with_override(st, datasets, plot_name, x_value, y_value
         final_value = st.number_input(
             f"Enter {description.lower()} value manually",
             min_value=0.70,
-            max_value=1.75,
+            max_value=4.50,
             value=float(st.session_state.inputs.get(store_key, 1.00)) if store_key else 1.00,
             step=0.01,
             format="%.3f",
