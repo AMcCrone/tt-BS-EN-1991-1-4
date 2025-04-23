@@ -382,11 +382,8 @@ if region == "United Kingdom":
     
     # Import the contour plot functions for UK
     from calc_engine.uk.contour_plots import load_contour_data, get_interpolated_value, display_single_plot
-    
-    # Get required parameters from session state - use the freshly calculated values
-    x_upwind = st.session_state.inputs.get("distance_upwind", 10.0)
 
-    # Allow user to override the calculated value (optional)
+    # Allow user to override the calculated value
     use_calculated = st.checkbox("Use calculated value from contour plot", value=True)
 
     # Create columns for layout
@@ -400,7 +397,7 @@ if region == "United Kingdom":
     datasets = load_contour_data(contour_data_path)
     
     # Get interpolated c_r(z) value from NA.3
-    interpolated_c_r = get_interpolated_value(datasets, "NA.3", d_sea, z_minus_h_dis)
+    interpolated_c_rz = get_interpolated_value(datasets, "NA.3", d_sea, z_minus_h_dis)
     
     with col2:
         # Display NA.3 plot in column 2
@@ -408,23 +405,22 @@ if region == "United Kingdom":
     
     # Set c_r based on user's choice
     if use_calculated and interpolated_c_r is not None:
-        c_r = interpolated_c_r
+        c_rz = interpolated_c_rz
     else:
         # If user chooses to enter manually or if interpolation failed
-        c_r = st.number_input(
+        c_rz = st.number_input(
             "Enter roughness factor value manually",
             min_value=0.70,
             max_value=1.75,
-            value=float(st.session_state.inputs.get("c_r", 1.0)),  # Use the common c_r key
+            value=float(st.session_state.inputs.get("c_rz", 1.0)),  # Use the common c_rz key
             step=0.01,
             format="%.3f"
         )
     
-    # Store calculated value with consistent naming
-    st.session_state.inputs["c_r"] = c_r
-    st.session_state.inputs["c_rz"] = c_r  # Add for consistency with mean velocity calculation
+    # Store calculated value
+    st.session_state.inputs["c_rz"] = c_rz  # Add for consistency with mean velocity calculation
     
-    st.latex(f"c_r(z) = {c_r:.3f}")
+    st.latex(f"c_r(z) = {c_rz:.3f}")
 else:
     # Import the roughness function from the EU module
     from calc_engine.eu import roughness as roughness_module
@@ -435,15 +431,12 @@ else:
     # Now call the roughness function
     try:
         # Use z_minus_h_dis instead of z for consistent handling across regions
-        c_r = roughness_module.calculate_cr(z_minus_h_dis, terrain_category)
-        
-        # Store calculated value with consistent naming
-        st.session_state.inputs["c_r"] = c_r
-        st.session_state.inputs["c_rz"] = c_r  # Add for consistency with mean velocity calculation
+        c_rz = roughness_module.calculate_cr(z_minus_h_dis, terrain_category)
+        st.session_state.inputs["c_rz"] = c_rz  # Add for consistency with mean velocity calculation
         
         st.markdown("#### Roughness Factor $C_r(z)$")
         st.write(f"The roughness factor, \\(c_r(z)\\), for terrain category **{terrain_category}** and height **{z_minus_h_dis} m** is:")
-        st.latex(f"c_r(z) = {c_r:.3f}")
+        st.latex(f"c_r(z) = {c_rz:.3f}")
     except Exception as e:
         st.error(f"Error calculating roughness factor: {e}")
 
@@ -551,40 +544,19 @@ if region == "United Kingdom":
         if in_town:
             st.markdown("##### Town terrain")
             
-            # Create columns for layout - just using one column for inputs now
-            col1 = st.columns(1)[0]
-            
-            with col1:
-                # Allow user to adjust parameters
-                z_input = st.number_input(
-                    "Height z (m)",
-                    min_value=1.0,
-                    max_value=200.0,
-                    value=z_minus_h_dis,
-                    format="%.1f"
-                )
-                
-                # Distance inside town terrain
-                distance_in_town = st.number_input(
-                    "Distance inside town (km)",
-                    min_value=0.0,
-                    max_value=10.0,
-                    value=1.0,
-                    step=0.1,
-                    format="%.1f"
-                )
-                st.session_state.inputs["distance_in_town"] = distance_in_town
+            st.session_state.inputs["d_sea"] = d_sea
+            st.session_state.inputs["d_town_terrain"] = d_town_terrain
             
             # Get interpolated values from NA.7 and NA.8
             # Display NA.7 plot (height factor) first
             st.markdown("##### NA.7 Plot (Height Factor)")
-            display_single_plot(st, datasets, "NA.7", 0, z_input)
-            interpolated_height_factor = get_interpolated_value(datasets, "NA.7", 0, z_input)
+            display_single_plot(st, datasets, "NA.7", d_sea, z_input)
+            interpolated_height_factor = get_interpolated_value(datasets, "NA.7", d_sea, z_input)
             
             # Then display NA.8 plot (town factor) beneath it
             st.markdown("##### NA.8 Plot (Town Factor)")
-            display_single_plot(st, datasets, "NA.8", distance_in_town, 0)
-            interpolated_town_factor = get_interpolated_value(datasets, "NA.8", distance_in_town, 0)
+            display_single_plot(st, datasets, "NA.8", d_town_terrain, z_input)
+            interpolated_town_factor = get_interpolated_value(datasets, "NA.8", d_town_terrain, z_input)
             
             if interpolated_height_factor is not None and interpolated_town_factor is not None:
                 qp_value = interpolated_height_factor * interpolated_town_factor * q_b
