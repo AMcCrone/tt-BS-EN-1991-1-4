@@ -386,40 +386,34 @@ if region == "United Kingdom":
     # Allow user to override the calculated value
     use_calculated = st.checkbox("Use calculated value from contour plot", value=True)
 
-    # Create columns for layout
-    col1, col2 = st.columns([0.3, 0.7])
-    
-    with col1:
-        d_sea = st.session_state.inputs.get("d_sea", 60.0)
+    # Retrieve and store sea distance
+    d_sea = st.session_state.inputs.get("d_sea", 60.0)
+    st.session_state.inputs["d_sea"] = d_sea
     
     # Load the contour data
     contour_data_path = "calc_engine/uk/contour_data.xlsx"
     datasets = load_contour_data(contour_data_path)
     
-    # Get interpolated c_r(z) value from NA.3
+    # Display NA.3 plot and compute interpolation
+    st.markdown("##### NA.3 Plot")
+    display_single_plot(st, datasets, "NA.3", d_sea, z_minus_h_dis)
     interpolated_c_rz = get_interpolated_value(datasets, "NA.3", d_sea, z_minus_h_dis)
     
-    with col2:
-        # Display NA.3 plot in column 2
-        display_single_plot(col2, datasets, "NA.3", d_sea, z_minus_h_dis)
-    
-    # Set c_rz based on user's choice
+    # Let user choose between calculated or manual c_r(z)
     if use_calculated and interpolated_c_rz is not None:
         c_rz = interpolated_c_rz
     else:
-        # If user chooses to enter manually or if interpolation failed
         c_rz = st.number_input(
             "Enter roughness factor value manually",
             min_value=0.70,
             max_value=1.75,
-            value=float(st.session_state.inputs.get("c_rz", 1.0)),  # Use the common c_rz key
+            value=float(st.session_state.inputs.get("c_rz", 1.00)),
             step=0.01,
             format="%.3f"
         )
     
-    # Store calculated value
-    st.session_state.inputs["c_rz"] = c_rz  # Add for consistency with mean velocity calculation
-    
+    # Store and display final roughness factor
+    st.session_state.inputs["c_rz"] = c_rz
     st.latex(f"c_r(z) = {c_rz:.3f}")
 else:
     # Import the roughness function from the EU module
