@@ -337,314 +337,105 @@ with col_result:
     st.latex(f"V_b = {V_b:.2f}\\; m/s")
     st.write(f"(Probability factor used: {c_prob:.3f})")
 
-st.subheader("Mean Wind Velocity")
+# Import needed modules
+from calc_engine.common.displacement import calculate_displacement_height, display_displacement_results
+from calc_engine.common.session_utils import get_session_value, store_session_value
 
-def calculate_displacement_height():
-    use_standard = st.checkbox("Use standard $h_{{dis}}$ = 15m", help = "In th absence of more accurate information, the obstruction height may be taken as h_ave = 15m for terrain category IV")
+def wind_velocity_section():
+    """Display the Mean Wind Velocity section."""
+    st.subheader("Mean Wind Velocity")
     
-    if use_standard:
-        h_dis = 15.0
-    else:
-        col1, col2 = st.columns(2)
-        with col1:
-            x = st.number_input("Distance to other buildings (m)", value=10.0, min_value=0.0)
-        with col2:
-            h_ave = st.number_input("Average height h_ave (m)", value=5.0, min_value=0.1)
-        
-        h = st.session_state.inputs.get("z", 30.0)
-        
-        if x <= 2 * h_ave:
-            h_dis = min(0.8 * h_ave, 0.6 * h)
-        elif x < 6 * h_ave:
-            h_dis = min(1.2 * h_ave - 0.2 * x, 0.6 * h)
-        else:
-            h_dis = 0
+    # Calculate displacement height
+    h_dis = calculate_displacement_height(st)
+    display_displacement_results(st, h_dis)
     
-    return h_dis
-
-# Execute the displacement height calculation
-h_dis = calculate_displacement_height()
-
-# Get or set the height z from session state
-z = st.session_state.inputs.get("z", 30.0)
-z_minus_h_dis = z - h_dis
-st.session_state.inputs["z_minus_h_dis"] = z_minus_h_dis
-
-st.write(f"Displacement height $h_{{dis}}$: {h_dis:.2f} m")
-st.write(f"Effective height ($z - h_{{dis}}$): {z_minus_h_dis:.2f} m")
-
-# Check the region selection
-region = st.session_state.inputs.get("region")
-z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis")
-
-if region == "United Kingdom":
-    st.markdown("#### Roughness Factor $C_r(z)$")
+    # Check the region selection
+    region = get_session_value(st, "region")
+    z_minus_h_dis = get_session_value(st, "z_minus_h_dis")
     
-    # Import the contour plot functions for UK
-    from calc_engine.uk.contour_plots import load_contour_data, get_interpolated_value, display_single_plot
-
-    # Allow user to override the calculated value
-    use_calculated = st.checkbox("Use calculated value from contour plot", value=True)
-
-    # Retrieve and store sea distance
-    d_sea = st.session_state.inputs.get("d_sea", 60.0)
-    st.session_state.inputs["d_sea"] = d_sea
-    
-    # Load the contour data
-    contour_data_path = "calc_engine/uk/contour_data.xlsx"
-    datasets = load_contour_data(contour_data_path)
-    st.markdown("##### NA.3 Plot (Town Roughness Factor $C_r(z)$)")
-    # Display NA.3 plot and compute interpolation
-    display_single_plot(st, datasets, "NA.3", d_sea, z_minus_h_dis)
-    interpolated_c_rz = get_interpolated_value(datasets, "NA.3", d_sea, z_minus_h_dis)
-    
-    # Let user choose between calculated or manual c_r(z)
-    if use_calculated and interpolated_c_rz is not None:
-        c_rz = interpolated_c_rz
-
-    # --- NA.4: town roughness, only if user is in UK and terrain = Town ---
-    terrain = st.session_state.inputs.get("terrain_category", "").lower()
-    if terrain == "town":
-        # retrieve the town‐distance
-        d_town_terrain = st.session_state.inputs.get("d_town_terrain", 5.0)
-        st.session_state.inputs["d_town_terrain"] = d_town_terrain
-
-        st.markdown("##### NA.4 Plot (Town Roughness Factor $C_{r,T}$)")
-        display_single_plot(st, datasets, "NA.4", d_town_terrain, z_minus_h_dis)
-        interpolated_c_rT = get_interpolated_value(datasets, "NA.4", d_town_terrain, z_minus_h_dis)
-
-        # manual override for town roughness
-        if use_calculated and interpolated_c_rT is not None:
-            c_rT = interpolated_c_rT
-        else:
-            c_rT = st.number_input(
-                "Enter town roughness factor value manually",
-                min_value=0.70,
-                max_value=1.75,
-                value=float(st.session_state.inputs.get("c_rT", 1.00)),
-                step=0.01,
-                format="%.3f"
-            )
-
-        st.session_state.inputs["c_rT"] = c_rT
-        st.latex(f"C_{{r,T}} = {c_rT:.3f}")
-    else:
-        c_rz = st.number_input(
-            "Enter roughness factor value manually",
-            min_value=0.70,
-            max_value=1.75,
-            value=float(st.session_state.inputs.get("c_rz", 1.00)),
-            step=0.01,
-            format="%.3f"
-        )
-    
-    # Store and display final roughness factor
-    st.session_state.inputs["c_rz"] = c_rz
-    st.latex(f"c_r(z) = {c_rz:.3f}")
-else:
-    # Import the roughness function from the EU module
-    from calc_engine.eu import roughness as roughness_module
-    
-    # Assume that a terrain category was selected via a dropdown earlier, stored in session_state
-    terrain_category = st.session_state.inputs.get("terrain_category", "II")
-    
-    # Now call the roughness function
-    try:
-        # Use z_minus_h_dis instead of z for consistent handling across regions
-        c_rz = roughness_module.calculate_cr(z_minus_h_dis, terrain_category)
-        st.session_state.inputs["c_rz"] = c_rz  # Add for consistency with mean velocity calculation
-        
+    # Calculate roughness factor based on region
+    if region == "United Kingdom":
         st.markdown("#### Roughness Factor $C_r(z)$")
-        st.write(f"The roughness factor, \\(c_r(z)\\), for terrain category **{terrain_category}** and height **{z_minus_h_dis} m** is:")
-        st.latex(f"c_r(z) = {c_rz:.3f}")
-    except Exception as e:
-        st.error(f"Error calculating roughness factor: {e}")
-
-# --- Section 3: Mean Wind Velocity ---
-st.markdown("#### Mean Wind Velocity")
-
-# Retrieve stored values with consistent naming
-v_b = st.session_state.inputs.get("V_b", 0.0)
-c_rz = st.session_state.inputs.get("c_rz", 1.0)
-c_oz = st.session_state.inputs.get("c_oz", 1.0)
-
-# Calculate mean wind velocity
-v_mean = v_b * c_rz * c_oz
-
-# Store in session state for later use
-st.session_state.inputs["v_mean"] = v_mean
-
-# Display the result
-st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_oz:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
         
-# Section 4: WIND PRESSURE
-st.markdown("---")
-st.header("Peak Wind Pressure")
-
-# Air density input
-rho_air = st.number_input(
-    "Air Density (kg/m³)",
-    min_value=1.0,
-    max_value=2.0,
-    value=1.226,
-    step=0.001,
-    format="%.3f"
-)
-st.session_state.inputs["rho_air"] = rho_air
-
-# Basic wind pressure calculation
-v_b = st.session_state.inputs.get("V_b", 0.0)
-q_b = 0.5 * rho_air * (v_b ** 2)
-st.session_state.inputs["q_b"] = q_b
-
-st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdot {rho_air:.2f} \\cdot {v_b:.2f}^2 = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
-
-# Check the region selection
-region = st.session_state.inputs.get("region")
-
-if region == "United Kingdom":
-    st.markdown("### UK Peak Wind Pressure")
-
-    # Import UK contour plot functions
-    from calc_engine.uk.contour_plots import (
-        load_contour_data,
-        get_interpolated_value,
-        display_single_plot,
-    )
-
-    # User options
-    is_orography_significant = st.checkbox("Orography is significant", value=False)
-
-    # Retrieve and store inputs
-    z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 10.0)
-    st.session_state.inputs["z_minus_h_dis"] = z_minus_h_dis
-
-    d_sea = st.session_state.inputs.get("d_sea", 60.0)
-    st.session_state.inputs["d_sea"] = d_sea
-
-    d_town_terrain = st.session_state.inputs.get("d_town_terrain", 5.0)
-    st.session_state.inputs["d_town_terrain"] = d_town_terrain
-
-    # Load the contour data
-    contour_data_path = "calc_engine/uk/contour_data.xlsx"
-    datasets = load_contour_data(contour_data_path)
-
-    if is_orography_significant:
-        st.markdown("#### NA.5 (Turbulence Intensity $I_{v}(z)$)")
-        # Interpolate and compute peak velocity pressure
-        interpolated_qp = get_interpolated_value(datasets, "NA.5", d_sea, z_minus_h_dis)
-        if interpolated_qp is not None:
-            qp_value = interpolated_qp * q_b
-            st.session_state.inputs["qp_value"] = qp_value
-            st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
-        else:
-            st.error("Could not interpolate value from NA.5")
-        # Plot NA.5
-        display_single_plot(st, datasets, "NA.5", d_sea, z_input)
-
+        # Import the UK contour plot functions
+        from calc_engine.uk.contour_plots import load_contour_data
+        from calc_engine.uk.roughness import calculate_uk_roughness
+        
+        # Load the contour data
+        contour_data_path = "calc_engine/uk/contour_data.xlsx"
+        datasets = load_contour_data(contour_data_path)
+        
+        # Calculate UK roughness factor
+        c_rz = calculate_uk_roughness(st, datasets)
     else:
-        terrain = st.session_state.inputs.get("terrain_category", "").lower()
-        # Interpolate NA.7
-        st.markdown("##### NA.7 Plot (Exposure Factor $C_{e}(z)$)")
-        display_single_plot(st, datasets, "NA.7", d_sea, z_minus_h_dis)
-        interpolated_c_ez = get_interpolated_value(datasets, "NA.7", d_sea, z_minus_h_dis)
-        qp_value = interpolated_c_ez * q_b
-        st.write(f"Height factor (NA.7): {interpolated_height_factor:.3f}")
-
-        if terrain == "town":
-            # Interpolate NA.8
-            st.markdown("##### NA.8 Plot (Exposure Factor Correction $C_{e,T}$)")
-            display_single_plot(st, datasets, "NA.8", d_town_terrain, z_minus_h_dis)
-            interpolated_c_eT = get_interpolated_value(datasets, "NA.8", d_town_terrain, z_minus_h_dis)
-            qp_value = interpolated_c_ez * interpolated_c_eT * q_b
-            st.write(f"Town factor (NA.8): {interpolated_town_factor:.3f}")
-            st.session_state.inputs["qp_value"] = qp_value
-
-        st.session_state.inputs["qp_value"] = qp_value
-        st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+        # Use EU roughness calculation
+        from calc_engine.eu.roughness import display_eu_roughness_calculation
         
-        else:
-            st.markdown("##### Country terrain")
-            
-            # Create columns for layout
-            col1, col2 = st.columns([0.3, 0.7])
-            
-            with col1:
-                # Allow user to adjust parameters
-                z_input = st.number_input(
-                    "Height z (m)",
-                    min_value=1.0,
-                    max_value=200.0,
-                    value=z_minus_h_dis,
-                    format="%.1f"
-                )
-            
-            # Get interpolated value from NA.7 only
-            with col2:
-                # Display NA.7 plot
-                display_single_plot(col2, datasets, "NA.7", 0, z_input)
-                interpolated_height_factor = get_interpolated_value(datasets, "NA.7", 0, z_input)
-            
-            if interpolated_height_factor is not None:
-                qp_value = interpolated_height_factor * q_b
-                st.session_state.inputs["qp_value"] = qp_value
-                
-                st.write(f"Height factor from NA.7: {interpolated_height_factor:.3f}")
-                st.write(f"Peak velocity pressure: $q_p(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
-            else:
-                st.error("Could not interpolate value from NA.7")
-
-else:
-    # Non-UK peak pressure calculation (EU standard)
-    st.markdown("### EU Peak Wind Pressure")
+        # Get terrain category from session state
+        terrain_category = get_session_value(st, "terrain_category", "II")
+        
+        # Calculate and display EU roughness factor
+        c_rz = display_eu_roughness_calculation(st, z_minus_h_dis, terrain_category)
     
-    # Import necessary functions
-    from calc_engine.eu.peak_pressure import calculate_qp
+    # Calculate mean wind velocity
+    v_b = get_session_value(st, "V_b", 0.0)
+    c_oz = get_session_value(st, "c_oz", 1.0)
     
-    # Get needed parameters
-    z = st.session_state.inputs.get("z_minus_h_dis", 10.0)
-    terrain_category = st.session_state.inputs.get("terrain_category", "II")
-    v_b = st.session_state.inputs.get("V_b", 0.0)
-    c_o = st.session_state.inputs.get("c_oz", 1.0)  # Orography factor
+    v_mean = v_b * c_rz * c_oz
+    store_session_value(st, "v_mean", v_mean)
     
-    # Calculate peak pressure
-    try:
-        qp_value = calculate_qp(z, terrain_category, v_b, rho_air, c_o)
-        st.session_state.inputs["qp_value"] = qp_value
+    # Display the mean wind velocity result
+    st.markdown("#### Mean Wind Velocity")
+    st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_oz:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
+
+def peak_pressure_section():
+    """Display the Peak Wind Pressure section."""
+    st.markdown("---")
+    st.header("Peak Wind Pressure")
+    
+    # Air density input
+    rho_air = st.number_input(
+        "Air Density (kg/m³)",
+        min_value=1.0,
+        max_value=2.0,
+        value=1.226,
+        step=0.001,
+        format="%.3f"
+    )
+    store_session_value(st, "rho_air", rho_air)
+    
+    # Basic wind pressure calculation
+    v_b = get_session_value(st, "V_b", 0.0)
+    q_b = 0.5 * rho_air * (v_b ** 2)
+    store_session_value(st, "q_b", q_b)
+    
+    st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdot {rho_air:.3f} \\cdot {v_b:.2f}^2 = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
+    
+    # Check the region selection for peak pressure calculation
+    region = get_session_value(st, "region")
+    z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
+    
+    if region == "United Kingdom":
+        from calc_engine.uk.contour_plots import load_contour_data
+        from calc_engine.uk.peak_pressure import calculate_uk_peak_pressure
         
-        # Get the c_r value for display
-        c_r = st.session_state.inputs.get("c_r", 1.0)
+        # Load the contour data
+        contour_data_path = "calc_engine/uk/contour_data.xlsx"
+        datasets = load_contour_data(contour_data_path)
         
-        # Display calculation parameters and result
-        st.write(f"Basic wind pressure: $q_b = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
-        st.write(f"Roughness factor: $c_r(z) = {c_r:.3f}$")
-        st.write(f"Orography factor: $c_o(z) = {c_o:.3f}$")
+        # Calculate UK peak pressure
+        qp_value = calculate_uk_peak_pressure(st, datasets, q_b)
+    else:
+        from calc_engine.eu.peak_pressure import display_eu_peak_pressure_calculation
         
-        # Calculate turbulence intensity (used in EU approach)
-        k_I = 1.0  # turbulence factor (default value is 1.0)
-        terrain_params = {
-            '0': {'z0': 0.003, 'z_min': 1},
-            'I': {'z0': 0.01, 'z_min': 1},
-            'II': {'z0': 0.05, 'z_min': 2},
-            'III': {'z0': 0.3, 'z_min': 5},
-            'IV': {'z0': 1.0, 'z_min': 10},
-        }
-        z0 = terrain_params[terrain_category]['z0']
-        z_min = terrain_params[terrain_category]['z_min']
+        # Get parameters
+        terrain_category = get_session_value(st, "terrain_category", "II")
+        c_o = get_session_value(st, "c_oz", 1.0)
         
-        # Calculate turbulence intensity
-        if z < z_min:
-            I_v = k_I / (c_o * math.log(z_min / z0))
-        else:
-            I_v = k_I / (c_o * math.log(z / z0))
-        
-        st.write(f"Turbulence intensity: $I_v(z) = {I_v:.3f}$")
-        
-        # Display the full formula and result
-        st.write(f"Peak velocity pressure: $q_p(z) = [1 + 7 \\cdot I_v(z)] \\cdot 0.5 \\cdot \\rho \\cdot v_m^2(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
-        
-    except Exception as e:
-        st.error(f"Error calculating peak velocity pressure: {e}")
+        # Calculate EU peak pressure
+        qp_value = display_eu_peak_pressure_calculation(
+            st, z_minus_h_dis, terrain_category, v_b, rho_air, c_o
+        )
 
 # --- Section 5: Wind Pressure Profile ---
 st.markdown("---")
