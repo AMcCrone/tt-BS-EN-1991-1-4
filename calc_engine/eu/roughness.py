@@ -86,7 +86,7 @@ def display_eu_roughness_calculation(st, z_minus_h_dis, terrain_category):
         float: The calculated roughness factor
     """
     # Calculate roughness factor using your existing function
-    c_rz = calculate_cr(z_minus_h_dis, terrain_category)
+    c_rz = calculate_crz(z_minus_h_dis, terrain_category)
     
     # Store in session state
     st.session_state.inputs["c_rz"] = c_rz
