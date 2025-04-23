@@ -121,7 +121,7 @@ with col1:
         "North-South Dimension (m)",
         min_value=1.0,
         max_value=500.0,
-        value=float(st.session_state.inputs.get("NS_dimension", 20.0)),
+        value=float(st.session_state.inputs.get("NS_dimension", 30.0)),
         step=1.0
     )
     
@@ -129,7 +129,7 @@ with col1:
         "East-West Dimension (m)",
         min_value=1.0,
         max_value=500.0,
-        value=float(st.session_state.inputs.get("EW_dimension", 15.0)),
+        value=float(st.session_state.inputs.get("EW_dimension", 30.0)),
         step=1.0
     )
     
@@ -137,7 +137,7 @@ with col1:
         "Building Height (m)",
         min_value=1.0,
         max_value=500.0,
-        value=float(st.session_state.inputs.get("z", 10.0)),
+        value=float(st.session_state.inputs.get("z", 30.0)),
         step=1.0
     )
     
