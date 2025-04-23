@@ -388,6 +388,8 @@ def wind_velocity_section():
     st.markdown("#### Mean Wind Velocity")
     st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_oz:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
 
+wind_velocity_section()
+
 def peak_pressure_section():
     """Display the Peak Wind Pressure section."""
     st.markdown("---")
@@ -436,6 +438,7 @@ def peak_pressure_section():
         qp_value = display_eu_peak_pressure_calculation(
             st, z_minus_h_dis, terrain_category, v_b, rho_air, c_o
         )
+peak_pressure_section()
 
 # --- Section 5: Wind Pressure Profile ---
 st.markdown("---")
