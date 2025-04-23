@@ -45,8 +45,8 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
                 "NA.6", 
                 d_town_terrain, 
                 z_minus_h_dis, 
-                "Terrain Orography Correction Factor", 
                 "Turbulence Correction Factor $k_{I,T}$", 
+                "k_{I,T}", 
                 "k_IT"
             )
             
