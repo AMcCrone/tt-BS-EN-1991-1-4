@@ -252,7 +252,7 @@ with col_input:
         "$$v_{b,map}$$ (m/s)",
         min_value=0.1,
         max_value=100.0,
-        value=float(st.session_state.inputs.get("V_bmap", 24.0)),
+        value=float(st.session_state.inputs.get("V_bmap", 21.5)),
         step=0.1,
         help="Fundamental wind velocity from Figure 3.2"
     )
@@ -357,12 +357,14 @@ h_dis = calculate_displacement_height()
 # Get or set the height z from session state
 z = st.session_state.inputs.get("z", 10.0)
 z_minus_h_dis = z - h_dis
+st.session_state.inputs["z_minus_h_dis"] = z_minus_h_dis
 
 st.write(f"Displacement height $h_{{dis}}$: {h_dis:.2f} m")
-st.write(f"Effective height $z - h_{{dis}}$): {z_minus_h_dis:.2f} m")
+st.write(f"Effective height ($z - h_{{dis}}$): {z_minus_h_dis:.2f} m")
 
 # Check the region selection
 region = st.session_state.inputs.get("region")
+z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis")
 
 if region == "United Kingdom":
     st.markdown("#### Roughness Factor $C_r(z)$")
@@ -372,25 +374,14 @@ if region == "United Kingdom":
     
     # Get required parameters from session state - use the freshly calculated values
     x_upwind = st.session_state.inputs.get("distance_upwind", 10.0)
-    
+
+    # Allow user to override the calculated value (optional)
+    use_calculated = st.checkbox("Use calculated value from contour plot", value=True)
+
     # Create columns for layout
     col1, col2 = st.columns([0.3, 0.7])
     
     with col1:
-        # Allow user to override the calculated value (optional)
-        use_calculated = st.checkbox("Use calculated value from contour plot", value=True)
-        
-        # Display the effective height but allow adjustment
-        z_input = st.number_input(
-            "z - h_dis (m)",
-            min_value=1.0,
-            max_value=200.0,
-            value=z_minus_h_dis,  # Use the freshly calculated value
-            format="%.1f"
-        )
-        # Update session state with any user-adjusted value
-        st.session_state.inputs["z_minus_h_dis"] = z_input
-        
         d_sea = st.session_state.inputs.get("d_sea", 60.0)
     
     # Load the contour data
@@ -398,11 +389,11 @@ if region == "United Kingdom":
     datasets = load_contour_data(contour_data_path)
     
     # Get interpolated c_r(z) value from NA.3
-    interpolated_c_r = get_interpolated_value(datasets, "NA.3", d_sea, z_input)
+    interpolated_c_r = get_interpolated_value(datasets, "NA.3", d_sea, z_minus_h_dis)
     
     with col2:
         # Display NA.3 plot in column 2
-        display_single_plot(col2, datasets, "NA.3", d_sea, z_input)
+        display_single_plot(col2, datasets, "NA.3", d_sea, z_minus_h_dis)
     
     # Set c_r based on user's choice
     if use_calculated and interpolated_c_r is not None:
@@ -470,10 +461,10 @@ st.header("Peak Wind Pressure")
 rho_air = st.number_input(
     "Air Density (kg/m³)",
     min_value=1.0,
-    max_value=1.5,
-    value=1.25,
-    step=0.01,
-    format="%.2f"
+    max_value=2.0,
+    value=1.226,
+    step=0.001,
+    format="%.3f"
 )
 st.session_state.inputs["rho_air"] = rho_air
 
