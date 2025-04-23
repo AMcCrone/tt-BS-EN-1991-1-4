@@ -51,7 +51,7 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     
     # Create a donut shape for surrounding buildings
     # Outer boundary (very large to extend beyond view)
-    plot_size = max(NS_dimension, EW_dimension) * 1.5
+    plot_size = max(NS_dimension, EW_dimension) * 2
     outer_x = [-plot_size, plot_size, plot_size, -plot_size, -plot_size]
     outer_y = [-plot_size, -plot_size, plot_size, plot_size, -plot_size]
     
@@ -147,7 +147,7 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
         e = min(b, 2*h)
         
         # Check if funnelling applies (gap between e/4 and e)
-        if e/4 <= gap <= e:
+        if e/4 < gap < e:
             if is_ns:  # North-South direction
                 if direction == "North":
                     x = [-dimension/2, dimension/2, dimension/2, -dimension/2, -dimension/2]
@@ -163,6 +163,16 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
                     x = [-EW_dimension/2, -EW_dimension/2-gap, -EW_dimension/2-gap, -EW_dimension/2, -EW_dimension/2]
                     y = [-dimension/2, -dimension/2, dimension/2, dimension/2, -dimension/2]
             
+            # Calculate funnelling intensity based on gap's position between e/4 and e
+            if gap <= e/2:
+                # Interpolate between e/4 and e/2 (increasing effect)
+                factor = (gap - e/4) / (e/4)  # 0 at e/4, 1 at e/2
+                intensity_text = f"Increasing (factor: {factor:.2f})"
+            else:
+                # Interpolate between e/2 and e (decreasing effect)
+                factor = (e - gap) / (e/2)  # 1 at e/2, 0 at e
+                intensity_text = f"Decreasing (factor: {factor:.2f})"
+            
             fig.add_trace(go.Scatter(
                 x=x,
                 y=y,
@@ -172,7 +182,7 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
                 line=dict(color=TT_Orange, width=1),
                 name=f"{direction} Funnelling Zone",
                 hoverinfo="text",
-                hovertext=f"{direction} Funnelling Zone",
+                hovertext=f"{direction} Funnelling Zone - {intensity_text}",
                 mode="lines"  # Just lines, no markers
             ))
             
@@ -227,7 +237,7 @@ def calculate_cpe():
     Calculate external pressure coefficients (cp,e) for projects considering funnelling effects for all wind directions
     
     Returns:
-    - DataFrame of cp,e values for different zones and wind directions
+    - Dictionary of DataFrames of cp,e values for different wind directions
     """
     h = st.session_state.inputs.get("z", 10.0)  # Building height
     NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
@@ -235,7 +245,7 @@ def calculate_cpe():
     
     # Calculate for all wind directions
     wind_directions = ["N", "S", "E", "W"]
-    all_results = []
+    results_by_direction = {}
     
     for wind_direction in wind_directions:    
         # Determine h/d ratio based on wind direction
@@ -254,8 +264,8 @@ def calculate_cpe():
         zone_A_values = [-1.2, -1.2, -1.2]
         zone_B_values = [-0.8, -0.8, -0.8]
         zone_C_values = [-0.5, -0.5, -0.5]
-        zone_D_values = [0.7, 0.8, 0.8]  # Windward
-        zone_E_values = [-0.3, -0.5, -0.7]  # Leeward
+        zone_D_values = [0.8, 0.8, 0.8]  # Windward
+        zone_E_values = [-0.5, -0.5, -0.7]  # Leeward
         
         # Linear interpolation for h/d ratio
         if h_d_ratio <= 0.25:
@@ -282,6 +292,11 @@ def calculate_cpe():
                     cp_E = zone_E_values[i] + factor * (zone_E_values[i+1] - zone_E_values[i])
                     break
         
+        # Store original values before funnelling adjustment
+        base_cp_A = cp_A
+        base_cp_B = cp_B
+        base_cp_C = cp_C
+        
         # Check for funnelling effect based on wind direction
         if wind_direction == "N":
             gap = st.session_state.inputs.get("south_gap", 10.0)
@@ -300,33 +315,57 @@ def calculate_cpe():
         b = dimension  # Width of face perpendicular to wind
         e = min(b, 2*h)
         
-        # Apply funnelling according to the guidance
+        # Apply funnelling according to the guidance and graph
         has_funnelling = False
+        funnelling_factor = 0
+        
+        # Define the funnelling peak values
+        max_funnel_cp_A = -1.6
+        max_funnel_cp_B = -0.9
+        max_funnel_cp_C = -0.9
+        
         if e/4 < gap < e:  # Funnelling applies when e/4 < gap < e
             has_funnelling = True
-            # Use the specified values for funnelling
-            cp_A = -1.6  # Value for Zone A with funnelling
-            cp_B = -0.9  # Value for Zone B with funnelling
-            cp_C = -0.9  # Value for Zone C with funnelling
-            # Note: No guidance mentioned for D and E zones, so keeping the original values
+            
+            if gap <= e/2:
+                # Interpolate between e/4 and e/2 (increasing effect)
+                # At e/4: original values
+                # At e/2: maximum funnelling values
+                factor = (gap - e/4) / (e/4)  # 0 at e/4, 1 at e/2
+                
+                cp_A = base_cp_A + factor * (max_funnel_cp_A - base_cp_A)
+                cp_B = base_cp_B + factor * (max_funnel_cp_B - base_cp_B)
+                cp_C = base_cp_C + factor * (max_funnel_cp_C - base_cp_C)
+                funnelling_factor = factor
+                
+            else:
+                # Interpolate between e/2 and e (decreasing effect)
+                # At e/2: maximum funnelling values
+                # At e: original values
+                factor = (e - gap) / (e/2)  # 1 at e/2, 0 at e
+                
+                cp_A = base_cp_A + factor * (max_funnel_cp_A - base_cp_A)
+                cp_B = base_cp_B + factor * (max_funnel_cp_B - base_cp_B)
+                cp_C = base_cp_C + factor * (max_funnel_cp_C - base_cp_C)
+                funnelling_factor = factor
         
         # Map the direction code to full name for display
         dir_map = {"N": "North", "S": "South", "E": "East", "W": "West"}
         direction_name = dir_map[wind_direction]
         
         # Add funnelling indicator to description if applicable
-        funnelling_note = " (Funnelling)" if has_funnelling else ""
+        funnelling_note = f" (Funnelling factor: {funnelling_factor:.2f})" if has_funnelling else ""
         
-        # Add to results
-        all_results.extend([
-            {"Wind Direction": direction_name, "Zone": "A", "cp,e": cp_A, "Description": f"Side Suction (Edge){funnelling_note}"},
-            {"Wind Direction": direction_name, "Zone": "B", "cp,e": cp_B, "Description": f"Side Suction{funnelling_note}"},
-            {"Wind Direction": direction_name, "Zone": "C", "cp,e": cp_C, "Description": f"Side Suction (Center){funnelling_note}"},
-            {"Wind Direction": direction_name, "Zone": "D", "cp,e": cp_D, "Description": "Windward Face"},
-            {"Wind Direction": direction_name, "Zone": "E", "cp,e": cp_E, "Description": "Leeward Face"}
-        ])
+        # Create results for this direction
+        direction_results = [
+            {"Zone": "A", "cp,e": cp_A, "Description": f"Side Suction (Edge){funnelling_note}"},
+            {"Zone": "B", "cp,e": cp_B, "Description": f"Side Suction{funnelling_note}"},
+            {"Zone": "C", "cp,e": cp_C, "Description": f"Side Suction (Center){funnelling_note}"},
+            {"Zone": "D", "cp,e": cp_D, "Description": "Windward Face"},
+            {"Zone": "E", "cp,e": cp_E, "Description": "Leeward Face"}
+        ]
+        
+        # Store results for this direction in the dictionary
+        results_by_direction[direction_name] = pd.DataFrame(direction_results)
     
-    # Create DataFrame of all results
-    results_df = pd.DataFrame(all_results)
-    
-    return results_df
+    return results_by_direction
