@@ -100,11 +100,11 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
     
     # Calculate roughness factor
     from calc_engine.eu.roughness import calculate_crz
-    c_r = calculate_cr(z_minus_h_dis, terrain_category)
-    st.session_state.inputs["c_r"] = c_r
+    c_rz = calculate_crz(z_minus_h_dis, terrain_category)
+    st.session_state.inputs["c_rz"] = c_rz
     
     # Calculate mean wind velocity
-    v_m = v_b * c_r * c_o
+    v_m = v_b * c_rz * c_o
     st.session_state.inputs["v_mean"] = v_m
     
     # Calculate turbulence intensity
@@ -133,9 +133,9 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
     # Display calculation parameters and results
     st.markdown("### EU Peak Wind Pressure")
     st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdot {rho_air:.3f} \\cdot {v_b:.2f}^2 = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
-    st.write(f"Roughness factor: $c_r(z) = {c_r:.3f}$")
+    st.write(f"Roughness factor: $c_r(z) = {c_rz:.3f}$")
     st.write(f"Orography factor: $c_o(z) = {c_o:.3f}$")
-    st.write(f"Mean wind velocity: $v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_r:.3f} \\cdot {c_o:.3f} = {v_m:.2f}\\;\\mathrm{{m/s}}$")
+    st.write(f"Mean wind velocity: $v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.3f} \\cdot {c_o:.3f} = {v_m:.2f}\\;\\mathrm{{m/s}}$")
     st.write(f"Turbulence intensity: $I_v(z) = {I_v:.3f}$")
     
     # Display the peak pressure calculation and result
