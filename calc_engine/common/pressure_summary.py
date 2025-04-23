@@ -153,7 +153,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     
     # Create a continuous color scale for pressure
     # We'll use a blue color scale from light to dark for increasing suction
-    colorscale = pc.sequential.Blues
+    colorscale = pc.sequential.Blues_r
     
     # Define cp,i values
     cp_i_positive = 0.2
