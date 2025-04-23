@@ -141,6 +141,48 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     # Storage for all figures
     figures = {}
     
+    # Find global pressure range across all directions for consistent colorscale
+    global_max_suction = 0
+    global_min_suction = 0
+    
+    # First pass to find global pressure range
+    for direction, cp_df in results_by_direction.items():
+        # Set up width based on direction
+        if direction in ["North", "South"]:
+            building_width = EW_dimension
+        else:  # East or West
+            building_width = NS_dimension
+        
+        # Sample heights to find pressure range
+        height_samples = 20
+        for z in np.linspace(0, h, height_samples):
+            qp_value = get_qp_at_height(z, h, building_width, qp_reference)
+            
+            # Check all zones
+            for zone_name in ['A', 'B', 'C']:
+                # Only process if this zone exists in this direction
+                if zone_name in cp_df['Zone'].values:
+                    cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
+                    we = qp_value * cp_e
+                    
+                    # Calculate internal pressures
+                    wi_positive = qp_value * cp_i_positive
+                    wi_negative = qp_value * cp_i_negative
+                    
+                    # Calculate net pressures (minimum of two internal pressure cases)
+                    net_pressure = min(we + wi_positive, we + wi_negative)
+                    
+                    global_max_suction = min(global_max_suction, net_pressure)
+                    global_min_suction = max(global_min_suction, net_pressure)
+    
+    # Ensure we have some range to avoid division by zero
+    if global_max_suction == global_min_suction:
+        global_max_suction = global_min_suction - 1
+    
+    # Convert pressure range from N/m² to kPa
+    global_max_suction_kpa = global_max_suction / 1000
+    global_min_suction_kpa = global_min_suction / 1000
+    
     # Process each direction (elevation)
     for direction, cp_df in results_by_direction.items():
         # Filter for just the A, B, C zones
@@ -231,56 +273,14 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             zone_boundaries = [(0, width)]
             zone_names = ['A']
         
-        # Define a function to get pressure at a specific height
-        def get_qp_at_height(z, h, b, qp_reference):
-            """Calculate qp at height z for a building with height h and width b."""
-            if h <= b:  # Case 1
-                return qp_reference  # Constant for entire height
-            elif b < h <= 2*b:  # Case 2
-                if z <= b:
-                    return qp_reference
-                else:
-                    # Linear interpolation between qp_reference and qp_reference*1.2
-                    return qp_reference + (qp_reference*0.2) * (z - b) / (h - b)
-            else:  # Case 3: h > 2b
-                if z <= b:
-                    return qp_reference
-                elif b < z <= (h - b):
-                    # Middle section: linear from qp_reference to qp_reference*1.35
-                    return qp_reference + (qp_reference*0.35) * (z - b) / ((h - b) - b)
-                else:
-                    # Top section: linear from qp_reference*1.35 to qp_reference*1.5
-                    return qp_reference*1.35 + (qp_reference*0.15) * (z - (h - b)) / (h - (h - b))
-        
-        # Find the maximum and minimum pressure values across all heights for color scaling
-        max_suction = 0
-        min_suction = 0
-        height_samples = 20  # Number of vertical segments to check
-        
         # Store the maximum pressure values for each zone (at maximum height)
         zone_max_pressures = {}
         
         for zone_name in set(zone_names):
             # Calculate pressure at maximum height (h) for this zone
-            qp_value = get_qp_at_height(height, height, building_width, qp_reference)
-            cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
-            we = qp_value * cp_e
-            
-            # Calculate internal pressures
-            wi_positive = qp_value * cp_i_positive
-            wi_negative = qp_value * cp_i_negative
-            
-            # Calculate net pressure (minimum of two internal pressure cases)
-            net_pressure = min(we + wi_positive, we + wi_negative)
-            
-            # Store the maximum pressure for this zone
-            zone_max_pressures[zone_name] = net_pressure
-        
-        # Calculate the range of pressures for all heights
-        for z in np.linspace(0, height, height_samples):
-            qp_value = get_qp_at_height(z, height, building_width, qp_reference)
-            
-            for zone_name in set(zone_names):
+            # Only calculate if this zone exists in this direction
+            if zone_name in cp_df['Zone'].values:
+                qp_value = get_qp_at_height(height, height, building_width, qp_reference)
                 cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
                 we = qp_value * cp_e
                 
@@ -288,15 +288,14 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 wi_positive = qp_value * cp_i_positive
                 wi_negative = qp_value * cp_i_negative
                 
-                # Calculate net pressures (we're only interested in suction for A, B, C)
+                # Calculate net pressure (minimum of two internal pressure cases)
                 net_pressure = min(we + wi_positive, we + wi_negative)
                 
-                max_suction = min(max_suction, net_pressure)
-                min_suction = max(min_suction, net_pressure)
-        
-        # Ensure we have some range to avoid division by zero
-        if max_suction == min_suction:
-            max_suction = min_suction - 1
+                # Convert to kPa and round to 2 decimal places
+                net_pressure_kpa = round(net_pressure / 1000, 2)
+                
+                # Store the maximum pressure for this zone
+                zone_max_pressures[zone_name] = net_pressure_kpa
         
         # For each zone, create a heatmap to show pressure variation with height
         for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
@@ -317,7 +316,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             X, Y = np.meshgrid(x_vals, y_vals)
             Z = np.zeros((y_steps, x_steps))
             
-            # Fill Z with pressure values that vary with height
+            # Fill Z with pressure values that vary with height (converted to kPa)
             for j, y in enumerate(y_vals):
                 qp_value = get_qp_at_height(y, height, building_width, qp_reference)
                 we = qp_value * cp_e
@@ -329,8 +328,11 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 # Calculate net pressure (minimum of two internal pressure cases)
                 net_pressure = min(we + wi_positive, we + wi_negative)
                 
+                # Convert to kPa
+                net_pressure_kpa = net_pressure / 1000
+                
                 # Fill the entire row with the same pressure value
-                Z[j, :] = net_pressure
+                Z[j, :] = net_pressure_kpa
             
             # Create heatmap for this zone
             fig.add_trace(go.Heatmap(
@@ -340,14 +342,14 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 colorscale=colorscale,
                 showscale=(i == 0),  # Only show colorbar for the first zone
                 colorbar=dict(
-                    title="Suction (N/m²)",
+                    title="Suction (kPa)",
                     x=1.05,
                     y=0.5,
                     lenmode="fraction",
                     len=0.9
                 ),
-                zmin=max_suction,
-                zmax=min_suction,
+                zmin=global_max_suction_kpa,  # Use global values for consistent scale
+                zmax=global_min_suction_kpa,
                 name=f"Zone {zone_name}"
             ))
             
@@ -356,7 +358,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             fig.add_annotation(
                 x=(x0 + x1)/2,
                 y=height/2,
-                text=f"Zone {zone_name}<br>{max_pressure:.0f} N/m²",
+                text=f"Zone {zone_name}<br>{max_pressure:.2f} kPa",
                 showarrow=False,
                 font=dict(size=16, color="white"),
                 bgcolor="rgba(0,0,0,0.3)",
@@ -530,6 +532,26 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
         figures[direction] = fig
     
     return figures
+
+def get_qp_at_height(z, h, b, qp_reference):
+    """Calculate qp at height z for a building with height h and width b."""
+    if h <= b:  # Case 1
+        return qp_reference  # Constant for entire height
+    elif b < h <= 2*b:  # Case 2
+        if z <= b:
+            return qp_reference
+        else:
+            # Linear interpolation between qp_reference and qp_reference*1.2
+            return qp_reference + (qp_reference*0.2) * (z - b) / (h - b)
+    else:  # Case 3: h > 2b
+        if z <= b:
+            return qp_reference
+        elif b < z <= (h - b):
+            # Middle section: linear from qp_reference to qp_reference*1.35
+            return qp_reference + (qp_reference*0.35) * (z - b) / ((h - b) - b)
+        else:
+            # Top section: linear from qp_reference*1.35 to qp_reference*1.5
+            return qp_reference*1.35 + (qp_reference*0.15) * (z - (h - b)) / (h - (h - b))
 
 def visualize_wind_pressures(session_state):
     """
