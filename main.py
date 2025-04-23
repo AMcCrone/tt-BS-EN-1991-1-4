@@ -740,15 +740,27 @@ north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
 # Calculate cp,e values - now using common function
 if st.button("Calculate External Pressure Coefficients"):
-    cp_results = calculate_cpe()
+    cp_results_by_direction = calculate_cpe()
     
     st.subheader("External Pressure Coefficients (cp,e)")
     
-    # Show results for all wind directions
-    st.dataframe(cp_results)
+    # Create tabs for each wind direction
+    tabs = st.tabs(["North", "South", "East", "West"])
     
-    # Store results for later use
-    st.session_state.cp_results = cp_results
+    # Show results for each wind direction in its own tab
+    for i, direction in enumerate(["North", "South", "East", "West"]):
+        with tabs[i]:
+            st.write(f"### {direction} Wind")
+            st.dataframe(cp_results_by_direction[direction])
+    
+    # Store overall results for later use (combine all directions)
+    all_results = []
+    for direction, df in cp_results_by_direction.items():
+        df_with_direction = df.copy()
+        df_with_direction["Wind Direction"] = direction
+        all_results.append(df_with_direction)
+    
+    st.session_state.cp_results = pd.concat(all_results)
 
 # Display wind zone plots (using your existing function)
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
