@@ -55,7 +55,7 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             store_session_value(st, "qp_value", qp_value)
             
             # Display result with equation
-            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot I_v(z) \\cdot \\text{{NA.6}} = {q_b:.2f} \\cdot {factor:.3f} \\cdot {na6_factor:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot I_v(z) \\cdot \\text{{NA.6}} = {q_b:.2f} \\cdot {factor:.3f} \\cdot {k_IT:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
         else:
             # Calculate peak pressure without NA.6 correction
             qp_value = factor * q_b
