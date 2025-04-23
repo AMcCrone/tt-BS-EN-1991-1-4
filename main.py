@@ -403,8 +403,8 @@ if region == "United Kingdom":
         # Display NA.3 plot in column 2
         display_single_plot(col2, datasets, "NA.3", d_sea, z_minus_h_dis)
     
-    # Set c_r based on user's choice
-    if use_calculated and interpolated_c_r is not None:
+    # Set c_rz based on user's choice
+    if use_calculated and interpolated_c_rz is not None:
         c_rz = interpolated_c_rz
     else:
         # If user chooses to enter manually or if interpolation failed
