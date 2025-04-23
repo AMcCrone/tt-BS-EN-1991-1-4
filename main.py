@@ -187,7 +187,7 @@ with col2:
     )
     st.plotly_chart(building_fig, use_container_width=True)
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col2 = st.columns(2)
 with col1:
         altitude_factor = st.number_input(
         "Altitude Above Sea Level (m)",
@@ -203,14 +203,6 @@ with col2:
         max_value=1000.0,
         value=float(st.session_state.inputs.get("d_sea", 60.0)),
         step=1.0
-    )
-with col3:
-        d_town_terrain = st.number_input(
-        "Distance inside Town Terrain (km)",
-        min_value=0.1,
-        max_value=50.0,
-        value=float(st.session_state.inputs.get("d_town_terrain", 5.0)),
-        step=0.1
     )
 
 def render_terrain_category():
@@ -235,6 +227,17 @@ def render_terrain_category():
     # Extract the simplified category code by splitting at " - "
     selected_code = selected_option.split(" - ")[0].strip()
     st.session_state.inputs["terrain_category"] = selected_code
+
+    if region == "United Kingdom" and selected_code.lower() == "town":
+        d_default = float(st.session_state.inputs.get("d_town_terrain", 5.0))
+        d_town = st.number_input(
+            "Distance inside Town Terrain (km)",
+            min_value=0.1,
+            max_value=50.0,
+            value=d_default,
+            step=0.1,
+        )
+        st.session_state.inputs["d_town_terrain"] = d_town
 
     # Display educational content if the toggle is enabled in the sidebar
     if st.session_state.get("show_educational", False):
