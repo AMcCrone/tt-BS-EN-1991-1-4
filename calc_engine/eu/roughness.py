@@ -74,8 +74,6 @@ def calculate_crz(z, terrain_category):
 
     return c_rz
 
-# Keep your existing calculate_cr function
-
 def display_eu_roughness_calculation(st, z_minus_h_dis, terrain_category):
     """Display EU roughness calculation with explanation.
     
