@@ -340,18 +340,18 @@ with col_result:
 st.subheader("Mean Wind Velocity")
 
 def calculate_displacement_height():
-    use_standard = st.checkbox("Use standard $h_{{dis}}$ = 15m")
+    use_standard = st.checkbox("Use standard $h_{{dis}}$ = 15m", help = "In th absence of more accurate information, the obstruction height may be taken as h_ave = 15m for terrain category IV")
     
     if use_standard:
         h_dis = 15.0
     else:
         col1, col2 = st.columns(2)
         with col1:
-            x = st.number_input("Distance x (m)", value=10.0, min_value=0.0)
+            x = st.number_input("Distance to other buildings (m)", value=10.0, min_value=0.0)
         with col2:
             h_ave = st.number_input("Average height h_ave (m)", value=5.0, min_value=0.1)
         
-        h = st.number_input("Obstruction height h (m)", value=6.0, min_value=0.1)
+        h = st.session_state.inputs.get("z", 30.0)
         
         if x <= 2 * h_ave:
             h_dis = min(0.8 * h_ave, 0.6 * h)
@@ -366,7 +366,7 @@ def calculate_displacement_height():
 h_dis = calculate_displacement_height()
 
 # Get or set the height z from session state
-z = st.session_state.inputs.get("z", 10.0)
+z = st.session_state.inputs.get("z", 30.0)
 z_minus_h_dis = z - h_dis
 st.session_state.inputs["z_minus_h_dis"] = z_minus_h_dis
 
