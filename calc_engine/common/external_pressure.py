@@ -51,7 +51,7 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     
     # Create a donut shape for surrounding buildings
     # Outer boundary (very large to extend beyond view)
-    plot_size = max(NS_dimension, EW_dimension) * 2
+    plot_size = max(NS_dimension, EW_dimension) * 1.5
     outer_x = [-plot_size, plot_size, plot_size, -plot_size, -plot_size]
     outer_y = [-plot_size, -plot_size, plot_size, plot_size, -plot_size]
     
