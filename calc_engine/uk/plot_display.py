@@ -17,7 +17,7 @@ def display_contour_plot_with_override(st, datasets, plot_name, x_value, y_value
         float: The interpolated or manually entered value
     """
     from calc_engine.uk.contour_plots import get_interpolated_value, display_single_plot
-    from calc_engine.common.session_utils import store_session_value
+    from calc_engine.common.util import store_session_value
     
     st.markdown(f"##### {plot_name} Plot ({description})")
     
