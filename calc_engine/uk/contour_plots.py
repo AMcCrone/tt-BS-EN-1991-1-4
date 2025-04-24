@@ -39,7 +39,7 @@ PLOT_CONFIGS = {
     "NA.6": {
         "x_min": 0.1, "x_max": 20, 
         "y_min": 2, "y_max": 200, 
-        "x_name": "parameter X (m)",
+        "x_name": "Distance inside town terrain (km)",
         "contour_start": 1.0, "contour_end": 1.8, "contour_step": 0.05,
         "x_type": "town",
         "var_name": "k_IT",
@@ -48,7 +48,7 @@ PLOT_CONFIGS = {
     "NA.7": {
         "x_min": 0.1, "x_max": 100, 
         "y_min": 2, "y_max": 200, 
-        "x_name": "parameter Y (m)",
+        "x_name": "Distance upwind to shoreline (km)",
         "contour_start": 1.5, "contour_end": 4.2, "contour_step": 0.1,
         "x_type": "upwind",
         "var_name": "c_ez",
@@ -57,7 +57,7 @@ PLOT_CONFIGS = {
     "NA.8": {
         "x_min": 0.1, "x_max": 20, 
         "y_min": 2, "y_max": 200, 
-        "x_name": "parameter Z (m)",
+        "x_name": "Distance inside town terrain (km)",
         "contour_start": 0.60, "contour_end": 1.0, "contour_step": 0.02,
         "x_type": "town",
         "var_name": "c_eT",
