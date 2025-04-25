@@ -4,13 +4,13 @@ def create_building_visualisation(NS_dimension, EW_dimension, z, include_inset=F
     TT_LightBlue = "rgb(136,219,223)"
     TT_MidBlue = "rgb(0,163,173)"
     TT_DarkBlue = "rgb(0,48,60)"
-    TT_LightGrey = "rgb(223,224,225)"  # Updated grey color for the ground base
+    TT_LightGrey = "rgb(223,224,225)"
     
     # Create a blank figure
     fig = go.Figure()
-    
+
     # Add ground base (extending beyond the building footprint)
-    ground_extension = max(NS_dimension, EW_dimension) * 0.5  # Extend ground beyond building
+    ground_extension = max(NS_dimension, EW_dimension) * 0.3  # Extend ground beyond building
     fig.add_trace(go.Mesh3d(
         x=[-ground_extension, NS_dimension + ground_extension, NS_dimension + ground_extension, -ground_extension],
         y=[-ground_extension, -ground_extension, EW_dimension + ground_extension, EW_dimension + ground_extension],
@@ -194,216 +194,7 @@ def create_building_visualisation(NS_dimension, EW_dimension, z, include_inset=F
                 hoverinfo='none'
             ))
     
-    # Add dimension arrows using cone traces for arrowheads
-    arrow_size = min(NS_dimension, EW_dimension, z) * 0.04
-    text_offset = arrow_size * 1.5
-    
-    # NS dimension
-    # Main line
-    fig.add_trace(go.Scatter3d(
-        x=[arrow_size, NS_dimension - arrow_size],
-        y=[-ground_extension/2, -ground_extension/2],
-        z=[0, 0],
-        mode='lines',
-        line=dict(color='black', width=3),
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    # Left arrowhead (cone)
-    fig.add_trace(go.Cone(
-        x=[0],
-        y=[-ground_extension/2],
-        z=[0],
-        u=[-arrow_size],
-        v=[0],
-        w=[0],
-        colorscale=[[0, 'black'], [1, 'black']],
-        showscale=False,
-        sizemode='absolute',
-        sizeref=arrow_size,
-        hoverinfo='none'
-    ))
-    # Right arrowhead (cone)
-    fig.add_trace(go.Cone(
-        x=[NS_dimension],
-        y=[-ground_extension/2],
-        z=[0],
-        u=[arrow_size],
-        v=[0],
-        w=[0],
-        colorscale=[[0, 'black'], [1, 'black']],
-        showscale=False,
-        sizemode='absolute',
-        sizeref=arrow_size,
-        hoverinfo='none'
-    ))
-    # Text for NS dimension
-    fig.add_trace(go.Scatter3d(
-        x=[NS_dimension/2],
-        y=[-ground_extension/2 - text_offset],
-        z=[0],
-        mode='text',
-        text=[f'{NS_dimension}m'],
-        textposition='middle center',
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    
-    # EW dimension
-    # Main line
-    fig.add_trace(go.Scatter3d(
-        x=[-ground_extension/2, -ground_extension/2],
-        y=[arrow_size, EW_dimension - arrow_size],
-        z=[0, 0],
-        mode='lines',
-        line=dict(color='black', width=3),
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    # Bottom arrowhead (cone)
-    fig.add_trace(go.Cone(
-        x=[-ground_extension/2],
-        y=[0],
-        z=[0],
-        u=[0],
-        v=[-arrow_size],
-        w=[0],
-        colorscale=[[0, 'black'], [1, 'black']],
-        showscale=False,
-        sizemode='absolute',
-        sizeref=arrow_size,
-        hoverinfo='none'
-    ))
-    # Top arrowhead (cone)
-    fig.add_trace(go.Cone(
-        x=[-ground_extension/2],
-        y=[EW_dimension],
-        z=[0],
-        u=[0],
-        v=[arrow_size],
-        w=[0],
-        colorscale=[[0, 'black'], [1, 'black']],
-        showscale=False,
-        sizemode='absolute',
-        sizeref=arrow_size,
-        hoverinfo='none'
-    ))
-    # Text for EW dimension
-    fig.add_trace(go.Scatter3d(
-        x=[-ground_extension/2 - text_offset],
-        y=[EW_dimension/2],
-        z=[0],
-        mode='text',
-        text=[f'{EW_dimension}m'],
-        textposition='middle center',
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    
-    # Height dimension
-    # Main line
-    fig.add_trace(go.Scatter3d(
-        x=[-ground_extension/2, -ground_extension/2],
-        y=[0, 0],
-        z=[arrow_size, z - arrow_size],
-        mode='lines',
-        line=dict(color='black', width=3),
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    # Bottom arrowhead (cone)
-    fig.add_trace(go.Cone(
-        x=[-ground_extension/2],
-        y=[0],
-        z=[0],
-        u=[0],
-        v=[0],
-        w=[-arrow_size],
-        colorscale=[[0, 'black'], [1, 'black']],
-        showscale=False,
-        sizemode='absolute',
-        sizeref=arrow_size,
-        hoverinfo='none'
-    ))
-    # Top arrowhead (cone)
-    fig.add_trace(go.Cone(
-        x=[-ground_extension/2],
-        y=[0],
-        z=[z],
-        u=[0],
-        v=[0],
-        w=[arrow_size],
-        colorscale=[[0, 'black'], [1, 'black']],
-        showscale=False,
-        sizemode='absolute',
-        sizeref=arrow_size,
-        hoverinfo='none'
-    ))
-    # Text for Height dimension
-    fig.add_trace(go.Scatter3d(
-        x=[-ground_extension/2 - text_offset],
-        y=[0],
-        z=[z/2],
-        mode='text',
-        text=[f'{z}m'],
-        textposition='middle center',
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    
-    # If inset is included, add its height dimension
-    if include_inset and inset_offset > 0 and inset_height > 0:
-        # Main line
-        fig.add_trace(go.Scatter3d(
-            x=[NS_dimension + ground_extension/3, NS_dimension + ground_extension/3],
-            y=[EW_dimension/2, EW_dimension/2],
-            z=[z + arrow_size, z + inset_height - arrow_size],
-            mode='lines',
-            line=dict(color='black', width=3),
-            showlegend=False,
-            hoverinfo='none'
-        ))
-        # Bottom arrowhead (cone)
-        fig.add_trace(go.Cone(
-            x=[NS_dimension + ground_extension/3],
-            y=[EW_dimension/2],
-            z=[z],
-            u=[0],
-            v=[0],
-            w=[-arrow_size],
-            colorscale=[[0, 'black'], [1, 'black']],
-            showscale=False,
-            sizemode='absolute',
-            sizeref=arrow_size,
-            hoverinfo='none'
-        ))
-        # Top arrowhead (cone)
-        fig.add_trace(go.Cone(
-            x=[NS_dimension + ground_extension/3],
-            y=[EW_dimension/2],
-            z=[z + inset_height],
-            u=[0],
-            v=[0],
-            w=[arrow_size],
-            colorscale=[[0, 'black'], [1, 'black']],
-            showscale=False,
-            sizemode='absolute',
-            sizeref=arrow_size,
-            hoverinfo='none'
-        ))
-        # Text for inset height
-        fig.add_trace(go.Scatter3d(
-            x=[NS_dimension + ground_extension/3 + text_offset],
-            y=[EW_dimension/2],
-            z=[z + inset_height/2],
-            mode='text',
-            text=[f'{inset_height}m'],
-            textposition='middle center',
-            showlegend=False,
-            hoverinfo='none'
-        ))
-    
-    # Set the layout to be completely clean with no axes or grid
+    # Set the layout to be minimal with no axes or grid
     fig.update_layout(
         scene=dict(
             xaxis=dict(visible=False, showgrid=False, showticklabels=False, showbackground=False, zeroline=False),
@@ -414,10 +205,9 @@ def create_building_visualisation(NS_dimension, EW_dimension, z, include_inset=F
         margin=dict(l=0, r=0, b=0, t=0),
         showlegend=False,
         scene_camera=dict(
-            eye=dict(x=1.8, y=-1.8, z=1.5)
+            eye=dict(x=1.5, y=-1.5, z=1.2)
         ),
-        height=500,
-        width=700,
+        height=400,
         hovermode=False
     )
     
