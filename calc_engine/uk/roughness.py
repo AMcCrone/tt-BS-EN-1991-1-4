@@ -43,8 +43,9 @@ def calculate_uk_roughness(st, datasets):
             "C_{r,T}", 
             "c_rT"
         )
+        # Calculate the combined roughness factor
         c_rz = c_rT * c_rz
-        # Show combined result 
-        st.latex(f"c_r(z) = c_{r,T} \cdot c__r(z) = {c_rz:.3f}")
+        # Show combined result with LaTeX
+        st.latex(f"c_r(z) = c_{{r,T}} \\cdot c_r(z) = {c_rT:.3f} \\cdot {c_rz/c_rT:.3f} = {c_rz:.3f}")
     
     return c_rz
