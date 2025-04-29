@@ -267,8 +267,10 @@ V_bmap = st.number_input(
 st.session_state.inputs["V_bmap"] = V_bmap
 # Let the user choose whether they want to override standard K, n, return period
 use_custom_values = st.checkbox("Use custom K, n, and return period?")
-# Create three columns for input
+
 if use_custom_values:
+    # Create three columns for input
+    col1, col2, col3 = st.columns(3)
     with col1:
         K = st.number_input(
             "Shape parameter (K)",
