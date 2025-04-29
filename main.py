@@ -255,27 +255,21 @@ st.markdown("---")
 st.header("Wind Velocity")
 st.subheader("Basic Wind Velocity")
 
+# Vb,map input
+V_bmap = st.number_input(
+    "$$v_{b,map}$$ (m/s)",
+    min_value=0.1,
+    max_value=100.0,
+    value=float(st.session_state.inputs.get("V_bmap", 21.5)),
+    step=0.1,
+    help="Fundamental wind velocity from Figure 3.2"
+)
+st.session_state.inputs["V_bmap"] = V_bmap
+# Let the user choose whether they want to override standard K, n, return period
+use_custom_values = st.checkbox("Use custom K, n, and return period?")
 # Create three columns for input
-col1, col2, col3 = st.columns(3)
-with col1:
-    # Vb,map input
-    V_bmap = st.number_input(
-        "$$v_{b,map}$$ (m/s)",
-        min_value=0.1,
-        max_value=100.0,
-        value=float(st.session_state.inputs.get("V_bmap", 21.5)),
-        step=0.1,
-        help="Fundamental wind velocity from Figure 3.2"
-    )
-    st.session_state.inputs["V_bmap"] = V_bmap
-
-with col2:
-    # Let the user choose whether they want to override standard K, n, return period
-    use_custom_values = st.checkbox("Use custom K, n, and return period?")
-
-# Show K, n, return period inputs if custom values are selected
 if use_custom_values:
-    with col2:
+    with col1:
         K = st.number_input(
             "Shape parameter (K)",
             min_value=0.0,
@@ -284,7 +278,7 @@ if use_custom_values:
             step=0.1,
             help="Typically 0.2 if unspecified."
         )
-    with col3:
+    with col2:
         n = st.number_input(
             "Exponent (n)",
             min_value=0.0,
@@ -293,6 +287,7 @@ if use_custom_values:
             step=0.1,
             help="Typically 0.5 if unspecified."
         )
+    with col3:
         return_period = st.number_input(
             "Return Period (years)",
             min_value=1,
