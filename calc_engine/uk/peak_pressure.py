@@ -25,21 +25,7 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
     z = st.session_state.inputs.get("z", 30.0)
     
     if is_orography_significant:
-        # Display plots for all significant orography factors
-        
-        # Get NA.5 - Turbulence Intensity
-        i_vz = display_contour_plot_with_override(
-            st, 
-            datasets, 
-            "NA.5", 
-            d_sea, 
-            z_minus_h_dis, 
-            "Turbulence Intensity $I_{v}(z)$", 
-            "I_v(z)", 
-            "i_v"
-        )
-        
-        # Get NA.7 - Exposure Factor
+        # Get NA.7 - Exposure Factor - Used in calculations for z ≤ 50m
         c_ez = display_contour_plot_with_override(
             st, 
             datasets, 
@@ -54,11 +40,24 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
         # Get orography factor from session state
         c_oz = get_session_value(st, "c_oz", 1.0)
         
+        if z > 50:
+            # For z > 50m, we need turbulence intensity
+            i_vz = display_contour_plot_with_override(
+                st, 
+                datasets, 
+                "NA.5", 
+                d_sea, 
+                z_minus_h_dis, 
+                "Turbulence Intensity $I_{v}(z)$", 
+                "I_v(z)", 
+                "i_v"
+            )
+        
         if terrain == "town":
             # Get town parameters for town terrain
             d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
             
-            # Get NA.8 - Town correction
+            # Get NA.8 - Town correction - Used in all town calculations
             c_eT = display_contour_plot_with_override(
                 st, 
                 datasets, 
@@ -70,21 +69,22 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
                 "c_eT"
             )
             
-            # Get NA.6 - Terrain Correction Factor for turbulence
-            k_IT = display_contour_plot_with_override(
-                st, 
-                datasets, 
-                "NA.6", 
-                d_town_terrain, 
-                z_minus_h_dis, 
-                "Turbulence Correction Factor $k_{I,T}$", 
-                "k_{I,T}", 
-                "k_IT"
-            )
-            
-            # Apply town correction to turbulence intensity
-            i_vz = i_vz * k_IT
-            st.write(f"Corrected turbulence intensity: $I_v(z) = I_v(z) \\cdot k_{{I,T}} = {i_vz:.3f}$")
+            if z > 50:
+                # Only need turbulence correction for z > 50
+                k_IT = display_contour_plot_with_override(
+                    st, 
+                    datasets, 
+                    "NA.6", 
+                    d_town_terrain, 
+                    z_minus_h_dis, 
+                    "Turbulence Correction Factor $k_{I,T}$", 
+                    "k_{I,T}", 
+                    "k_IT"
+                )
+                
+                # Apply town correction to turbulence intensity
+                i_vz = i_vz * k_IT
+                st.write(f"Corrected turbulence intensity: $I_v(z) = I_v(z) \\cdot k_{{I,T}} = {i_vz:.3f}$")
             
             # Calculate peak pressure with different formulas based on height
             if z <= 50:
@@ -139,32 +139,8 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             "c_ez"
         )
         
-        # Get NA.5 - Turbulence Intensity (added for both town and non-town cases)
-        i_vz = display_contour_plot_with_override(
-            st, 
-            datasets, 
-            "NA.5", 
-            d_sea, 
-            z_minus_h_dis, 
-            "Turbulence Intensity $I_{v}(z)$", 
-            "I_v(z)", 
-            "i_v"
-        )
-        
         if terrain == "town":
             d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
-            
-            # Get NA.6 - Turbulence Correction Factor for town (added as required)
-            k_IT = display_contour_plot_with_override(
-                st, 
-                datasets, 
-                "NA.6", 
-                d_town_terrain, 
-                z_minus_h_dis, 
-                "Turbulence Correction Factor $k_{I,T}$", 
-                "k_{I,T}", 
-                "k_IT"
-            )
             
             # Get town factor from NA.8
             c_eT = display_contour_plot_with_override(
