@@ -15,7 +15,7 @@ PLOT_CONFIGS = {
         "x_name": "Distance upwind to shoreline (km)",
         "contour_start": 0.75, "contour_end": 1.7, "contour_step": 0.05,
         "x_type": "upwind",
-        "var_name": "c_rz",
+        "var_name": "$c_r(z)$",
         "section_heading": "Values of $C_r(z)$"
     },
     "NA.4": {
