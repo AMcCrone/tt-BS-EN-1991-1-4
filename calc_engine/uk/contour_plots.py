@@ -15,7 +15,7 @@ PLOT_CONFIGS = {
         "x_name": "Distance upwind to shoreline (km)",
         "contour_start": 0.75, "contour_end": 1.7, "contour_step": 0.05,
         "x_type": "upwind",
-        "var_name": "$c_r(z)$",
+        "var_name": "$C_r(z)$",
         "section_heading": "Values of $C_r(z)$"
     },
     "NA.4": {
@@ -24,7 +24,7 @@ PLOT_CONFIGS = {
         "x_name": "Distance inside town terrain (km)",
         "contour_start": 0.56, "contour_end": 1.0, "contour_step": 0.02,
         "x_type": "town",
-        "var_name": "c_rT",
+        "var_name": "$c_{r,T}$",
         "section_heading": "Values of correction factor $c_{r,T}$ for sites in Town terrain"
     },
     "NA.5": {
@@ -33,7 +33,7 @@ PLOT_CONFIGS = {
         "x_name": "Distance upwind to shoreline (km)",
         "contour_start": 0.07, "contour_end": 0.21, "contour_step": 0.01,
         "x_type": "upwind",
-        "var_name": "I_vz",
+        "var_name": "$I_v(z)_{flat}$",
         "section_heading": "Values of $I_v(z)_{flat}$"
     },
     "NA.6": {
@@ -42,7 +42,7 @@ PLOT_CONFIGS = {
         "x_name": "Distance inside town terrain (km)",
         "contour_start": 1.0, "contour_end": 1.8, "contour_step": 0.05,
         "x_type": "town",
-        "var_name": "k_IT",
+        "var_name": "$k_{I,T}$",
         "section_heading": "Values of turbulence correction factor $k_{I,T}$ for sites in Town terrain"
     },
     "NA.7": {
@@ -51,7 +51,7 @@ PLOT_CONFIGS = {
         "x_name": "Distance upwind to shoreline (km)",
         "contour_start": 1.5, "contour_end": 4.2, "contour_step": 0.1,
         "x_type": "upwind",
-        "var_name": "c_ez",
+        "var_name": "$c_e(z)$",
         "section_heading": "Values of $c_e(z)$"
     },
     "NA.8": {
@@ -60,7 +60,7 @@ PLOT_CONFIGS = {
         "x_name": "Distance inside town terrain (km)",
         "contour_start": 0.60, "contour_end": 1.0, "contour_step": 0.02,
         "x_type": "town",
-        "var_name": "c_eT",
+        "var_name": "$c_{e,T}$",
         "section_heading": "Values of exposure correction factor $c_{e,T}$ for sites in Town terrain"
     }
 }
