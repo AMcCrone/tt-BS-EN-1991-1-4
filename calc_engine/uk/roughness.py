@@ -24,8 +24,8 @@ def calculate_uk_roughness(st, datasets):
         "NA.3", 
         d_sea, 
         z_minus_h_dis, 
-        "Town Roughness Factor $C_r(z)$", 
-        "C_r(z)", 
+        "Town Roughness Factor $c_r(z)$", 
+        "c_r(z)", 
         "c_rz"
     )
     
@@ -39,8 +39,8 @@ def calculate_uk_roughness(st, datasets):
             "NA.4", 
             d_town_terrain, 
             z_minus_h_dis, 
-            "Town Roughness Factor $C_{r,T}$", 
-            "C_{r,T}", 
+            "Town Roughness Factor $c_{r,T}$", 
+            "c_{r,T}", 
             "c_rT"
         )
         # Calculate the combined roughness factor
