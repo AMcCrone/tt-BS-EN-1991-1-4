@@ -51,11 +51,14 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             "c_ez"
         )
         
-        # Get NA.8 - Town correction if applicable
-        c_eT = 1.0  # Default value
+        # Get orography factor from session state
+        c_oz = get_session_value(st, "c_oz", 1.0)
+        
         if terrain == "town":
+            # Get town parameters for town terrain
             d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
             
+            # Get NA.8 - Town correction
             c_eT = display_contour_plot_with_override(
                 st, 
                 datasets, 
@@ -66,11 +69,8 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
                 "C_{e,T}", 
                 "c_eT"
             )
-        
-        # Get NA.6 - Terrain Correction Factor
-        k_IT = 1.0  # Default value
-        if terrain == "town":            
-            d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
+            
+            # Get NA.6 - Terrain Correction Factor for turbulence
             k_IT = display_contour_plot_with_override(
                 st, 
                 datasets, 
@@ -81,36 +81,53 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
                 "k_{I,T}", 
                 "k_IT"
             )
-        
-        # Calculate peak pressure with different formulas based on height
-        if z <= 50:
-            # Get orography factor from session state (assuming it's stored)
-            c_oz = get_session_value(st, "c_oz", 1.0)
             
-            # Calculate with formula for z <= 50
-            qp_value = c_ez * q_b * ((c_oz + 0.6) / 1.6) ** 2
+            # Apply town correction to turbulence intensity
+            i_vz = i_vz * k_IT
+            st.write(f"Corrected turbulence intensity: $I_v(z) = I_v(z) \\cdot k_{{I,T}} = {i_vz:.3f}$")
             
-            # Display result with equation
-            st.write(f"Peak velocity pressure (z ≤ 50m): $q_p(z) = C_e(z) \\cdot q_b \\cdot ((C_o(z) + 0.6) / 1.6)^2 = {c_ez:.3f} \\cdot {q_b:.2f} \\cdot ((${c_oz:.3f}$ + 0.6) / 1.6)^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            # Calculate peak pressure with different formulas based on height
+            if z <= 50:
+                # Calculate with formula for z <= 50 with town correction
+                qp_value = c_ez * c_eT * q_b * ((c_oz + 0.6) / 1.6) ** 2
+                
+                # Display result with equation
+                st.write(f"Peak velocity pressure (z ≤ 50m): $q_p(z) = C_e(z) \\cdot C_{{e,T}} \\cdot q_b \\cdot ((C_o(z) + 0.6) / 1.6)^2 = {c_ez:.3f} \\cdot {c_eT:.3f} \\cdot {q_b:.2f} \\cdot ((${c_oz:.3f}$ + 0.6) / 1.6)^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            else:
+                # Get air density and mean velocity from session state
+                rho = get_session_value(st, "rho_air", 1.25)
+                v_m = get_session_value(st, "v_mean", 0.0)
+                
+                # Calculate with formula for z > 50
+                qp_value = (1 + 3 * i_vz) ** 2 * 0.5 * rho * (v_m ** 2)
+                
+                # Display result with equation
+                st.write(f"Peak velocity pressure (z > 50m): $q_p(z) = (1 + 3 \\cdot I_v(z))^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2 = (1 + 3 \\cdot {i_vz:.3f})^2 \\cdot 0.5 \\cdot {rho:.2f} \\cdot {v_m:.2f}^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+                
+                # Apply town correction
+                qp_value = qp_value * c_eT
+                st.write(f"With town correction: $q_p(z) = {qp_value:.2f} \\cdot {c_eT:.3f} = {qp_value * c_eT:.2f}\\;\\mathrm{{N/m^2}}$")
         else:
-            # Get air density and mean velocity from session state
-            rho = get_session_value(st, "rho_air", 1.25)
-            v_m = get_session_value(st, "v_mean", 0.0)
-            
-            # Calculate with formula for z > 50
-            qp_value = (1 + 3 * i_vz) ** 2 * 0.5 * rho * (v_m ** 2)
-            
-            # Display result with equation
-            st.write(f"Peak velocity pressure (z > 50m): $q_p(z) = (1 + 3 \\cdot I_v(z))^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2 = (1 + 3 \\cdot {i_vz:.3f})^2 \\cdot 0.5 \\cdot {rho:.2f} \\cdot {v_m:.2f}^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
-        
-        # Apply town correction if needed
-        if terrain == "town":
-            qp_value = qp_value * k_IT
-            st.write(f"With town correction: $q_p(z) = {qp_value:.2f} \\cdot {k_IT:.3f} = {qp_value * k_IT:.2f}\\;\\mathrm{{N/m^2}}$")
-    
+            # For non-town terrain with significant orography
+            if z <= 50:
+                # Calculate with formula for z <= 50
+                qp_value = c_ez * q_b * ((c_oz + 0.6) / 1.6) ** 2
+                
+                # Display result with equation
+                st.write(f"Peak velocity pressure (z ≤ 50m): $q_p(z) = C_e(z) \\cdot q_b \\cdot ((C_o(z) + 0.6) / 1.6)^2 = {c_ez:.3f} \\cdot {q_b:.2f} \\cdot ((${c_oz:.3f}$ + 0.6) / 1.6)^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            else:
+                # Get air density and mean velocity from session state
+                rho = get_session_value(st, "rho_air", 1.25)
+                v_m = get_session_value(st, "v_mean", 0.0)
+                
+                # Calculate with formula for z > 50
+                qp_value = (1 + 3 * i_vz) ** 2 * 0.5 * rho * (v_m ** 2)
+                
+                # Display result with equation
+                st.write(f"Peak velocity pressure (z > 50m): $q_p(z) = (1 + 3 \\cdot I_v(z))^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2 = (1 + 3 \\cdot {i_vz:.3f})^2 \\cdot 0.5 \\cdot {rho:.2f} \\cdot {v_m:.2f}^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
     else:
-        # Standard approach using exposure factors
-        # Get height factor from NA.7
+        # Standard approach when orography is not significant
+        # Get NA.7 - Exposure Factor
         c_ez = display_contour_plot_with_override(
             st, 
             datasets, 
@@ -122,11 +139,32 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             "c_ez"
         )
         
-        formula = f"q_p(z) = q_b \\cdot C_e(z) = {q_b:.2f} \\cdot {c_ez:.3f}"
+        # Get NA.5 - Turbulence Intensity (added for both town and non-town cases)
+        i_vz = display_contour_plot_with_override(
+            st, 
+            datasets, 
+            "NA.5", 
+            d_sea, 
+            z_minus_h_dis, 
+            "Turbulence Intensity $I_{v}(z)$", 
+            "I_v(z)", 
+            "i_v"
+        )
         
-        # Apply town correction if needed
         if terrain == "town":
             d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
+            
+            # Get NA.6 - Turbulence Correction Factor for town (added as required)
+            k_IT = display_contour_plot_with_override(
+                st, 
+                datasets, 
+                "NA.6", 
+                d_town_terrain, 
+                z_minus_h_dis, 
+                "Turbulence Correction Factor $k_{I,T}$", 
+                "k_{I,T}", 
+                "k_IT"
+            )
             
             # Get town factor from NA.8
             c_eT = display_contour_plot_with_override(
@@ -142,13 +180,15 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             
             # Calculate with town correction
             qp_value = q_b * c_ez * c_eT
-            formula += f" \\cdot {c_eT:.3f}"
+            
+            # Display result with formula
+            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot C_e(z) \\cdot C_{{e,T}} = {q_b:.2f} \\cdot {c_ez:.3f} \\cdot {c_eT:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
         else:
             # Calculate without town correction
             qp_value = q_b * c_ez
-        
-        # Display result
-        st.write(f"Peak velocity pressure: ${formula} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            
+            # Display result with formula
+            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot C_e(z) = {q_b:.2f} \\cdot {c_ez:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
     
     # Store the result in session state
     store_session_value(st, "qp_value", qp_value)
