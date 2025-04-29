@@ -255,9 +255,9 @@ st.markdown("---")
 st.header("Wind Velocity")
 st.subheader("Basic Wind Velocity")
 
-col_input, col_result = st.columns(2)
-
-with col_input:
+# Create three columns for input
+col1, col2, col3 = st.columns(3)
+with col1:
     # Vb,map input
     V_bmap = st.number_input(
         "$$v_{b,map}$$ (m/s)",
@@ -269,10 +269,13 @@ with col_input:
     )
     st.session_state.inputs["V_bmap"] = V_bmap
 
+with col2:
     # Let the user choose whether they want to override standard K, n, return period
     use_custom_values = st.checkbox("Use custom K, n, and return period?")
-    
-    if use_custom_values:
+
+# Show K, n, return period inputs if custom values are selected
+if use_custom_values:
+    with col2:
         K = st.number_input(
             "Shape parameter (K)",
             min_value=0.0,
@@ -281,6 +284,7 @@ with col_input:
             step=0.1,
             help="Typically 0.2 if unspecified."
         )
+    with col3:
         n = st.number_input(
             "Exponent (n)",
             min_value=0.0,
@@ -297,45 +301,59 @@ with col_input:
             step=1,
             help="Typical is 50 years."
         )
-        # Probability of exceedance
-        p = 1.0 / return_period
-        
-        # Equation (4.2):
-        # c_prob = [ (1 - K * ln(-ln(1 - p))) / (1 - K * ln(-ln(0.98))) ]^n
-        numerator = 1.0 - K * math.log(-math.log(1.0 - p))
-        denominator = 1.0 - K * math.log(-math.log(0.98))
-        # Guard against division by zero
-        if abs(denominator) < 1e-9:
-            st.warning("Denominator is close to zero; check K and standard reference. Setting c_prob = 1.")
-            c_prob = 1.0
-        else:
-            c_prob = (numerator / denominator) ** n
-    else:
-        # If user doesn't override, c_prob = 1.0
+    
+    # Probability of exceedance
+    p = 1.0 / return_period
+    
+    # Equation (4.2):
+    # c_prob = [ (1 - K * ln(-ln(1 - p))) / (1 - K * ln(-ln(0.98))) ]^n
+    numerator = 1.0 - K * math.log(-math.log(1.0 - p))
+    denominator = 1.0 - K * math.log(-math.log(0.98))
+    # Guard against division by zero
+    if abs(denominator) < 1e-9:
+        st.warning("Denominator is close to zero; check K and standard reference. Setting c_prob = 1.")
         c_prob = 1.0
-
-with col_result:
-    # Altitude correction
-    if z <= 10:
-        c_alt = 1 + 0.001 * altitude_factor
     else:
-        c_alt = 1 + 0.001 * altitude_factor * (10 / z) ** 0.2
+        c_prob = (numerator / denominator) ** n
+else:
+    # If user doesn't override, c_prob = 1.0
+    c_prob = 1.0
 
-    V_b0 = V_bmap * c_alt
-    
-    # Directional & seasonal factors (assume standard = 1.0 unless user changes them)
-    c_dir = 1.0
-    c_season = 1.0
-    
-    # Basic Wind Speed with c_prob included
-    V_b = V_b0 * c_dir * c_season * c_prob
+# Display the probability factor
+st.write(f"Probability factor $c_{{prob}}$: {c_prob:.3f}")
 
-    st.session_state.inputs["V_b"] = V_b
+# Altitude correction - display the case and working
+if z <= 10:
+    case = "z ≤ 10m"
+    altitude_equation = "c_{alt} = 1 + 0.001 × A"
+    c_alt = 1 + 0.001 * altitude_factor
+else:
+    case = "z > 10m"
+    altitude_equation = "c_{alt} = 1 + 0.001 × A × (10/z)^{0.2}"
+    c_alt = 1 + 0.001 * altitude_factor * (10 / z) ** 0.2
+
+st.write(f"**Case: {case}**")
+st.latex(altitude_equation)
+st.write(f"Where A = {altitude_factor}")
+st.write(f"Therefore, $c_{{alt}}$ = {c_alt:.3f}")
     
-    # Display the result
-    st.markdown("**Calculated Basic Wind Speed**")
-    st.latex(f"V_b = {V_b:.2f}\\; m/s")
-    st.write(f"(Probability factor used: {c_prob:.3f})")
+# Calculate V_b0
+V_b0 = V_bmap * c_alt
+st.write(f"$V_{{b0}} = V_{{b,map}} × c_{{alt}} = {V_bmap:.2f} × {c_alt:.3f} = {V_b0:.2f}$ m/s")
+    
+# Directional & seasonal factors
+c_dir = 1.0
+c_season = 1.0
+st.write(f"Directional factor $c_{{dir}}$: {c_dir}")
+st.write(f"Seasonal factor $c_{{season}}$: {c_season}")
+    
+# Basic Wind Speed with c_prob included
+V_b = V_b0 * c_dir * c_season * c_prob
+st.session_state.inputs["V_b"] = V_b
+    
+# Display the final result
+st.markdown("**Basic Wind Speed**")
+st.latex(f"V_b = V_{{b0}} × c_{{dir}} × c_{{season}} × c_{{prob}} = {V_b:.2f}\\; m/s")
 
 # Import needed modules
 from calc_engine.common.displacement import calculate_displacement_height, display_displacement_results
