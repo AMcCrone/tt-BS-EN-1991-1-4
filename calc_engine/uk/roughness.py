@@ -43,8 +43,8 @@ def calculate_uk_roughness(st, datasets):
             "C_{r,T}", 
             "c_rT"
         )
-        
+        c_rz = c_rT * c_rz
         # Show combined result 
-        st.latex(f"C_r(z) = {c_rz:.3f}")
+        st.latex(f"C_r(z) = {c_rT:.3f} * {c_rz:.3f}")
     
     return c_rz
