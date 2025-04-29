@@ -270,8 +270,8 @@ use_custom_values = st.checkbox("Use custom K, n, and return period?")
 
 if use_custom_values:
     # Create three columns for input
-    col1, col2, col3 = st.columns(3)
-    with col1:
+    shape_column, exponent_column, period_column = st.columns(3)
+    with shape_column:
         K = st.number_input(
             "Shape parameter (K)",
             min_value=0.0,
@@ -280,7 +280,7 @@ if use_custom_values:
             step=0.1,
             help="Typically 0.2 if unspecified."
         )
-    with col2:
+    with exponent_column:
         n = st.number_input(
             "Exponent (n)",
             min_value=0.0,
@@ -289,7 +289,7 @@ if use_custom_values:
             step=0.1,
             help="Typically 0.5 if unspecified."
         )
-    with col3:
+    with period_column:
         return_period = st.number_input(
             "Return Period (years)",
             min_value=1,
