@@ -32,8 +32,8 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             "NA.7", 
             d_sea, 
             z_minus_h_dis, 
-            "Exposure Factor $C_{e}(z)$", 
-            "C_e(z)", 
+            "Exposure Factor $c_{e}(z)$", 
+            "c_e(z)", 
             "c_ez"
         )
         
@@ -64,8 +64,8 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
                 "NA.8", 
                 d_town_terrain, 
                 z_minus_h_dis, 
-                "Exposure Factor Correction $C_{e,T}$", 
-                "C_{e,T}", 
+                "Exposure Factor Correction $c_{e,T}$", 
+                "c_{e,T}", 
                 "c_eT"
             )
             
@@ -92,7 +92,7 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
                 qp_value = c_ez * c_eT * q_b * ((c_oz + 0.6) / 1.6) ** 2
                 
                 # Display result with equation
-                st.write(f"Peak velocity pressure (z ≤ 50m): $q_p(z) = C_e(z) \\cdot C_{{e,T}} \\cdot q_b \\cdot ((C_o(z) + 0.6) / 1.6)^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+                st.write(f"Peak velocity pressure (z ≤ 50m): $q_p(z) = c_e(z) \\cdot c_{{e,T}} \\cdot q_b \\cdot ((c_o(z) + 0.6) / 1.6)^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
             else:
                 # Get air density and mean velocity from session state
                 rho = get_session_value(st, "rho_air", 1.25)
@@ -114,7 +114,7 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
                 qp_value = c_ez * q_b * ((c_oz + 0.6) / 1.6) ** 2
                 
                 # Display result with equation
-                st.write(f"Peak velocity pressure (z ≤ 50m): $q_p(z) = C_e(z) \\cdot q_b \\cdot ((C_o(z) + 0.6) / 1.6)^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+                st.write(f"Peak velocity pressure (z ≤ 50m): $q_p(z) = c_e(z) \\cdot q_b \\cdot ((c_o(z) + 0.6) / 1.6)^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
             else:
                 # Get air density and mean velocity from session state
                 rho = get_session_value(st, "rho_air", 1.25)
@@ -134,8 +134,8 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             "NA.7", 
             d_sea, 
             z_minus_h_dis, 
-            "Exposure Factor $C_{e}(z)$", 
-            "C_e(z)", 
+            "Exposure Factor $c_{e}(z)$", 
+            "c_e(z)", 
             "c_ez"
         )
         
@@ -149,8 +149,8 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
                 "NA.8", 
                 d_town_terrain, 
                 z_minus_h_dis, 
-                "Exposure Factor Correction $C_{e,T}$", 
-                "C_{e,T}", 
+                "Exposure Factor Correction $c_{e,T}$", 
+                "c_{e,T}", 
                 "c_eT"
             )
             
@@ -158,13 +158,13 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             qp_value = q_b * c_ez * c_eT
             
             # Display result with formula
-            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot C_e(z) \\cdot C_{{e,T}} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot c_e(z) \\cdot c_{{e,T}} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
         else:
             # Calculate without town correction
             qp_value = q_b * c_ez
             
             # Display result with formula
-            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot C_e(z) = {q_b:.2f} \\cdot {c_ez:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"Peak velocity pressure: $q_p(z) = q_b \\cdot c_e(z) = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
     
     # Store the result in session state
     store_session_value(st, "qp_value", qp_value)
