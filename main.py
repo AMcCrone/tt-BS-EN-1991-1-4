@@ -411,21 +411,12 @@ def wind_velocity_section():
     v_b = get_session_value(st, "V_b", 0.0)
     c_oz = get_session_value(st, "c_oz", 1.0)
     
-    # Apply the special calculation for UK with Town terrain
-    if region == "United Kingdom" and get_session_value(st, "terrain_type", "") == "Town":
-        v_mean = v_b * c_rz * c_rT * c_oz
-        # Display the mean wind velocity result with terrain factor
-        st.markdown("#### Mean Wind Velocity")
-        st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_{{rT}} \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_rT:.2f} \\cdot {c_oz:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
-    else:
-        # Standard calculation for other cases
-        v_mean = v_b * c_rz * c_oz
-        # Display the mean wind velocity result without terrain factor
-        st.markdown("#### Mean Wind Velocity")
-        st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_oz:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
-    
-    # Store the calculated mean velocity in session state
+    v_mean = v_b * c_rz * c_oz
     store_session_value(st, "v_mean", v_mean)
+ 
+    # Display the mean wind velocity result
+    st.markdown("#### Mean Wind Velocity")
+    st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_oz:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
 
 wind_velocity_section()
 
