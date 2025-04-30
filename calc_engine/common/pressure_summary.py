@@ -283,8 +283,23 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 normalized_value = (zone_pressure - global_max_suction_kpa) / (global_min_suction_kpa - global_max_suction_kpa)
             normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
             
-            # Sample the colorscale at normalized_value (0…1)
-            zone_color = pc.sample_colorscale(colorscale, normalized_value)[0]
+            # 1) Make sure we pass a list of sample points
+            sample_list = [normalized_value]
+            
+            # 2) Try to sample
+            sampled = pc.sample_colorscale(colorscale, sample_list)
+            
+            # 3) If successful, grab the first color; otherwise pick a fallback
+            if sampled:
+                zone_color = sampled[0]
+            else:
+                # if colorscale is a sequence of [t, color] pairs, pick end stops
+                if isinstance(colorscale, (list, tuple)) and len(colorscale):
+                    # take the last defined color
+                    zone_color = colorscale[-1][1]
+                else:
+                    # fallback to a hard-coded neutral grey
+                    zone_color = "rgb(200,200,200)"
             
             # Add colored rectangle for the zone
             fig.add_shape(
