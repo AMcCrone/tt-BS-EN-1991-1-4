@@ -81,32 +81,37 @@ st.markdown(f"""
    ON-SCREEN STYLES
    ============================ */
 
-/* Educational content styling */
+/* Base educational text styling */
 .educational-content {{
     font-size: 0.8rem;
-}}
-
-/* Custom styling for education-specific expanders */
-.educational-expander [data-testid="stExpanderHeader"] {{
-    background-color: rgba(211, 69, 29, 0.1);
-    border-radius: 5px;
-    font-weight: bold;
     color: {TT_ORANGE};
 }}
-.educational-expander [data-testid="stExpanderContent"] {{
-    background-color: rgba(211, 69, 29, 0.05);
-    border-left: 3px solid {TT_ORANGE};
+
+/* 1) Universal TT-Orange tint for all expanders (header + content) */
+[data-testid="stExpander"] > div[role="button"],
+[data-testid="stExpander"] > div[role="button"] + div {{
+    background-color: rgba(211, 69, 29, 0.1) !important;
+}}
+
+/* 2) Special overrides for your “educational-expander” wrappers */
+.educational-expander [data-testid="stExpander"] > div[role="button"] {{
+    /* Header style */
+    background-color: rgba(211, 69, 29, 0.15) !important;
+    border-radius: 5px;
+    font-weight: bold;
+    color: {TT_ORANGE} !important;
+}}
+.educational-expander [data-testid="stExpander"] > div[role="button"] + div {{
+    /* Content style */
+    background-color: rgba(211, 69, 29, 0.05) !important;
+    border-left: 3px solid {TT_ORANGE} !important;
     padding: 10px;
     font-size: 0.8rem;
 }}
 
-/* 3) TT-Orange BACKGROUND for *all* expanders */
-[data-testid="stExpander"] > div:first-child,
-[data-testid="stExpander"] > div:nth-child(2) {{
-    background-color: rgba(211, 69, 29, 0.1) !important;
-}}
-
-/* Remove educational-expanders from print */
+/* ============================
+   PRINT-ONLY: hide edu expanders
+   ============================ */
 @media print {{
     .educational-expander {{
         display: none !important;
@@ -114,6 +119,7 @@ st.markdown(f"""
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 # Section 1: Project Information
 st.header("1. Project Information")
