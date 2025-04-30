@@ -40,6 +40,7 @@ Linear interpolation may be used for intermediate heights.
 """
 
 basic_wind_help = """
+
 Values for $V_{b,map}$ can be obtained from the National Annex.
 
 For projects in the UK, $V_{b,map}$ may be read from **Figure NA.1** (shown right). Typically, for projects in London, $V_{b,map}$ = 21.5 m/s
