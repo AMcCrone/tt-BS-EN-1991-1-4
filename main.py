@@ -182,10 +182,7 @@ with col2:
     building_fig = create_building_visualisation(
         NS_dimension, 
         EW_dimension, 
-        z,
-        include_inset=include_inset,
-        inset_offset=inset_offset if include_inset else 0,
-        inset_height=inset_height if include_inset else 0
+        z
     )
     st.plotly_chart(building_fig, use_container_width=True)
 
