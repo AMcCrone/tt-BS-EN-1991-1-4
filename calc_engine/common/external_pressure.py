@@ -253,26 +253,31 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
 
 def calculate_cpe():
     """
-    Calculate external pressure coefficients (cp,e) for projects considering funnelling effects for all wind directions
+    Calculate external pressure coefficients (cp,e) for building elevations (N, E, S, W)
+    considering funnelling effects for all wind directions
     
     Returns:
-    - Dictionary of DataFrames of cp,e values for different wind directions
+    - Dictionary of DataFrames of cp,e values for different elevations
     """
     h = st.session_state.inputs.get("z", 10.0)  # Building height
     NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
     EW_dimension = st.session_state.inputs.get("EW_dimension", 40.0)
     
-    # Calculate for all wind directions
-    wind_directions = ["N", "S", "E", "W"]
-    results_by_direction = {}
+    # Create results dictionary for each elevation
+    elevations = ["North", "South", "East", "West"]
+    results_by_elevation = {elevation: [] for elevation in elevations}
     
-    for wind_direction in wind_directions:    
-        # Determine h/d ratio based on wind direction
-        if wind_direction in ["N", "S"]:
-            d = NS_dimension
-        else:  # E or W
-            d = EW_dimension
+    # For each elevation, calculate cp,e values based on wind hitting that elevation
+    for elevation in elevations:
+        # Define dimensions based on elevation orientation
+        if elevation in ["North", "South"]:
+            b = EW_dimension  # Width of the elevation perpendicular to wind
+            d = NS_dimension  # Depth of building parallel to wind
+        else:  # East or West
+            b = NS_dimension  # Width of the elevation perpendicular to wind
+            d = EW_dimension  # Depth of building parallel to wind
         
+        # Calculate h/d ratio
         h_d_ratio = h / d
         
         # Interpolate cp,e values based on h/d ratio
@@ -283,22 +288,19 @@ def calculate_cpe():
         zone_A_values = [-1.2, -1.2, -1.2]
         zone_B_values = [-0.8, -0.8, -0.8]
         zone_C_values = [-0.5, -0.5, -0.5]
-        zone_D_values = [0.8, 0.8, 0.8]  # Windward
-        zone_E_values = [-0.5, -0.5, -0.7]  # Leeward
+        zone_D_values = [0.7, 0.8, 0.8]  # Updated for h/d <= 0.25, D = 0.7
         
         # Linear interpolation for h/d ratio
         if h_d_ratio <= 0.25:
             cp_A = zone_A_values[0]
             cp_B = zone_B_values[0]
             cp_C = zone_C_values[0]
-            cp_D = zone_D_values[0]
-            cp_E = zone_E_values[0]
+            cp_D = zone_D_values[0]  # 0.7 when h/d <= 0.25
         elif h_d_ratio >= 5.0:
             cp_A = zone_A_values[2]
             cp_B = zone_B_values[2]
             cp_C = zone_C_values[2]
             cp_D = zone_D_values[2]
-            cp_E = zone_E_values[2]
         else:
             # Interpolate between known points
             for i in range(len(h_d_points)-1):
@@ -308,7 +310,6 @@ def calculate_cpe():
                     cp_B = zone_B_values[i] + factor * (zone_B_values[i+1] - zone_B_values[i])
                     cp_C = zone_C_values[i] + factor * (zone_C_values[i+1] - zone_C_values[i])
                     cp_D = zone_D_values[i] + factor * (zone_D_values[i+1] - zone_D_values[i])
-                    cp_E = zone_E_values[i] + factor * (zone_E_values[i+1] - zone_E_values[i])
                     break
         
         # Store original values before funnelling adjustment
@@ -316,27 +317,24 @@ def calculate_cpe():
         base_cp_B = cp_B
         base_cp_C = cp_C
         
-        # Check for funnelling effect based on wind direction
-        if wind_direction == "N":
-            gap = st.session_state.inputs.get("south_gap", 10.0)
-            dimension = EW_dimension
-        elif wind_direction == "S":
+        # Check for funnelling effect based on elevation
+        if elevation == "North":
             gap = st.session_state.inputs.get("north_gap", 10.0)
-            dimension = EW_dimension
-        elif wind_direction == "E":
-            gap = st.session_state.inputs.get("west_gap", 10.0)
-            dimension = NS_dimension
-        else:  # "W"
+        elif elevation == "South":
+            gap = st.session_state.inputs.get("south_gap", 10.0)
+        elif elevation == "East":
             gap = st.session_state.inputs.get("east_gap", 10.0)
-            dimension = NS_dimension
+        else:  # "West"
+            gap = st.session_state.inputs.get("west_gap", 10.0)
         
         # Calculate e (the smaller of b or 2h)
-        b = dimension  # Width of face perpendicular to wind
         e = min(b, 2*h)
         
         # Apply funnelling according to the guidance and graph
         has_funnelling = False
-        funnelling_factor = 0
+        funnelling_increase_pct_A = 0
+        funnelling_increase_pct_B = 0
+        funnelling_increase_pct_C = 0
         
         # Define the funnelling peak values
         max_funnel_cp_A = -1.6
@@ -352,10 +350,20 @@ def calculate_cpe():
                 # At e/2: maximum funnelling values
                 factor = (gap - e/4) / (e/4)  # 0 at e/4, 1 at e/2
                 
-                cp_A = base_cp_A + factor * (max_funnel_cp_A - base_cp_A)
-                cp_B = base_cp_B + factor * (max_funnel_cp_B - base_cp_B)
-                cp_C = base_cp_C + factor * (max_funnel_cp_C - base_cp_C)
-                funnelling_factor = factor
+                # Calculate with funnelling
+                cp_A_with_funnel = base_cp_A + factor * (max_funnel_cp_A - base_cp_A)
+                cp_B_with_funnel = base_cp_B + factor * (max_funnel_cp_B - base_cp_B)
+                cp_C_with_funnel = base_cp_C + factor * (max_funnel_cp_C - base_cp_C)
+                
+                # Calculate percentage increase (negative values, so using absolute difference)
+                funnelling_increase_pct_A = (abs(cp_A_with_funnel) - abs(base_cp_A)) / abs(base_cp_A) * 100
+                funnelling_increase_pct_B = (abs(cp_B_with_funnel) - abs(base_cp_B)) / abs(base_cp_B) * 100
+                funnelling_increase_pct_C = (abs(cp_C_with_funnel) - abs(base_cp_C)) / abs(base_cp_C) * 100
+                
+                # Update values with funnelling
+                cp_A = cp_A_with_funnel
+                cp_B = cp_B_with_funnel
+                cp_C = cp_C_with_funnel
                 
             else:
                 # Interpolate between e/2 and e (decreasing effect)
@@ -363,28 +371,34 @@ def calculate_cpe():
                 # At e: original values
                 factor = (e - gap) / (e/2)  # 1 at e/2, 0 at e
                 
-                cp_A = base_cp_A + factor * (max_funnel_cp_A - base_cp_A)
-                cp_B = base_cp_B + factor * (max_funnel_cp_B - base_cp_B)
-                cp_C = base_cp_C + factor * (max_funnel_cp_C - base_cp_C)
-                funnelling_factor = factor
+                # Calculate with funnelling
+                cp_A_with_funnel = base_cp_A + factor * (max_funnel_cp_A - base_cp_A)
+                cp_B_with_funnel = base_cp_B + factor * (max_funnel_cp_B - base_cp_B)
+                cp_C_with_funnel = base_cp_C + factor * (max_funnel_cp_C - base_cp_C)
+                
+                # Calculate percentage increase (negative values, so using absolute difference)
+                funnelling_increase_pct_A = (abs(cp_A_with_funnel) - abs(base_cp_A)) / abs(base_cp_A) * 100
+                funnelling_increase_pct_B = (abs(cp_B_with_funnel) - abs(base_cp_B)) / abs(base_cp_B) * 100
+                funnelling_increase_pct_C = (abs(cp_C_with_funnel) - abs(base_cp_C)) / abs(base_cp_C) * 100
+                
+                # Update values with funnelling
+                cp_A = cp_A_with_funnel
+                cp_B = cp_B_with_funnel
+                cp_C = cp_C_with_funnel
         
-        # Map the direction code to full name for display
-        dir_map = {"N": "North", "S": "South", "E": "East", "W": "West"}
-        direction_name = dir_map[wind_direction]
+        # Create result entries for this elevation
+        funnelling_note_A = f" (+{funnelling_increase_pct_A:.1f}% funnelling)" if has_funnelling and funnelling_increase_pct_A > 0 else ""
+        funnelling_note_B = f" (+{funnelling_increase_pct_B:.1f}% funnelling)" if has_funnelling and funnelling_increase_pct_B > 0 else ""
+        funnelling_note_C = f" (+{funnelling_increase_pct_C:.1f}% funnelling)" if has_funnelling and funnelling_increase_pct_C > 0 else ""
         
-        # Add funnelling indicator to description if applicable
-        funnelling_note = f" (Funnelling factor: {funnelling_factor:.2f})" if has_funnelling else ""
-        
-        # Create results for this direction
-        direction_results = [
-            {"Zone": "A", "cp,e": cp_A, "Description": f"Side Suction (Edge){funnelling_note}"},
-            {"Zone": "B", "cp,e": cp_B, "Description": f"Side Suction{funnelling_note}"},
-            {"Zone": "C", "cp,e": cp_C, "Description": f"Side Suction (Center){funnelling_note}"},
-            {"Zone": "D", "cp,e": cp_D, "Description": "Windward Face"},
-            {"Zone": "E", "cp,e": cp_E, "Description": "Leeward Face"}
+        elevation_results = [
+            {"Zone": "A", "cp,e": cp_A, "Description": f"Side Suction (Edge){funnelling_note_A}"},
+            {"Zone": "B", "cp,e": cp_B, "Description": f"Side Suction{funnelling_note_B}"},
+            {"Zone": "C", "cp,e": cp_C, "Description": f"Side Suction (Center){funnelling_note_C}"},
+            {"Zone": "D", "cp,e": cp_D, "Description": "Windward Face"}
         ]
         
-        # Store results for this direction in the dictionary
-        results_by_direction[direction_name] = pd.DataFrame(direction_results)
+        # Store results for this elevation in the dictionary
+        results_by_elevation[elevation] = pd.DataFrame(elevation_results)
     
-    return results_by_direction
+    return results_by_elevation
