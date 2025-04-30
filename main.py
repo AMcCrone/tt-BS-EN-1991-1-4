@@ -663,7 +663,7 @@ elevation_figures = plot_elevation_with_pressures(st.session_state, results_by_d
 
 # Display results manually
 st.subheader("Pressure Summary")
-st.dataframe(summary_df, hide_index=True)
+st.dataframe(summary_df, hide_index=True, height=35*len(summary_df)+38)
 
 # Display figures
 for direction, fig in elevation_figures.items():
