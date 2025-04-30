@@ -578,10 +578,12 @@ north_b = EW_dimension
 north_e = min(north_b, 2*h)
 north_gap = st.session_state.inputs.get("north_gap", 10.0)
 funnelling_status = ""
-if north_e/4 < north_gap < north_e:
-    funnelling_status = "Funnelling Applied"
+if north_gap <= north_e/4:
+    funnelling_status = "No Funnelling (gap ≤ e/4)"
+elif north_gap >= north_e:
+    funnelling_status = "No Funnelling (gap ≥ e)"
 else:
-    funnelling_status = "No Funnelling"
+    funnelling_status = "Funnelling Applied (e/4 < gap < e)"
 st.write(f"h/d = {north_h_d:.2f}, e = {north_e:.2f}m, gap = {north_gap:.2f}m ({funnelling_status})")
 st.dataframe(cp_results_by_elevation["North"].reset_index(drop=True))
 
@@ -593,10 +595,12 @@ east_b = NS_dimension
 east_e = min(east_b, 2*h)
 east_gap = st.session_state.inputs.get("east_gap", 10.0)
 funnelling_status = ""
-if east_e/4 < east_gap < east_e:
-    funnelling_status = "Funnelling Applied"
+if east_gap <= east_e/4:
+    funnelling_status = "No Funnelling (gap ≤ e/4)"
+elif east_gap >= east_e:
+    funnelling_status = "No Funnelling (gap ≥ e)"
 else:
-    funnelling_status = "No Funnelling"
+    funnelling_status = "Funnelling Applied (e/4 < gap < e)"
 st.write(f"h/d = {east_h_d:.2f}, e = {east_e:.2f}m, gap = {east_gap:.2f}m ({funnelling_status})")
 st.dataframe(cp_results_by_elevation["East"].reset_index(drop=True))
 
@@ -608,10 +612,12 @@ south_b = EW_dimension
 south_e = min(south_b, 2*h)
 south_gap = st.session_state.inputs.get("south_gap", 10.0)
 funnelling_status = ""
-if south_e/4 < south_gap < south_e:
-    funnelling_status = "Funnelling Applied"
+if south_gap <= south_e/4:
+    funnelling_status = "No Funnelling (gap ≤ e/4)"
+elif south_gap >= south_e:
+    funnelling_status = "No Funnelling (gap ≥ e)"
 else:
-    funnelling_status = "No Funnelling"
+    funnelling_status = "Funnelling Applied (e/4 < gap < e)"
 st.write(f"h/d = {south_h_d:.2f}, e = {south_e:.2f}m, gap = {south_gap:.2f}m ({funnelling_status})")
 st.dataframe(cp_results_by_elevation["South"].reset_index(drop=True))
 
@@ -623,10 +629,12 @@ west_b = NS_dimension
 west_e = min(west_b, 2*h)
 west_gap = st.session_state.inputs.get("west_gap", 10.0)
 funnelling_status = ""
-if west_e/4 < west_gap < west_e:
-    funnelling_status = "Funnelling Applied"
+if west_gap <= west_e/4:
+    funnelling_status = "No Funnelling (gap ≤ e/4)"
+elif west_gap >= west_e:
+    funnelling_status = "No Funnelling (gap ≥ e)"
 else:
-    funnelling_status = "No Funnelling"
+    funnelling_status = "Funnelling Applied (e/4 < gap < e)"
 st.write(f"h/d = {west_h_d:.2f}, e = {west_e:.2f}m, gap = {west_gap:.2f}m ({funnelling_status})")
 st.dataframe(cp_results_by_elevation["West"].reset_index(drop=True))
 
