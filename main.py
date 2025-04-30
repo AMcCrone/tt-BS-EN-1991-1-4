@@ -121,35 +121,6 @@ details.streamlit-expander > div {{
 </style>
 """, unsafe_allow_html=True)
 
-TT_ORANGE = "#D3451D"
-css = f"""
-<style>
-/* UNIVERSAL expander tint via <details> */
-details.streamlit-expander > summary,
-details.streamlit-expander[open] > div {{
-  /* 10% opacity of TT_ORANGE */
-  background-color: #D3451D1A !important;
-}}
-
-/* EDUCATIONAL expander overrides */
-.educational-expander details.streamlit-expander > summary {{
-  /* header tweaks: 15% opacity */
-  background-color: #D3451D26 !important;
-  border-radius: 5px;
-  color: {TT_ORANGE} !important;
-  font-weight: bold;
-}}
-.educational-expander details.streamlit-expander[open] > div {{
-  /* content tweaks: 5% opacity */
-  background-color: #D3451D0D !important;
-  border-left: 3px solid {TT_ORANGE} !important;
-  padding: 10px;
-  font-size: 0.8rem;
-}}
-</style>
-"""
-st.html(css)
-
 # Section 1: Project Information
 st.header("1. Project Information")
 col1, col2 = st.columns(2)
@@ -287,15 +258,20 @@ def render_terrain_category():
         )
         st.session_state.inputs["d_town_terrain"] = d_town_terrain
 
-    # Display educational content if the toggle is enabled in the sidebar
-    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-    with st.expander("Which Terrain Type Should I Use?", expanded=True):
-        st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
-        st.markdown(
-            f'<div class="educational-content">{text_content.terrain_help}</div>',
-            unsafe_allow_html=True
-        )
-    st.markdown('</div>', unsafe_allow_html=True)
+    if st.session_state.get("show_educational", False):
+        # open a div with your special class
+        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+        
+        # inside that div, render a normal Streamlit expander
+        with st.expander("Which Terrain Type Should I Use?", expanded=True):
+            st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
+            st.markdown(
+                f'<div class="educational-content">{text_content.terrain_help}</div>',
+                unsafe_allow_html=True
+            )
+        
+        # close the wrapper div
+        st.markdown('</div>', unsafe_allow_html=True)
 render_terrain_category()
 
 # Section 3: WIND VELOCITY
