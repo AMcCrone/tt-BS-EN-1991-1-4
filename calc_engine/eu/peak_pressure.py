@@ -139,6 +139,6 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
     st.write(f"Turbulence intensity: $I_v(z) = {I_v:.3f}$")
     
     # Display the peak pressure calculation and result
-    st.write(f"Peak velocity pressure: $q_p(z) = [1 + 7 \\cdot I_v(z)] \\cdot 0.5 \\cdot \\rho \\cdot v_m^2(z) = [1 + 7 \\cdot {I_v:.3f}] \\cdot 0.5 \\cdot {rho_air:.3f} \\cdot {v_m:.2f}^2 = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
+    st.write(f"Peak velocity pressure: $q_p(z) = [1 + 7 \\cdot I_v(z)] \\cdot 0.5 \\cdot \\rho \\cdot v_m^2(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
     
     return qp_value
