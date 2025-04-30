@@ -121,6 +121,34 @@ details.streamlit-expander > div {{
 </style>
 """, unsafe_allow_html=True)
 
+TT_ORANGE = "#D3451D"
+css = f"""
+<style>
+/* UNIVERSAL expander tint via <details> */
+details.streamlit-expander > summary,
+details.streamlit-expander[open] > div {{
+  /* 10% opacity of TT_ORANGE */
+  background-color: #D3451D1A !important;
+}}
+
+/* EDUCATIONAL expander overrides */
+.educational-expander details.streamlit-expander > summary {{
+  /* header tweaks: 15% opacity */
+  background-color: #D3451D26 !important;
+  border-radius: 5px;
+  color: {TT_ORANGE} !important;
+  font-weight: bold;
+}}
+.educational-expander details.streamlit-expander[open] > div {{
+  /* content tweaks: 5% opacity */
+  background-color: #D3451D0D !important;
+  border-left: 3px solid {TT_ORANGE} !important;
+  padding: 10px;
+  font-size: 0.8rem;
+}}
+</style>
+"""
+st.html(css)
 
 # Section 1: Project Information
 st.header("1. Project Information")
