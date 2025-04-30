@@ -90,20 +90,20 @@ st.markdown(f"""
 /* 1) UNIVERSAL expander tint via <details> */
 details.streamlit-expander > summary,
 details.streamlit-expander > div {{
-    background-color: rgba(211, 69, 29, 0.1) !important;
+    background-color: rgb(211, 69, 29) !important;
 }}
 
 /* 2) “Educational” expander overrides */
 .educational-expander details.streamlit-expander > summary {{
     /* header tweaks */
-    background-color: rgba(211, 69, 29, 0.15) !important;
+    background-color: rgb(211, 69, 29) !important;
     border-radius: 5px;
     color: {TT_ORANGE} !important;
     font-weight: bold;
 }}
 .educational-expander details.streamlit-expander > div {{
     /* content tweaks */
-    background-color: rgba(211, 69, 29, 0.05) !important;
+    background-color: rgb(211, 69, 29) !important;
     border-left: 3px solid {TT_ORANGE} !important;
     padding: 10px;
     font-size: 0.8rem;
