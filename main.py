@@ -367,6 +367,15 @@ def wind_velocity_section():
     h_dis = calculate_displacement_height(st)
     display_displacement_results(st, h_dis)
     
+    # Educational text on h_dis calculation
+    if st.session_state.get("show_educational", False):
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+
+    with st.expander("What Is All $$h_dis$$ About?", expanded=False):
+        st.image("educational/images/h_dis_diagram.png", use_container_width=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Check the region selection
     region = get_session_value(st, "region")
     z_minus_h_dis = get_session_value(st, "z_minus_h_dis")
