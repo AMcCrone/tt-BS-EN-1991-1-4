@@ -87,22 +87,22 @@ st.markdown(f"""
     color: {TT_ORANGE};
 }}
 
-/* 1) Universal TT-Orange tint for all expanders (header + content) */
-[data-testid="stExpander"] > div[role="button"],
-[data-testid="stExpander"] > div[role="button"] + div {{
+/* 1) UNIVERSAL expander tint via <details> */
+details.streamlit-expander > summary,
+details.streamlit-expander > div {{
     background-color: rgba(211, 69, 29, 0.1) !important;
 }}
 
-/* 2) Special overrides for your “educational-expander” wrappers */
-.educational-expander [data-testid="stExpander"] > div[role="button"] {{
-    /* Header style */
+/* 2) “Educational” expander overrides */
+.educational-expander details.streamlit-expander > summary {{
+    /* header tweaks */
     background-color: rgba(211, 69, 29, 0.15) !important;
     border-radius: 5px;
-    font-weight: bold;
     color: {TT_ORANGE} !important;
+    font-weight: bold;
 }}
-.educational-expander [data-testid="stExpander"] > div[role="button"] + div {{
-    /* Content style */
+.educational-expander details.streamlit-expander > div {{
+    /* content tweaks */
     background-color: rgba(211, 69, 29, 0.05) !important;
     border-left: 3px solid {TT_ORANGE} !important;
     padding: 10px;
@@ -119,7 +119,6 @@ st.markdown(f"""
 }}
 </style>
 """, unsafe_allow_html=True)
-
 
 # Section 1: Project Information
 st.header("1. Project Information")
