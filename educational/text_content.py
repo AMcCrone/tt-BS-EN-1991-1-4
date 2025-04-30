@@ -1,4 +1,5 @@
 terrain_help = """
+
 **Terrain Categories (UK)**
 
 The classification of roughness categories has been simplified into three terrain categories:
