@@ -561,22 +561,74 @@ cp_results_by_direction = calculate_cpe()
 
 st.subheader("External Pressure Coefficients (cp,e)")
 
-# Display results for each wind direction in separate sections
-# North Wind Direction
+# Calculate the required values for display
+cp_results_by_elevation = calculate_cpe()  # Run the calculation function
+
+# Get building dimensions from session state
+h = st.session_state.inputs.get("z", 10.0)  # Building height
+NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
+EW_dimension = st.session_state.inputs.get("EW_dimension", 40.0)
+
+# Display results for each elevation in separate sections
+# North Elevation
 st.write("#### North Elevation")
-st.dataframe(cp_results_by_direction["North"])
+# Calculate values for North elevation
+north_h_d = h / NS_dimension
+north_b = EW_dimension
+north_e = min(north_b, 2*h)
+north_gap = st.session_state.inputs.get("north_gap", 10.0)
+funnelling_status = ""
+if north_e/4 < north_gap < north_e:
+    funnelling_status = "Funnelling Applied"
+else:
+    funnelling_status = "No Funnelling"
+st.write(f"h/d = {north_h_d:.2f}, e = {north_e:.2f}m, gap = {north_gap:.2f}m ({funnelling_status})")
+st.dataframe(cp_results_by_elevation["North"].reset_index(drop=True))
 
-# East Wind Direction
+# East Elevation
 st.write("#### East Elevation")
-st.dataframe(cp_results_by_direction["East"])
+# Calculate values for East elevation
+east_h_d = h / EW_dimension
+east_b = NS_dimension
+east_e = min(east_b, 2*h)
+east_gap = st.session_state.inputs.get("east_gap", 10.0)
+funnelling_status = ""
+if east_e/4 < east_gap < east_e:
+    funnelling_status = "Funnelling Applied"
+else:
+    funnelling_status = "No Funnelling"
+st.write(f"h/d = {east_h_d:.2f}, e = {east_e:.2f}m, gap = {east_gap:.2f}m ({funnelling_status})")
+st.dataframe(cp_results_by_elevation["East"].reset_index(drop=True))
 
-# South Wind Direction
+# South Elevation
 st.write("#### South Elevation")
-st.dataframe(cp_results_by_direction["South"])
+# Calculate values for South elevation
+south_h_d = h / NS_dimension
+south_b = EW_dimension
+south_e = min(south_b, 2*h)
+south_gap = st.session_state.inputs.get("south_gap", 10.0)
+funnelling_status = ""
+if south_e/4 < south_gap < south_e:
+    funnelling_status = "Funnelling Applied"
+else:
+    funnelling_status = "No Funnelling"
+st.write(f"h/d = {south_h_d:.2f}, e = {south_e:.2f}m, gap = {south_gap:.2f}m ({funnelling_status})")
+st.dataframe(cp_results_by_elevation["South"].reset_index(drop=True))
 
-# West Wind Direction
+# West Elevation
 st.write("#### West Elevation")
-st.dataframe(cp_results_by_direction["West"])
+# Calculate values for West elevation
+west_h_d = h / EW_dimension
+west_b = NS_dimension
+west_e = min(west_b, 2*h)
+west_gap = st.session_state.inputs.get("west_gap", 10.0)
+funnelling_status = ""
+if west_e/4 < west_gap < west_e:
+    funnelling_status = "Funnelling Applied"
+else:
+    funnelling_status = "No Funnelling"
+st.write(f"h/d = {west_h_d:.2f}, e = {west_e:.2f}m, gap = {west_gap:.2f}m ({funnelling_status})")
+st.dataframe(cp_results_by_elevation["West"].reset_index(drop=True))
 
 # Store overall results for later use (combine all directions)
 all_results = []
