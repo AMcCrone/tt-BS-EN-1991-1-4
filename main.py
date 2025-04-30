@@ -35,7 +35,7 @@ st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG"
 st.title("Wind Load Calculator")
 st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
 
-TT_ORANGE = "rgb(211,69,29)"
+TT_ORANGE = "#D3451D"
 st.markdown(f"""
 <style>
 /* ============================
@@ -90,20 +90,21 @@ st.markdown(f"""
 /* 1) UNIVERSAL expander tint via <details> */
 details.streamlit-expander > summary,
 details.streamlit-expander > div {{
-    background-color: rgb(211, 69, 29) !important;
+    /* 10% opacity: #D3451D1A */
+    background-color: #D3451D1A !important;
 }}
 
 /* 2) “Educational” expander overrides */
 .educational-expander details.streamlit-expander > summary {{
-    /* header tweaks */
-    background-color: rgb(211, 69, 29) !important;
+    /* header tweaks, 15% opacity: #D3451D26 */
+    background-color: #D3451D26 !important;
     border-radius: 5px;
     color: {TT_ORANGE} !important;
     font-weight: bold;
 }}
 .educational-expander details.streamlit-expander > div {{
-    /* content tweaks */
-    background-color: rgb(211, 69, 29) !important;
+    /* content tweaks, 5% opacity: #D3451D0D */
+    background-color: #D3451D0D !important;
     border-left: 3px solid {TT_ORANGE} !important;
     padding: 10px;
     font-size: 0.8rem;
@@ -119,6 +120,7 @@ details.streamlit-expander > div {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 # Section 1: Project Information
 st.header("1. Project Information")
