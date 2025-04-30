@@ -352,7 +352,7 @@ def create_pressure_table(building_height, building_width, qp_value):
         else:
             data.append([label, "0.00", "0.00"])  # Ground level has zero pressure
             
-    df = pd.DataFrame(data, columns=["Position", "Height (m)", "q_p(z) (N/m²)"])
+    df = pd.DataFrame(data, columns=["Position", "Height (m)", "$q_p(z)$ (N/m²)"])
     return df
 
 def calculate_design_pressure(building_height, building_width, qp_value):
