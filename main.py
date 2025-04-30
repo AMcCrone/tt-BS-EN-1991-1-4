@@ -553,8 +553,6 @@ st.header("Wind Zones")
 # Import required modules
 from visualisation.wind_zones import plot_wind_zones
 from calc_engine.common.external_pressure import calculate_cpe, display_funnelling_inputs
-# External Pressure Coefficients Section
-st.subheader("External Pressure Coefficients")
 # Display funnelling inputs regardless of region
 north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
@@ -565,19 +563,19 @@ st.subheader("External Pressure Coefficients (cp,e)")
 
 # Display results for each wind direction in separate sections
 # North Wind Direction
-st.write("### North Wind")
+st.write("#### North Elevation")
 st.dataframe(cp_results_by_direction["North"])
 
 # East Wind Direction
-st.write("### East Wind")
+st.write("#### East Elevation")
 st.dataframe(cp_results_by_direction["East"])
 
 # South Wind Direction
-st.write("### South Wind")
+st.write("#### South Elevation")
 st.dataframe(cp_results_by_direction["South"])
 
 # West Wind Direction
-st.write("### West Wind")
+st.write("#### West Elevation")
 st.dataframe(cp_results_by_direction["West"])
 
 # Store overall results for later use (combine all directions)
