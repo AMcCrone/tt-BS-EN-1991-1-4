@@ -176,10 +176,6 @@ with col1:
 st.session_state.inputs["NS_dimension"] = NS_dimension
 st.session_state.inputs["EW_dimension"] = EW_dimension
 st.session_state.inputs["z"] = z
-st.session_state.inputs["include_inset"] = include_inset
-if include_inset:
-    st.session_state.inputs["inset_offset"] = inset_offset
-    st.session_state.inputs["inset_height"] = inset_height
 
 # 3D visualization of the building
 with col2:
