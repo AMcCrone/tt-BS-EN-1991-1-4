@@ -284,7 +284,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
             
             # Get color from colorscale
-            color_func = pc.get_colorscale(colorscale)
+            color_func = pc.get_colorscale("Blues")
             zone_color = color_func(normalized_value)[0]
             
             # Add colored rectangle for the zone
