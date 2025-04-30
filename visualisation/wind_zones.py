@@ -99,15 +99,24 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
                 ]
                 zone_names = ['A', 'B', 'A']
         else:
-            # Standard case with A, B, C, B, A
-            zone_boundaries = [
-                (0, e/5),                      # Left A
-                (e/5, e),                      # Left B
-                (e, width - e),                # Middle C
-                (width - e, width - e/5),      # Right B
-                (width - e/5, width)           # Right A
-            ]
-            zone_names = ['A', 'B', 'C', 'B', 'A']
+            if width - 2*e <= 0:  # If C zone would have zero or negative width
+                # Use A-B-A pattern instead
+                zone_boundaries = [
+                    (0, e/5),                  # Left A
+                    (e/5, width - e/5),        # Middle B
+                    (width - e/5, width)       # Right A
+                ]
+                zone_names = ['A', 'B', 'A']
+            else:
+                # Standard case with A, B, C, B, A
+                zone_boundaries = [
+                    (0, e/5),                      # Left A
+                    (e/5, e),                      # Left B
+                    (e, width - e),                # Middle C
+                    (width - e, width - e/5),      # Right B
+                    (width - e/5, width)           # Right A
+                ]
+                zone_names = ['A', 'B', 'C', 'B', 'A']
     
     elif e >= width and e < 5*width:  # Two zones: A, B
         # For e >= d but < 5d, we have A zones on each end, B in middle
