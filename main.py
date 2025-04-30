@@ -36,45 +36,54 @@ st.title("Wind Load Calculator")
 st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
 
 TT_ORANGE = "rgb(211,69,29)"
-# Add print-specific CSS - minimal version
 st.markdown(f"""
 <style>
-/* Your existing print CSS */
+/* ============================
+   GLOBAL & PRINT-ONLY STYLES
+   ============================ */
+
+/* 1) Your existing print rules */
 @media print {{
     /* Hide UI elements in print mode */
-    .stApp header, .stApp footer, .stSidebar, .stButton, 
+    .stApp header, .stApp footer, .stSidebar, .stButton,
     .educational-content, .navigation-section {{
         display: none !important;
     }}
-    
-    /* Hide number input +/- buttons and help icons */
+    /* Hide number-input +/- buttons and help icons */
     .stNumberInput button, .stNumberInput svg,
-    [data-testid="stToolbar"], 
+    [data-testid="stToolbar"],
     .stTooltipIcon,
     .stTabs button[data-baseweb="tab-list"] {{
         display: none !important;
     }}
-    
     /* Format printable content */
     .print-friendly {{
         page-break-inside: avoid;
         margin: 20px 0;
     }}
-    
-    /* Prevent images and charts from being split across pages */
-    img, svg, figure, 
-    .stPlot, .element-container, 
+    /* Prevent images/charts from splitting */
+    img, svg, figure,
+    .stPlot, .element-container,
     [data-testid="stImage"], [data-testid="stPlotlyChart"],
     [data-testid="stDecoration"], [data-testid="stMetric"] {{
         page-break-inside: avoid !important;
         break-inside: avoid !important;
     }}
-    
-    /* Additional print optimization */
+    /* Page margins */
     @page {{
         margin: 1cm;
     }}
+
+    /* 2) FORCE HEADING PAGE-BREAKS */
+    /* change h1,h2 to whichever levels you need */
+    h1, h2 {{
+        page-break-before: always !important;
+    }}
 }}
+
+/* ============================
+   ON-SCREEN STYLES
+   ============================ */
 
 /* Educational content styling */
 .educational-content {{
@@ -82,14 +91,13 @@ st.markdown(f"""
     color: {TT_ORANGE};
 }}
 
-/* Custom styling for expander when used for educational content */
+/* Custom styling for education expanders */
 .educational-expander .streamlit-expanderHeader {{
     background-color: rgba(211, 69, 29, 0.1);
     border-radius: 5px;
     font-weight: bold;
     color: {TT_ORANGE};
 }}
-
 .educational-expander .streamlit-expanderContent {{
     background-color: rgba(211, 69, 29, 0.05);
     border-left: 3px solid {TT_ORANGE};
@@ -97,7 +105,13 @@ st.markdown(f"""
     font-size: 0.8rem;
 }}
 
-/* Remove educational content from printing */
+/* 3) TT-Orange BACKGROUND for *all* expanders */
+.st-expander > .streamlit-expanderHeader,
+.st-expander > .streamlit-expanderContent {{
+    background-color: rgba(211, 69, 29, 0.1) !important;
+}}
+
+/* Remove educational‐expanders from print */
 @media print {{
     .educational-expander {{
         display: none !important;
@@ -105,6 +119,7 @@ st.markdown(f"""
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 # Section 1: Project Information
 st.header("1. Project Information")
