@@ -41,8 +41,6 @@ st.markdown(f"""
 /* ============================
    GLOBAL & PRINT-ONLY STYLES
    ============================ */
-
-/* 1) Your existing print rules */
 @media print {{
     /* Hide UI elements in print mode */
     .stApp header, .stApp footer, .stSidebar, .stButton,
@@ -73,10 +71,8 @@ st.markdown(f"""
     @page {{
         margin: 1cm;
     }}
-
-    /* 2) FORCE HEADING PAGE-BREAKS */
-    /* change h1,h2 to whichever levels you need */
-    h1, h2 {{
+    /* On-demand page breaks */
+    .pagebreak {{
         page-break-before: always !important;
     }}
 }}
@@ -91,14 +87,14 @@ st.markdown(f"""
     color: {TT_ORANGE};
 }}
 
-/* Custom styling for education expanders */
-.educational-expander .streamlit-expanderHeader {{
+/* Custom styling for education-specific expanders */
+.educational-expander [data-testid="stExpanderHeader"] {{
     background-color: rgba(211, 69, 29, 0.1);
     border-radius: 5px;
     font-weight: bold;
     color: {TT_ORANGE};
 }}
-.educational-expander .streamlit-expanderContent {{
+.educational-expander [data-testid="stExpanderContent"] {{
     background-color: rgba(211, 69, 29, 0.05);
     border-left: 3px solid {TT_ORANGE};
     padding: 10px;
@@ -106,12 +102,12 @@ st.markdown(f"""
 }}
 
 /* 3) TT-Orange BACKGROUND for *all* expanders */
-.st-expander > .streamlit-expanderHeader,
-.st-expander > .streamlit-expanderContent {{
+[data-testid="stExpander"] > div:first-child,
+[data-testid="stExpander"] > div:nth-child(2) {{
     background-color: rgba(211, 69, 29, 0.1) !important;
 }}
 
-/* Remove educational‐expanders from print */
+/* Remove educational-expanders from print */
 @media print {{
     .educational-expander {{
         display: none !important;
@@ -119,7 +115,6 @@ st.markdown(f"""
 }}
 </style>
 """, unsafe_allow_html=True)
-
 
 # Section 1: Project Information
 st.header("1. Project Information")
@@ -261,7 +256,7 @@ def render_terrain_category():
     # Display educational content if the toggle is enabled in the sidebar
     if st.session_state.get("show_educational", False):
         # Use the direct expander styling from Streamlit
-        with st.expander("📚 Educational Content: Terrain Types", expanded=True):
+        with st.expander("Which Terrain Type Should I Use?", expanded=True):
             # Display an image from the educational folder
             st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
             st.markdown(f'<div class="educational-content">{text_content.terrain_help}</div>', unsafe_allow_html=True)
