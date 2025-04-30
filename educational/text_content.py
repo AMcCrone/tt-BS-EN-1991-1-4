@@ -1,5 +1,5 @@
 terrain_help = """
-### Terrain Categories (UK)
+**Terrain Categories (UK)**
 
 The classification of roughness categories has been simplified into three terrain categories:
 
@@ -11,11 +11,11 @@ The classification of roughness categories has been simplified into three terrai
 
 ---
 
-### Transition Between Roughness Categories (0, I, II, III, IV)
+**Terrain Categories (EU)**
 
 When calculating wind pressure parameters (qₚ and cₛc_d), transitions between terrain roughness categories must be considered. Two recommended procedures are:
 
-#### Procedure 1
+**Procedure 1**
 Use the **smoother terrain category in the upwind direction** if the structure is located:
 
 - Less than 2 km from the smoother **Category 0**, or  
@@ -23,7 +23,7 @@ Use the **smoother terrain category in the upwind direction** if the structure i
 
 > Small areas (less than 10% of the area under consideration) with different roughness may be ignored.
 
-#### Procedure 2
+**Procedure 2**
 1. Determine the roughness categories for the upstream terrain in angular sectors.
 2. For each sector, find the distance *x* from the building to where the terrain roughness changes.
 3. If *x* is **smaller** than values from Table A.1 (based on height), use the **lower** roughness value.  
@@ -36,5 +36,11 @@ If no distance *x* is specified (or height exceeds 50 m), default to using the *
 Linear interpolation may be used for intermediate heights.
 
 > A building can be calculated in a lower terrain category if it lies within the limits defined in Table A.1.
+"""
+
+basic_wind_help = """
+Values for $V_{b,map}$ can be obtained from the National Annex.
+
+For projects in the UK, $V_{b,map}$ may be read from **Figure NA.1** (shown right). Typically, for projects in London, $V_{b,map}$ = 21.5 m/s
 """
 
