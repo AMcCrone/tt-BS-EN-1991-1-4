@@ -536,7 +536,6 @@ st.write("### North-South Direction")
 NS_df = create_pressure_table(h, NS_dimension, qp_value)
 st.table(NS_df)
 NS_design_pressure = calculate_design_pressure(h, NS_dimension, qp_value)
-st.info(f"Design peak velocity pressure for NS direction: {NS_design_pressure:.2f} N/m²")
 st.session_state.inputs["NS_design_pressure"] = NS_design_pressure
 
 # EW Direction
@@ -544,7 +543,6 @@ st.write("### East-West Direction")
 EW_df = create_pressure_table(h, EW_dimension, qp_value)
 st.table(EW_df)
 EW_design_pressure = calculate_design_pressure(h, EW_dimension, qp_value)
-st.info(f"Design peak velocity pressure for EW direction: {EW_design_pressure:.2f} N/m²")
 st.session_state.inputs["EW_design_pressure"] = EW_design_pressure
 
 # Section 5: WIND ZONES
