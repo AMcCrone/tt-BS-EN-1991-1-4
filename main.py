@@ -254,11 +254,19 @@ def render_terrain_category():
 
     # Display educational content if the toggle is enabled in the sidebar
     if st.session_state.get("show_educational", False):
-        # Use the direct expander styling from Streamlit
+        # open a div with your special class
+        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+        
+        # inside that div, render a normal Streamlit expander
         with st.expander("Which Terrain Type Should I Use?", expanded=True):
-            # Display an image from the educational folder
             st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
-            st.markdown(f'<div class="educational-content">{text_content.terrain_help}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="educational-content">{text_content.terrain_help}</div>',
+                unsafe_allow_html=True
+            )
+        
+        # close the wrapper div
+        st.markdown('</div>', unsafe_allow_html=True)
 render_terrain_category()
 
 # Section 3: WIND VELOCITY
