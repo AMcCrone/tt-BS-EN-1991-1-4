@@ -79,7 +79,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Section 1: Project Information
-st.header("1. Project Information")
+st.header("Project Information")
 col1, col2 = st.columns(2)
 
 with col1:
@@ -453,6 +453,7 @@ peak_pressure_section()
 
 # --- Section 5: Wind Pressure Profile ---
 st.markdown("---")
+st.markdown('<div class="pagebreak"></div>', unsafe_allow_html=True)
 st.write("## Wind Pressure Profile")
 
 # Import the pressure profile functions
@@ -606,6 +607,7 @@ st.plotly_chart(ew_elevation_fig, use_container_width=True)
 
 # Section 6: RESULTS SUMMARY
 st.markdown("---")
+st.markdown('<div class="pagebreak"></div>', unsafe_allow_html=True)
 st.header("Results Summary")
 from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures, visualize_wind_pressures
 
