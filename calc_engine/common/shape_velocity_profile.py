@@ -13,7 +13,14 @@ TT_LightLightBlue = "rgb(207,241,242)"
 TT_LightGrey = "rgb(223,224,225)"
 
 def get_qp_at_height(z_height, building_height, building_width, qp_max):
-    """Calculate q_p at a given height based on building dimensions."""
+    """Calculate q_p at a given height based on building dimensions.
+    Conservative approach: Using the same calculation for all height scenarios."""
+    # Conservative approach - use h <= b calculation for all cases
+    return qp_max
+
+def get_qp_less_conservative(z_height, building_height, building_width, qp_max):
+    """Calculate q_p at a given height based on building dimensions using 
+    the less conservative approach from BS EN 1991-1-4."""
     h = building_height
     b = building_width
     
@@ -56,7 +63,12 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
     
     # Create height points for plotting
     z_points = np.linspace(0, building_height, 100)
+    
+    # Conservative approach (constant pressure)
     qp_points = [get_qp_at_height(z, building_height, building_width, qp_value) for z in z_points]
+    
+    # Less conservative approach (for reference)
+    qp_points_less_conservative = [get_qp_less_conservative(z, building_height, building_width, qp_value) for z in z_points]
     
     # Create the figure
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -78,15 +90,26 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
         )
     )
     
-    # Draw pressure profile curve
+    # Draw pressure profile curve (conservative approach)
     fig.add_trace(
         go.Scatter(
             x=[ref_x + qp * arrow_scale for qp in qp_points],
             y=z_points,
             line=dict(color=TT_MidBlue, width=3),
-            name='Pressure Profile'
+            name='Conservative Pressure Profile'
         )
     )
+    
+    # Add less conservative profile curve if applicable (h > b)
+    if building_height > building_width:
+        fig.add_trace(
+            go.Scatter(
+                x=[ref_x + qp * arrow_scale for qp in qp_points_less_conservative],
+                y=z_points,
+                line=dict(color=TT_Grey, width=2, dash='dash'),
+                name='Less Conservative Profile (BS EN 1991-1-4)'
+            )
+        )
     
     # Draw arrows at different heights
     num_arrows = 15
@@ -132,6 +155,30 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
             ayref="y",
             ax=ref_x + arrow_length - 0.05*building_width,
             ay=z_height
+        )
+    
+    # Add explanatory text for different cases
+    if building_height <= building_width:
+        pass  # No additional text needed for Case 1
+    elif building_width < building_height <= 2*building_width:
+        fig.add_annotation(
+            x=ref_x,
+            y=building_height * 1.05,
+            text="Note: A less conservative approach is outlined in BS EN 1991-1-4 for a two part model.",
+            showarrow=False,
+            font=dict(color=TT_Grey, size=12),
+            xanchor="right",
+            yanchor="bottom"
+        )
+    else:  # h > 2*b
+        fig.add_annotation(
+            x=ref_x,
+            y=building_height * 1.05,
+            text="Note: A less conservative approach is outlined in BS EN 1991-1-4 for a multiple parts model.",
+            showarrow=False,
+            font=dict(color=TT_Grey, size=12),
+            xanchor="right",
+            yanchor="bottom"
         )
     
     # Add reference height lines
@@ -183,13 +230,13 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
             yanchor="bottom"
         )
         
-        # Add rectangle for upper zone
+        # Add rectangle for upper zone (for reference only)
         fig.add_shape(
             type="rect",
             x0=0, y0=building_width,
             x1=building_width, y1=building_height,
             fillcolor=TT_LightLightBlue,
-            opacity=0.3,
+            opacity=0.2,
             line=dict(width=0)
         )
         
@@ -239,23 +286,23 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
             yanchor="bottom"
         )
         
-        # Add rectangle for middle zone
+        # Add rectangle for middle zone (for reference only)
         fig.add_shape(
             type="rect",
             x0=0, y0=building_width,
             x1=building_width, y1=z_strip,
             fillcolor=TT_LightLightBlue,
-            opacity=0.3,
+            opacity=0.2,
             line=dict(width=0)
         )
         
-        # Add rectangle for upper zone
+        # Add rectangle for upper zone (for reference only)
         fig.add_shape(
             type="rect",
             x0=0, y0=z_strip,
             x1=building_width, y1=building_height,
             fillcolor=TT_LightBlue,
-            opacity=0.3,
+            opacity=0.2,
             line=dict(width=0)
         )
     
@@ -296,7 +343,7 @@ def create_pressure_table(building_height, building_width, qp_value):
             (f"Top (h = {building_height} m)", building_height)
         ]
 
-    # Create the table data
+    # Create the table data - using conservative approach
     data = []
     for label, z_height in key_heights:
         if z_height > 0:  # Skip ground level for calculation
@@ -309,18 +356,8 @@ def create_pressure_table(building_height, building_width, qp_value):
     return df
 
 def calculate_design_pressure(building_height, building_width, qp_value):
-    """Calculate design pressure based on building dimensions."""
-    if building_height <= building_width:
-        design_pressure = qp_value
-    elif building_width < building_height <= 2*building_width:
-        # Weighted average of the two zones
-        qp_b = qp_value * (building_width / building_height)
-        weighted_avg = (qp_b * building_width + qp_value * (building_height - building_width)) / building_height
-        design_pressure = weighted_avg
-    else:  # h > 2*b
-        # More complex calculation with three zones
-        qp_b = qp_value * (building_width / building_height)
-        qp_strip = qp_value * ((building_height - building_width) / building_height)
-        design_pressure = (qp_b * building_width + qp_strip * (building_height - 2*building_width) + qp_value * building_width) / building_height
-        
+    """Calculate design pressure based on building dimensions.
+    Using conservative approach for all cases."""
+    # Conservative approach - use the qp_value directly for all cases
+    design_pressure = qp_value
     return design_pressure
