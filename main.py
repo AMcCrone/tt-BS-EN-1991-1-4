@@ -289,13 +289,13 @@ def render_terrain_category():
 
     # Display educational content if the toggle is enabled in the sidebar
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-        with st.expander("Which Terrain Type Should I Use?", expanded=True):
-            st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
-            st.markdown(
-                f'<div class="educational-content">Here’s some terrain help text…</div>',
-                unsafe_allow_html=True
-            )
-        st.markdown('</div>', unsafe_allow_html=True)
+    with st.expander("Which Terrain Type Should I Use?", expanded=True):
+        st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
+        st.markdown(
+            f'<div class="educational-content">Here’s some terrain help text…</div>',
+            unsafe_allow_html=True
+        )
+    st.markdown('</div>', unsafe_allow_html=True)
 render_terrain_category()
 
 # Section 3: WIND VELOCITY
