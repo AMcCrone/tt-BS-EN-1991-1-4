@@ -271,44 +271,55 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 # Store the pressure for this zone
                 zone_pressures[zone_name] = net_pressure_kpa
         
-        # For each zone, create a heatmap with constant pressure
+        # For each zone, create a single colored rectangle with constant pressure
         for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
             # Get the pressure value for this zone
             zone_pressure = zone_pressures.get(zone_name, 0)
             
-            # Create a grid for the heatmap
-            x_steps = 10  # horizontal resolution
-            y_steps = 10  # vertical resolution
+            # Normalize the pressure value for color mapping
+            if global_max_suction_kpa == global_min_suction_kpa:
+                normalized_value = 0.5  # Default to middle of colorscale if no range
+            else:
+                normalized_value = (zone_pressure - global_max_suction_kpa) / (global_min_suction_kpa - global_max_suction_kpa)
+            normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
             
-            # Create slightly inset boundaries to avoid overlapping the building outline
-            inset = width * 0.005
-            x_vals = np.linspace(x0 + inset, x1 - inset, x_steps)
-            y_vals = np.linspace(inset, height - inset, y_steps)
+            # Get color from colorscale
+            color_func = pc.get_colorscale(colorscale)
+            zone_color = color_func(normalized_value)[0]
             
-            # Create meshgrid for heatmap
-            X, Y = np.meshgrid(x_vals, y_vals)
+            # Add colored rectangle for the zone
+            fig.add_shape(
+                type="rect",
+                x0=x0,
+                y0=0,
+                x1=x1,
+                y1=height,
+                fillcolor=zone_color,
+                opacity=0.8,
+                line=dict(width=0),
+                layer="below"
+            )
             
-            # Create constant pressure array for the heatmap
-            Z = np.full((y_steps, x_steps), zone_pressure)
-            
-            # Create heatmap for this zone
-            fig.add_trace(go.Heatmap(
-                z=Z,
-                x=x_vals,
-                y=y_vals,
-                colorscale=colorscale,
-                showscale=(i == 0),  # Only show colorbar for the first zone
-                colorbar=dict(
-                    title="Suction (kPa)",
-                    x=1.05,
-                    y=0.5,
-                    lenmode="fraction",
-                    len=0.9
-                ),
-                zmin=global_max_suction_kpa,  # Use global values for consistent scale
-                zmax=global_min_suction_kpa,
-                name=f"Zone {zone_name}"
-            ))
+            # Add colorbar to figure (only once)
+            if i == 0:
+                # Create a dummy heatmap just for the colorbar
+                dummy_z = [[global_max_suction_kpa, global_max_suction_kpa], 
+                          [global_min_suction_kpa, global_min_suction_kpa]]
+                fig.add_trace(go.Heatmap(
+                    z=dummy_z,
+                    x=[0, 0.1],  # Outside visible area
+                    y=[0, 0.1],  # Outside visible area
+                    colorscale=colorscale,
+                    showscale=True,
+                    colorbar=dict(
+                        title="Suction (kPa)",
+                        x=1.05,
+                        y=0.5,
+                        lenmode="fraction",
+                        len=0.9
+                    ),
+                    visible=False
+                ))
             
             # Add zone label with pressure value
             fig.add_annotation(
