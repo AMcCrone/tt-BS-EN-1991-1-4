@@ -157,30 +157,6 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
             ay=z_height
         )
     
-    # Add explanatory text for different cases
-    if building_height <= building_width:
-        pass  # No additional text needed for Case 1
-    elif building_width < building_height <= 2*building_width:
-        fig.add_annotation(
-            x=ref_x,
-            y=building_height * 1.05,
-            text="Note: A less conservative approach is outlined in BS EN 1991-1-4 for a two part model.",
-            showarrow=False,
-            font=dict(color=TT_Grey, size=12),
-            xanchor="right",
-            yanchor="bottom"
-        )
-    else:  # h > 2*b
-        fig.add_annotation(
-            x=ref_x,
-            y=building_height * 1.05,
-            text="Note: A less conservative approach is outlined in BS EN 1991-1-4 for a multiple parts model.",
-            showarrow=False,
-            font=dict(color=TT_Grey, size=12),
-            xanchor="right",
-            yanchor="bottom"
-        )
-    
     # Add reference height lines
     if building_height <= building_width:
         # Case 1: Only mark h
@@ -329,9 +305,7 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
     return fig, profile_case
 
 def create_pressure_table(building_height, building_width, qp_value):
-    """Create a dataframe with pressure values at key heights and display as a Streamlit dataframe."""
-    import streamlit as st
-    
+    """Create a dataframe with pressure values at key heights for display in Streamlit."""
     key_heights = []
     if building_height <= building_width:
         key_heights = [("Ground level", 0), (f"Top (h = {building_height} m)", building_height)]
@@ -355,8 +329,13 @@ def create_pressure_table(building_height, building_width, qp_value):
             
     df = pd.DataFrame(data, columns=["Position", "Height (m)", "$q_p(z)$ (N/m²)"])
     
-    # Display as a Streamlit dataframe
-    st.dataframe(df, hide_index=True)
+    # Add information about less conservative approach if applicable
+    import streamlit as st
+    if building_height > building_width:
+        if building_width < building_height <= 2*building_width:
+            st.write("*Note: A less conservative approach is outlined in BS EN 1991-1-4 for a two part model.*")
+        else:  # h > 2*b
+            st.write("*Note: A less conservative approach is outlined in BS EN 1991-1-4 for a multiple parts model.*")
     
     return df
 
