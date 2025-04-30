@@ -144,10 +144,12 @@ st.markdown("---")
 st.header("Geometry & Terrain")
 
 st.subheader("Geometry")
-# Building dimensions input
-col1, col2 = st.columns([0.3,0.7])
+
+# Create three equal-width columns for inputs
+col1, col2, col3 = st.columns(3)
+
+# North-South Dimension input
 with col1:
-    # Building dimensions
     NS_dimension = st.number_input(
         "North-South Dimension (m)",
         min_value=1.0,
@@ -155,7 +157,9 @@ with col1:
         value=float(st.session_state.inputs.get("NS_dimension", 30.0)),
         step=1.0
     )
-    
+
+# East-West Dimension input
+with col2:
     EW_dimension = st.number_input(
         "East-West Dimension (m)",
         min_value=1.0,
@@ -163,7 +167,9 @@ with col1:
         value=float(st.session_state.inputs.get("EW_dimension", 30.0)),
         step=1.0
     )
-    
+
+# Building Height input
+with col3:
     z = st.number_input(
         "Building Height (m)",
         min_value=1.0,
@@ -178,13 +184,12 @@ st.session_state.inputs["EW_dimension"] = EW_dimension
 st.session_state.inputs["z"] = z
 
 # 3D visualization of the building
-with col2:
-    building_fig = create_building_visualisation(
-        NS_dimension, 
-        EW_dimension, 
-        z
-    )
-    st.plotly_chart(building_fig, use_container_width=True)
+building_fig = create_building_visualisation(
+    NS_dimension,
+    EW_dimension,
+    z
+)
+st.plotly_chart(building_fig, use_container_width=True)
 
 col1, col2 = st.columns(2)
 with col1:
