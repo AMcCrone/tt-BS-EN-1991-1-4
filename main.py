@@ -263,7 +263,7 @@ if st.session_state.get("show_educational", False):
             st.image(
                 "educational/images/Basic_Wind_Map.png",
                 caption="Basic Wind Map",
-                use_column_width=True
+                use_container_width=True
             )
 
     st.markdown('</div>', unsafe_allow_html=True)
