@@ -583,7 +583,7 @@ elif north_gap >= north_e:
 else:
     funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
 st.write(f"h/d = {north_h_d:.2f}, e = {north_e:.2f}m, gap = {north_gap:.2f}m ({funnelling_status})")
-st.dataframe(cp_results_by_elevation["North"].reset_index(drop=True))
+st.dataframe(cp_results_by_elevation["North"], hide_index=True)
 
 # East Elevation
 st.write("#### East Elevation")
@@ -600,7 +600,7 @@ elif east_gap >= east_e:
 else:
     funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
 st.write(f"h/d = {east_h_d:.2f}, e = {east_e:.2f}m, gap = {east_gap:.2f}m ({funnelling_status})")
-st.dataframe(cp_results_by_elevation["East"].reset_index(drop=True))
+st.dataframe(cp_results_by_elevation["East"], hide_index=True)
 
 # South Elevation
 st.write("#### South Elevation")
@@ -617,7 +617,7 @@ elif south_gap >= south_e:
 else:
     funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
 st.write(f"h/d = {south_h_d:.2f}, e = {south_e:.2f}m, gap = {south_gap:.2f}m ({funnelling_status})")
-st.dataframe(cp_results_by_elevation["South"].reset_index(drop=True))
+st.dataframe(cp_results_by_elevation["South"], hide_index=True)
 
 # West Elevation
 st.write("#### West Elevation")
@@ -634,7 +634,7 @@ elif west_gap >= west_e:
 else:
     funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
 st.write(f"h/d = {west_h_d:.2f}, e = {west_e:.2f}m, gap = {west_gap:.2f}m ({funnelling_status})")
-st.dataframe(cp_results_by_elevation["West"].reset_index(drop=True))
+st.dataframe(cp_results_by_elevation["West"], hide_index=True)
 
 # Store overall results for later use (combine all directions)
 all_results = []
@@ -663,7 +663,7 @@ elevation_figures = plot_elevation_with_pressures(st.session_state, results_by_d
 
 # Display results manually
 st.subheader("Pressure Summary")
-st.dataframe(summary_df)
+st.dataframe(summary_df, hide_index=True)
 
 # Display figures
 for direction, fig in elevation_figures.items():
