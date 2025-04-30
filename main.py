@@ -220,7 +220,7 @@ def render_terrain_category():
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
         
         # inside that div, render a normal Streamlit expander
-        with st.expander("Which Terrain Type Should I Use?", expanded=True):
+        with st.expander("Which Terrain Type Should I Use?", expanded=False):
             st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
             st.markdown(
                 f'<div class="educational-content">{text_content.terrain_help}</div>',
@@ -251,7 +251,7 @@ if st.session_state.get("show_educational", False):
     # wrap in your educational-expander container
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
 
-    with st.expander("What $$v_{b,map}$$ Value Should I Use?", expanded=True):
+    with st.expander("What $$v_{b,map}$$ Value Should I Use?", expanded=False):
         # two columns: text (wide) on left, image (narrow) on right
         col1, col2 = st.columns([0.7, 0.3])
         with col1:
