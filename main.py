@@ -7,6 +7,7 @@ from auth import authenticate_user
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
 from visualisation.building_viz import create_building_visualisation
+from educational import text_content
 
 authenticate_user()
 
@@ -90,7 +91,7 @@ st.markdown(f"""
 }}
 
 .educational-expander .streamlit-expanderContent {{
-    background-color: rgba(211, 69, 29, 0.05);
+    background-color: rgba(211, 69, 29, 0.1);
     border-left: 3px solid {TT_ORANGE};
     padding: 10px;
     font-size: 0.9rem;
@@ -274,12 +275,8 @@ def render_terrain_category():
         # Wrap the educational content in a div with custom classes
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
         
-        with st.expander("📚 Educational Content: Terrain Types", expanded=True):
-            # Display an image from the educational folder
+        with st.expander("Which Terrain Type Should I Use?", expanded=False):
             st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
-            
-            # Import and display educational text
-            from educational import text_content
             st.markdown(f'<div class="educational-content">{text_content.terrain_help}</div>', 
                        unsafe_allow_html=True)
     
