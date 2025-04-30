@@ -327,7 +327,7 @@ def create_pressure_table(building_height, building_width, qp_value):
         qp_at_z = get_qp_at_height(z_height, building_height, building_width, qp_value)
         data.append([label, f"{z_height:.2f}", f"{qp_at_z:.2f}"])
             
-    df = pd.DataFrame(data, columns=["Position", "Height (m)", "$q_p(z)$ (N/m²)"])
+    df = pd.DataFrame(data, columns=["Position", "Height (m)", "q_p(z) (N/m²)"])
     
     # Add information about less conservative approach if applicable
     import streamlit as st
