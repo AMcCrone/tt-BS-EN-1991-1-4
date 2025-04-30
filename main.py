@@ -292,7 +292,7 @@ def render_terrain_category():
     with st.expander("Which Terrain Type Should I Use?", expanded=True):
         st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
         st.markdown(
-            f'<div class="educational-content">Here’s some terrain help text…</div>',
+            f'<div class="educational-content">{text_content.terrain_help}</div>',
             unsafe_allow_html=True
         )
     st.markdown('</div>', unsafe_allow_html=True)
