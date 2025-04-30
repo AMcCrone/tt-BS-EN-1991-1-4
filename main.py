@@ -288,19 +288,13 @@ def render_terrain_category():
         st.session_state.inputs["d_town_terrain"] = d_town_terrain
 
     # Display educational content if the toggle is enabled in the sidebar
-    if st.session_state.get("show_educational", False):
-        # open a div with your special class
-        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-        
-        # inside that div, render a normal Streamlit expander
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
         with st.expander("Which Terrain Type Should I Use?", expanded=True):
             st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
             st.markdown(
-                f'<div class="educational-content">{text_content.terrain_help}</div>',
+                f'<div class="educational-content">Here’s some terrain help text…</div>',
                 unsafe_allow_html=True
             )
-        
-        # close the wrapper div
         st.markdown('</div>', unsafe_allow_html=True)
 render_terrain_category()
 
