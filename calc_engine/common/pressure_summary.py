@@ -283,9 +283,8 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 normalized_value = (zone_pressure - global_max_suction_kpa) / (global_min_suction_kpa - global_max_suction_kpa)
             normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
             
-            # Get color from colorscale
-            color_func = pc.get_colorscale("Blues")
-            zone_color = color_func(normalized_value)[0]
+            # Sample the colorscale at normalized_value (0…1)
+            zone_color = pc.sample_colorscale(colorscale, normalized_value)[0]
             
             # Add colored rectangle for the zone
             fig.add_shape(
