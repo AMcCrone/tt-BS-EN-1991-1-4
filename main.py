@@ -84,7 +84,6 @@ st.markdown(f"""
 /* Educational content styling */
 .educational-content {{
     font-size: 0.8rem;
-    color: {TT_ORANGE};
 }}
 
 /* Custom styling for education-specific expanders */
