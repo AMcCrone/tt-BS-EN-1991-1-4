@@ -171,31 +171,6 @@ with col1:
         value=float(st.session_state.inputs.get("z", 30.0)),
         step=1.0
     )
-    
-    # Option to include an inset zone
-    include_inset = st.checkbox("Include Inset Zone", 
-                               value=st.session_state.inputs.get("include_inset", False))
-    
-    # Show inset parameters only if inset is enabled
-    inset_offset = 0
-    inset_height = 0
-    
-    if include_inset:
-        inset_offset = st.number_input(
-            "Inset Offset from Edges (m)",
-            min_value=0.1,
-            max_value=min(NS_dimension/2, EW_dimension/2) - 0.1,  # Prevent negative dimensions
-            value=float(st.session_state.inputs.get("inset_offset", 2.0)),
-            step=0.1
-        )
-        
-        inset_height = st.number_input(
-            "Inset Zone Height (m)",
-            min_value=0.1,
-            max_value=100.0,
-            value=float(st.session_state.inputs.get("inset_height", 3.0)),
-            step=0.1
-        )
 
 # Save geometry inputs to session state
 st.session_state.inputs["NS_dimension"] = NS_dimension
