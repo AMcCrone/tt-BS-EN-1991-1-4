@@ -78,7 +78,7 @@ st.markdown(f"""
 
 /* Educational content styling */
 .educational-content {{
-    font-size: 0.9rem;
+    font-size: 0.5rem;
     color: {TT_ORANGE};
 }}
 
@@ -94,7 +94,7 @@ st.markdown(f"""
     background-color: rgba(211, 69, 29, 0.05);
     border-left: 3px solid {TT_ORANGE};
     padding: 10px;
-    font-size: 0.9rem;
+    font-size: 0.5rem;
 }}
 
 /* Remove educational content from printing */
