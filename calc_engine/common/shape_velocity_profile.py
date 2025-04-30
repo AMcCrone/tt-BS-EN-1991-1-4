@@ -329,7 +329,9 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
     return fig, profile_case
 
 def create_pressure_table(building_height, building_width, qp_value):
-    """Create a dataframe with pressure values at key heights."""
+    """Create a dataframe with pressure values at key heights and display as a Streamlit dataframe."""
+    import streamlit as st
+    
     key_heights = []
     if building_height <= building_width:
         key_heights = [("Ground level", 0), (f"Top (h = {building_height} m)", building_height)]
@@ -346,13 +348,16 @@ def create_pressure_table(building_height, building_width, qp_value):
     # Create the table data - using conservative approach
     data = []
     for label, z_height in key_heights:
-        if z_height > 0:  # Skip ground level for calculation
-            qp_at_z = get_qp_at_height(z_height, building_height, building_width, qp_value)
-            data.append([label, f"{z_height:.2f}", f"{qp_at_z:.2f}"])
-        else:
-            data.append([label, "0.00", "0.00"])  # Ground level has zero pressure
+        # Apply the same pressure for all heights in conservative approach
+        # Ground level has the same pressure as the building top
+        qp_at_z = get_qp_at_height(z_height, building_height, building_width, qp_value)
+        data.append([label, f"{z_height:.2f}", f"{qp_at_z:.2f}"])
             
     df = pd.DataFrame(data, columns=["Position", "Height (m)", "$q_p(z)$ (N/m²)"])
+    
+    # Display as a Streamlit dataframe
+    st.dataframe(df, hide_index=True)
+    
     return df
 
 def calculate_design_pressure(building_height, building_width, qp_value):
