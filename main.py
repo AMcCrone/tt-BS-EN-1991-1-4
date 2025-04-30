@@ -473,11 +473,9 @@ NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
 EW_dimension = st.session_state.inputs.get("EW_dimension", 15.0)
 
 # Create and display plots for both directions
-st.write("### North-South Direction")
 NS_fig, NS_profile_case = create_wind_pressure_plot(h, NS_dimension, qp_value, "NS")
 st.plotly_chart(NS_fig, use_container_width=True)
 
-st.write("### East-West Direction")
 EW_fig, EW_profile_case = create_wind_pressure_plot(h, EW_dimension, qp_value, "EW")
 st.plotly_chart(EW_fig, use_container_width=True)
 
