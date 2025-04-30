@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
+import plotly.colors as pc
 
 def create_pressure_summary(session_state, results_by_direction):
     """
@@ -106,8 +107,8 @@ def create_pressure_summary(session_state, results_by_direction):
 
 def plot_elevation_with_pressures(session_state, results_by_direction):
     """
-    Create plots for all four elevations showing wind zones A, B, C with pressure gradients
-    that vary with height according to the building's height-to-width ratio.
+    Create plots for all four elevations showing wind zones A, B, C with constant pressure
+    values based on the building's height.
     
     Parameters:
     -----------
@@ -121,15 +122,11 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     dict
         Dictionary of plotly figures for each elevation
     """
-    import numpy as np
-    import plotly.graph_objects as go
-    import plotly.colors as pc
-    
     # Extract dimensions and peak velocity pressure
     h = session_state.inputs.get("z", 10.0)  # Building height
     NS_dimension = session_state.inputs.get("NS_dimension", 20.0)
     EW_dimension = session_state.inputs.get("EW_dimension", 40.0)
-    qp_reference = session_state.inputs.get("qp_value", 1000.0)  # Reference peak velocity pressure in N/m²
+    qp_value = session_state.inputs.get("qp_value", 1000.0)  # Peak velocity pressure at building height
     
     # Create a continuous color scale for pressure
     colorscale = pc.sequential.Blues_r
@@ -147,33 +144,22 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     
     # First pass to find global pressure range
     for direction, cp_df in results_by_direction.items():
-        # Set up width based on direction
-        if direction in ["North", "South"]:
-            building_width = EW_dimension
-        else:  # East or West
-            building_width = NS_dimension
-        
-        # Sample heights to find pressure range
-        height_samples = 20
-        for z in np.linspace(0, h, height_samples):
-            qp_value = get_qp_at_height(z, h, building_width, qp_reference)
-            
-            # Check all zones
-            for zone_name in ['A', 'B', 'C']:
-                # Only process if this zone exists in this direction
-                if zone_name in cp_df['Zone'].values:
-                    cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
-                    we = qp_value * cp_e
-                    
-                    # Calculate internal pressures
-                    wi_positive = qp_value * cp_i_positive
-                    wi_negative = qp_value * cp_i_negative
-                    
-                    # Calculate net pressures (minimum of two internal pressure cases)
-                    net_pressure = min(we + wi_positive, we + wi_negative)
-                    
-                    global_max_suction = min(global_max_suction, net_pressure)
-                    global_min_suction = max(global_min_suction, net_pressure)
+        # Check all zones
+        for zone_name in ['A', 'B', 'C']:
+            # Only process if this zone exists in this direction
+            if zone_name in cp_df['Zone'].values:
+                cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
+                we = qp_value * cp_e
+                
+                # Calculate internal pressures
+                wi_positive = qp_value * cp_i_positive
+                wi_negative = qp_value * cp_i_negative
+                
+                # Calculate net pressures (minimum of two internal pressure cases)
+                net_pressure = min(we + wi_positive, we + wi_negative)
+                
+                global_max_suction = min(global_max_suction, net_pressure)
+                global_min_suction = max(global_min_suction, net_pressure)
     
     # Ensure we have some range to avoid division by zero
     if global_max_suction == global_min_suction:
@@ -192,26 +178,16 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
         if direction in ["North", "South"]:
             width = EW_dimension
             height = h
-            building_width = EW_dimension  # Width perpendicular to wind direction
             crosswind_dim = NS_dimension
             title = f"{direction} Elevation - Wind Suction Zones"
         else:  # East or West
             width = NS_dimension
             height = h
-            building_width = NS_dimension  # Width perpendicular to wind direction
             crosswind_dim = EW_dimension
             title = f"{direction} Elevation - Wind Suction Zones"
         
         # Calculate parameter e according to Eurocode
         e = min(crosswind_dim, 2 * height)
-        
-        # Determine profile case based on building dimensions
-        if height <= building_width:
-            profile_case = "Case 1: h ≤ b"
-        elif building_width < height <= 2 * building_width:
-            profile_case = "Case 2: b < h ≤ 2b"
-        else:
-            profile_case = "Case 3: h > 2b"
         
         # Create figure
         fig = go.Figure()
@@ -273,14 +249,12 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             zone_boundaries = [(0, width)]
             zone_names = ['A']
         
-        # Store the maximum pressure values for each zone (at maximum height)
-        zone_max_pressures = {}
+        # Store the pressure values for each zone
+        zone_pressures = {}
         
         for zone_name in set(zone_names):
-            # Calculate pressure at maximum height (h) for this zone
             # Only calculate if this zone exists in this direction
             if zone_name in cp_df['Zone'].values:
-                qp_value = get_qp_at_height(height, height, building_width, qp_reference)
                 cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
                 we = qp_value * cp_e
                 
@@ -288,51 +262,34 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 wi_positive = qp_value * cp_i_positive
                 wi_negative = qp_value * cp_i_negative
                 
-                # Calculate net pressure (minimum of two internal pressure cases)
+                # Calculate net pressure (minimum of two internal pressure cases for suction)
                 net_pressure = min(we + wi_positive, we + wi_negative)
                 
                 # Convert to kPa and round to 2 decimal places
                 net_pressure_kpa = round(net_pressure / 1000, 2)
                 
-                # Store the maximum pressure for this zone
-                zone_max_pressures[zone_name] = net_pressure_kpa
+                # Store the pressure for this zone
+                zone_pressures[zone_name] = net_pressure_kpa
         
-        # For each zone, create a heatmap to show pressure variation with height
+        # For each zone, create a heatmap with constant pressure
         for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
-            # Get the cp_e value for this zone
-            cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
+            # Get the pressure value for this zone
+            zone_pressure = zone_pressures.get(zone_name, 0)
             
             # Create a grid for the heatmap
             x_steps = 10  # horizontal resolution
-            y_steps = 50  # vertical resolution
+            y_steps = 10  # vertical resolution
             
             # Create slightly inset boundaries to avoid overlapping the building outline
-            # Inset by a very small amount (0.5% of width) to avoid overlapping the building edge
             inset = width * 0.005
             x_vals = np.linspace(x0 + inset, x1 - inset, x_steps)
             y_vals = np.linspace(inset, height - inset, y_steps)
             
             # Create meshgrid for heatmap
             X, Y = np.meshgrid(x_vals, y_vals)
-            Z = np.zeros((y_steps, x_steps))
             
-            # Fill Z with pressure values that vary with height (converted to kPa)
-            for j, y in enumerate(y_vals):
-                qp_value = get_qp_at_height(y, height, building_width, qp_reference)
-                we = qp_value * cp_e
-                
-                # Calculate internal pressures
-                wi_positive = qp_value * cp_i_positive
-                wi_negative = qp_value * cp_i_negative
-                
-                # Calculate net pressure (minimum of two internal pressure cases)
-                net_pressure = min(we + wi_positive, we + wi_negative)
-                
-                # Convert to kPa
-                net_pressure_kpa = net_pressure / 1000
-                
-                # Fill the entire row with the same pressure value
-                Z[j, :] = net_pressure_kpa
+            # Create constant pressure array for the heatmap
+            Z = np.full((y_steps, x_steps), zone_pressure)
             
             # Create heatmap for this zone
             fig.add_trace(go.Heatmap(
@@ -353,12 +310,11 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 name=f"Zone {zone_name}"
             ))
             
-            # Add zone label with maximum pressure value
-            max_pressure = zone_max_pressures[zone_name]
+            # Add zone label with pressure value
             fig.add_annotation(
                 x=(x0 + x1)/2,
                 y=height/2,
-                text=f"Zone {zone_name}<br>{max_pressure:.2f} kPa",
+                text=f"Zone {zone_name}<br>{zone_pressure:.2f} kPa",
                 showarrow=False,
                 font=dict(size=16, color="white"),
                 bgcolor="rgba(0,0,0,0.3)",
@@ -404,100 +360,21 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             layer="above"
         )
         
-        # Add reference height lines and annotations
-        if height <= building_width:
-            # Case 1: Only mark h
-            fig.add_shape(
-                type="line",
-                x0=-0.05*width, y0=height, 
-                x1=0, y1=height,
-                line=dict(color="black", width=1)
-            )
-            fig.add_annotation(
-                x=-0.02*width, y=height,
-                text=f"h = {height:.1f}m",
-                showarrow=False,
-                font=dict(size=12),
-                xanchor="right",
-                yanchor="middle"
-            )
-            
-        elif building_width < height <= 2*building_width:
-            # Case 2: Mark b and h
-            fig.add_shape(
-                type="line",
-                x0=-0.05*width, y0=building_width, 
-                x1=0, y1=building_width,
-                line=dict(color="black", width=1)
-            )
-            fig.add_shape(
-                type="line",
-                x0=-0.05*width, y0=height, 
-                x1=0, y1=height,
-                line=dict(color="black", width=1)
-            )
-            fig.add_annotation(
-                x=-0.02*width, y=building_width,
-                text=f"b = {building_width:.1f}m",
-                showarrow=False,
-                font=dict(size=12),
-                xanchor="right",
-                yanchor="middle"
-            )
-            fig.add_annotation(
-                x=-0.02*width, y=height,
-                text=f"h = {height:.1f}m",
-                showarrow=False,
-                font=dict(size=12),
-                xanchor="right",
-                yanchor="middle"
-            )
-            
-        else:  # h > 2*b
-            # Case 3: Mark b, h-b, and h
-            z_strip = height - building_width
-            fig.add_shape(
-                type="line",
-                x0=-0.05*width, y0=building_width, 
-                x1=0, y1=building_width,
-                line=dict(color="black", width=1)
-            )
-            fig.add_shape(
-                type="line",
-                x0=-0.05*width, y0=z_strip, 
-                x1=0, y1=z_strip,
-                line=dict(color="black", width=1)
-            )
-            fig.add_shape(
-                type="line",
-                x0=-0.05*width, y0=height, 
-                x1=0, y1=height,
-                line=dict(color="black", width=1)
-            )
-            fig.add_annotation(
-                x=-0.02*width, y=building_width,
-                text=f"b = {building_width:.1f}m",
-                showarrow=False,
-                font=dict(size=12),
-                xanchor="right",
-                yanchor="middle"
-            )
-            fig.add_annotation(
-                x=-0.02*width, y=z_strip,
-                text=f"h-b = {z_strip:.1f}m",
-                showarrow=False,
-                font=dict(size=12),
-                xanchor="right",
-                yanchor="middle"
-            )
-            fig.add_annotation(
-                x=-0.02*width, y=height,
-                text=f"h = {height:.1f}m",
-                showarrow=False,
-                font=dict(size=12),
-                xanchor="right",
-                yanchor="middle"
-            )
+        # Add reference height line and annotation
+        fig.add_shape(
+            type="line",
+            x0=-0.05*width, y0=height, 
+            x1=0, y1=height,
+            line=dict(color="black", width=1)
+        )
+        fig.add_annotation(
+            x=-0.02*width, y=height,
+            text=f"h = {height:.1f}m",
+            showarrow=False,
+            font=dict(size=12),
+            xanchor="right",
+            yanchor="middle"
+        )
         
         # Add e and d dimensions as annotations
         fig.add_annotation(
@@ -517,10 +394,10 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             font=dict(size=12, color="black")
         )
         
-        # Add title with profile case
+        # Add title
         fig.update_layout(
-            title=f"{title}<br><sup>{profile_case}</sup>",
-            showlegend=False,  # No legend needed since hatches are removed
+            title=f"{title}",
+            showlegend=False,
             xaxis=dict(
                 showgrid=False,
                 zeroline=False,
@@ -544,26 +421,6 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
         figures[direction] = fig
     
     return figures
-
-def get_qp_at_height(z, h, b, qp_reference):
-    """Calculate qp at height z for a building with height h and width b."""
-    if h <= b:  # Case 1
-        return qp_reference  # Constant for entire height
-    elif b < h <= 2*b:  # Case 2
-        if z <= b:
-            return qp_reference
-        else:
-            # Linear interpolation between qp_reference and qp_reference*1.2
-            return qp_reference + (qp_reference*0.2) * (z - b) / (h - b)
-    else:  # Case 3: h > 2b
-        if z <= b:
-            return qp_reference
-        elif b < z <= (h - b):
-            # Middle section: linear from qp_reference to qp_reference*1.35
-            return qp_reference + (qp_reference*0.35) * (z - b) / ((h - b) - b)
-        else:
-            # Top section: linear from qp_reference*1.35 to qp_reference*1.5
-            return qp_reference*1.35 + (qp_reference*0.15) * (z - (h - b)) / (h - (h - b))
 
 def visualize_wind_pressures(session_state):
     """
