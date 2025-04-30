@@ -669,8 +669,6 @@ st.dataframe(summary_df, hide_index=True)
 for direction, fig in elevation_figures.items():
     st.plotly_chart(fig)
 
-st.info("Final calculation results will be displayed here with a 3D gradient plot showing the wind pressures on all 4 elevations.")
-
 # Toggle educational content in sidebar
 st.sidebar.title("Options")
 show_educational = st.sidebar.checkbox("Show Educational Content", 
