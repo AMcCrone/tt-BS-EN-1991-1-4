@@ -35,89 +35,45 @@ st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG"
 st.title("Wind Load Calculator")
 st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
 
-TT_ORANGE = "#D3451D"
-st.markdown(f"""
+st.markdown("""
 <style>
 /* ============================
    GLOBAL & PRINT-ONLY STYLES
    ============================ */
-@media print {{
-    /* Hide UI elements in print mode */
+@media print {
+    /* Hide UI chrome */
     .stApp header, .stApp footer, .stSidebar, .stButton,
-    .educational-content, .navigation-section {{
+    .navigation-section, .educational-content {
         display: none !important;
-    }}
-    /* Hide number-input +/- buttons and help icons */
+    }
+    /* Hide number-input buttons & help icons */
     .stNumberInput button, .stNumberInput svg,
-    [data-testid="stToolbar"],
-    .stTooltipIcon,
-    .stTabs button[data-baseweb="tab-list"] {{
+    [data-testid="stToolbar"], .stTooltipIcon,
+    .stTabs button[data-baseweb="tab-list"] {
         display: none !important;
-    }}
-    /* Format printable content */
-    .print-friendly {{
-        page-break-inside: avoid;
-        margin: 20px 0;
-    }}
-    /* Prevent images/charts from splitting */
-    img, svg, figure,
-    .stPlot, .element-container,
-    [data-testid="stImage"], [data-testid="stPlotlyChart"],
-    [data-testid="stDecoration"], [data-testid="stMetric"] {{
+    }
+    /* Keep charts/images together */
+    .print-friendly, img, svg, figure,
+    [data-testid="stImage"], [data-testid="stPlotlyChart"] {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-    }}
+        margin: 20px 0;
+    }
     /* Page margins */
-    @page {{
-        margin: 1cm;
-    }}
+    @page { margin: 1cm; }
     /* On-demand page breaks */
-    .pagebreak {{
-        page-break-before: always !important;
-    }}
-}}
+    .pagebreak { page-break-before: always !important; }
+}
 
 /* ============================
    ON-SCREEN STYLES
    ============================ */
 
-/* Base educational text styling */
-.educational-content {{
+/* Educational text in light grey */
+.educational-content {
     font-size: 0.8rem;
-    color: {TT_ORANGE};
-}}
-
-/* 1) UNIVERSAL expander tint via <details> */
-details.streamlit-expander > summary,
-details.streamlit-expander > div {{
-    /* 10% opacity: #D3451D1A */
-    background-color: #D3451D1A !important;
-}}
-
-/* 2) “Educational” expander overrides */
-.educational-expander details.streamlit-expander > summary {{
-    /* header tweaks, 15% opacity: #D3451D26 */
-    background-color: #D3451D26 !important;
-    border-radius: 5px;
-    color: {TT_ORANGE} !important;
-    font-weight: bold;
-}}
-.educational-expander details.streamlit-expander > div {{
-    /* content tweaks, 5% opacity: #D3451D0D */
-    background-color: #D3451D0D !important;
-    border-left: 3px solid {TT_ORANGE} !important;
-    padding: 10px;
-    font-size: 0.8rem;
-}}
-
-/* ============================
-   PRINT-ONLY: hide edu expanders
-   ============================ */
-@media print {{
-    .educational-expander {{
-        display: none !important;
-    }}
-}}
+    color: lightgrey;
+}
 </style>
 """, unsafe_allow_html=True)
 
