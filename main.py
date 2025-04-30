@@ -35,43 +35,72 @@ st.title("Wind Load Calculator")
 st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
 
 # Add print-specific CSS - minimal version
-st.markdown("""
+st.markdown(f"""
 <style>
-@media print {
+/* Your existing print CSS */
+@media print {{
     /* Hide UI elements in print mode */
     .stApp header, .stApp footer, .stSidebar, .stButton, 
-    .educational-content, .navigation-section {
+    .educational-content, .navigation-section {{
         display: none !important;
-    }
+    }}
     
     /* Hide number input +/- buttons and help icons */
     .stNumberInput button, .stNumberInput svg,
     [data-testid="stToolbar"], 
     .stTooltipIcon,
-    .stTabs button[data-baseweb="tab-list"] {
+    .stTabs button[data-baseweb="tab-list"] {{
         display: none !important;
-    }
+    }}
     
     /* Format printable content */
-    .print-friendly {
+    .print-friendly {{
         page-break-inside: avoid;
         margin: 20px 0;
-    }
+    }}
     
     /* Prevent images and charts from being split across pages */
     img, svg, figure, 
     .stPlot, .element-container, 
     [data-testid="stImage"], [data-testid="stPlotlyChart"],
-    [data-testid="stDecoration"], [data-testid="stMetric"] {
+    [data-testid="stDecoration"], [data-testid="stMetric"] {{
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-    }
+    }}
     
     /* Additional print optimization */
-    @page {
+    @page {{
         margin: 1cm;
-    }
-}
+    }}
+}}
+
+/* Educational content styling */
+.educational-content {{
+    font-size: 0.9rem;
+    color: {TT_ORANGE};
+}}
+
+/* Custom styling for expander when used for educational content */
+.educational-expander .streamlit-expanderHeader {{
+    background-color: rgba(211, 69, 29, 0.1);
+    border-radius: 5px;
+    font-weight: bold;
+    color: {TT_ORANGE};
+}}
+
+.educational-expander .streamlit-expanderContent {{
+    background-color: rgba(211, 69, 29, 0.05);
+    border-left: 3px solid {TT_ORANGE};
+    padding: 10px;
+    font-size: 0.9rem;
+}}
+
+/* Remove educational content from printing */
+@media print {{
+    .educational-expander {{
+        display: none !important;
+    }}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -241,13 +270,20 @@ def render_terrain_category():
 
     # Display educational content if the toggle is enabled in the sidebar
     if st.session_state.get("show_educational", False):
-        st.markdown("""<div class="educational-content print-friendly">""", unsafe_allow_html=True)
-        # Display an image from the educational folder; adjust the path as needed.
-        st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
-        # Import educational text from educational/text_content.py (assuming it contains a variable named terrain_help)
-        from educational import text_content
-        st.write(text_content.terrain_help)
-        st.markdown("</div>", unsafe_allow_html=True)
+        # Wrap the educational content in a div with custom classes
+        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+        
+        with st.expander("📚 Educational Content: Terrain Types", expanded=True):
+            # Display an image from the educational folder
+            st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
+            
+            # Import and display educational text
+            from educational import text_content
+            st.markdown(f'<div class="educational-content">{text_content.terrain_help}</div>', 
+                       unsafe_allow_html=True)
+    
+        # Close the wrapper div
+        st.markdown('</div>', unsafe_allow_html=True)
 render_terrain_category()
 
 # Section 3: WIND VELOCITY
