@@ -534,14 +534,14 @@ st.subheader("Wind Pressure Values at Key Heights")
 # NS Direction
 st.write("#### North-South Direction")
 NS_df = create_pressure_table(h, NS_dimension, qp_value)
-st.dataframe(NS_df)
+st.dataframe(NS_df, hide_index=True)
 NS_design_pressure = calculate_design_pressure(h, NS_dimension, qp_value)
 st.session_state.inputs["NS_design_pressure"] = NS_design_pressure
 
 # EW Direction
 st.write("#### East-West Direction")
 EW_df = create_pressure_table(h, EW_dimension, qp_value)
-st.dataframe(EW_df)
+st.dataframe(EW_df, hide_index=True)
 EW_design_pressure = calculate_design_pressure(h, EW_dimension, qp_value)
 st.session_state.inputs["EW_design_pressure"] = EW_design_pressure
 
