@@ -369,12 +369,12 @@ def wind_velocity_section():
     
     # Educational text on h_dis calculation
     if st.session_state.get("show_educational", False):
-    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-
-    with st.expander("What Is All $$h_dis$$ About?", expanded=False):
-        st.image("educational/images/h_dis_diagram.png", use_container_width=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+    
+        with st.expander("What Is All $$h_dis$$ About?", expanded=False):
+            st.image("educational/images/h_dis_diagram.png", use_container_width=True)
+    
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Check the region selection
     region = get_session_value(st, "region")
@@ -456,11 +456,11 @@ def peak_pressure_section():
     st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdot {rho_air:.3f} \\cdot {v_b:.2f}^2 = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
     # Educational text on Orography Significance
     if st.session_state.get("show_educational", False):
-    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-
-    with st.expander("Is Orography Significant?", expanded=False):
-        st.image("educational/images/Orography_Diagram.png", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+    
+        with st.expander("Is Orography Significant?", expanded=False):
+            st.image("educational/images/Orography_Diagram.png", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Check the region selection for peak pressure calculation
     region = get_session_value(st, "region")
@@ -496,11 +496,11 @@ st.write("## Wind Pressure Profile")
 
 # Educational text on Wind Pressure Profile
 if st.session_state.get("show_educational", False):
-st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-
-with st.expander("What Should The Wind Pressure Profile Look Like?", expanded=False):
-    st.image("educational/images/Velocity_Profile.png", use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+    
+    with st.expander("What Should The Wind Pressure Profile Look Like?", expanded=False):
+        st.image("educational/images/Velocity_Profile.png", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Import the pressure profile functions
 from calc_engine.common.shape_velocity_profile import (
