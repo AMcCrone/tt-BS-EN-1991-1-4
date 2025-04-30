@@ -246,6 +246,28 @@ V_bmap = st.number_input(
     help="Fundamental wind velocity from Figure 3.2"
 )
 st.session_state.inputs["V_bmap"] = V_bmap
+
+if st.session_state.get("show_educational", False):
+    # wrap in your educational-expander container
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+
+    with st.expander("What $$v_{b,map}$$ Value Should I Use?", expanded=True):
+        # two columns: text (wide) on left, image (narrow) on right
+        col1, col2 = st.columns([0.7, 0.3])
+        with col1:
+            st.markdown(
+                f'<div class="educational-content">{text_content.basic_wind_help}</div>',
+                unsafe_allow_html=True
+            )
+        with col2:
+            st.image(
+                "educational/images/Basic_Wind_Map.png",
+                caption="Basic Wind Map",
+                use_column_width=True
+            )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    
 # Let the user choose whether they want to override standard K, n, return period
 use_custom_values = st.checkbox("Use custom K, n, and return period?")
 
