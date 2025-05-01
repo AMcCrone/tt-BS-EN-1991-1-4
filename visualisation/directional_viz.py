@@ -9,7 +9,7 @@ TT_DarkBlue = "rgb(0,48,60)"
 TT_Grey = "rgb(99,102,105)"
 TT_LightGrey = "rgb(223,224,225)"
 
-def create_direction_viz(rotation_angle=0, NS_dimension=4, EW_dimension=2):
+def create_simplified_direction_viz(rotation_angle=0, NS_dimension=20.0, EW_dimension=40.0):
     """
     Create a simplified visualization showing the building orientation and directional factors.
     
@@ -98,7 +98,7 @@ def create_direction_viz(rotation_angle=0, NS_dimension=4, EW_dimension=2):
     directions = list(uk_dir_factors.keys())
     r_values = list(uk_dir_factors.values())
     
-    # Convert angles to match meteorological convention (0 = North, clockwise)
+    # Convert angles to match North at top (0 = North, clockwise)
     # and adjust for Plotly's polar coordinates (0 = East, counterclockwise)
     plot_angles = [(270 - a) % 360 for a in directions]
     plot_angles_rad = [math.radians(a) for a in plot_angles]
@@ -107,7 +107,7 @@ def create_direction_viz(rotation_angle=0, NS_dimension=4, EW_dimension=2):
     radar_x = [plot_scale * r * math.cos(theta) for r, theta in zip(r_values, plot_angles_rad)]
     radar_y = [plot_scale * r * math.sin(theta) for r, theta in zip(r_values, plot_angles_rad)]
     
-    # Add first point again to close the loop
+    # Close the loop by adding the first point again
     radar_x.append(radar_x[0])
     radar_y.append(radar_y[0])
     
@@ -123,20 +123,6 @@ def create_direction_viz(rotation_angle=0, NS_dimension=4, EW_dimension=2):
         showlegend=False
     ))
     
-    # Add reference lines at 30-degree intervals
-    for angle in range(0, 360, 30):
-        rad_angle = math.radians((270 - angle) % 360)
-        line_x = [0, max_dimension * math.cos(rad_angle)]
-        line_y = [0, max_dimension * math.sin(rad_angle)]
-        
-        fig.add_trace(go.Scatter(
-            x=line_x,
-            y=line_y,
-            mode='lines',
-            line=dict(color='red', width=1),
-            showlegend=False
-        ))
-    
     # Draw building outline
     fig.add_trace(go.Scatter(
         x=x_corners,
@@ -148,68 +134,24 @@ def create_direction_viz(rotation_angle=0, NS_dimension=4, EW_dimension=2):
         showlegend=False
     ))
     
-    # Add axes
-    fig.add_trace(go.Scatter(
-        x=[-max_dimension, max_dimension],
-        y=[0, 0],
-        mode='lines',
-        line=dict(color='red', width=2),
-        showlegend=False
-    ))
+    # Get the directional factors based on the rotation
+    # Calculate c_dir for each elevation based on the building rotation
+    directions = ["North", "East", "South", "West"]
+    elevations_c_dir = {}
     
-    fig.add_trace(go.Scatter(
-        x=[0, 0],
-        y=[-max_dimension, max_dimension],
-        mode='lines',
-        line=dict(color='red', width=2),
-        showlegend=False
-    ))
-    
-    # Add key c_dir values as annotations
-    # Add annotations for main cardinal directions and max value
-    key_directions = {
-        0: "N", 
-        90: "E", 
-        180: "S", 
-        270: "W",
-        240: "1.0"  # Maximum value
-    }
-    
-    for angle, label in key_directions.items():
-        rad_angle = math.radians((270 - angle) % 360)
+    for i, direction in enumerate(directions):
+        # Calculate the global angle for this elevation
+        base_angles = {"North": 0, "East": 90, "South": 180, "West": 270}
+        global_angle = (base_angles[direction] + rotation_angle) % 360
         
-        # Get the c_dir value for this angle
-        c_dir = uk_dir_factors.get(angle, 1.0)  # Default to 1.0 for 240 degrees
-        
-        # Position the label at the edge of the c_dir plot
-        pos_x = plot_scale * c_dir * math.cos(rad_angle) * 1.1
-        pos_y = plot_scale * c_dir * math.sin(rad_angle) * 1.1
-        
-        # For cardinal directions, add the label
-        if label in ["N", "E", "S", "W"]:
-            fig.add_annotation(
-                x=pos_x,
-                y=pos_y,
-                text=label,
-                showarrow=False,
-                font=dict(size=14, color=TT_DarkBlue)
-            )
-        else:
-            # For the max value point, add the value
-            fig.add_annotation(
-                x=pos_x,
-                y=pos_y,
-                text=label,
-                showarrow=False,
-                font=dict(size=14, color=TT_Orange)
-            )
+        # Find the closest direction in the UK factors table
+        closest_dir = min(uk_dir_factors.keys(), key=lambda x: min(abs(x - global_angle), abs((x + 360) - global_angle), abs(x - (global_angle + 360))))
+        elevations_c_dir[direction] = uk_dir_factors[closest_dir]
     
-    # Add simplified elevation labels to the building
-    # Calculate the midpoints of each face and add simplified labels
+    # Add simplified elevation labels to the building with c_dir values
     rotated_corners_with_first = rotated_corners + [rotated_corners[0]]
-    
-    # Labels to use based on the building's orientation
     face_labels = ["N", "E", "S", "W"]
+    face_directions = ["North", "East", "South", "West"]
     
     for i in range(4):
         # Calculate midpoint of this face
@@ -220,35 +162,36 @@ def create_direction_viz(rotation_angle=0, NS_dimension=4, EW_dimension=2):
         # At 0° rotation: Face 0 (bottom) = S, Face 1 (right) = E, Face 2 (top) = N, Face 3 (left) = W
         face_idx = (2 - i + rotation_angle // 90) % 4
         label = face_labels[face_idx]
+        direction = face_directions[face_idx]
         
+        # Get the c_dir value for this face
+        c_dir = elevations_c_dir[direction]
+        
+        # Add the label with c_dir value
         fig.add_annotation(
             x=mid_x,
             y=mid_y,
-            text=label,
+            text=f"{label}\n{c_dir:.2f}",
             showarrow=False,
             font=dict(size=12, color=TT_DarkBlue)
         )
     
-    # Add key c_dir values
-    key_values = [0.73, 0.74, 0.80, 1.0]
-    for value in key_values:
-        # Find direction with this value
-        for angle, val in uk_dir_factors.items():
-            if abs(val - value) < 0.01:
-                rad_angle = math.radians((270 - angle) % 360)
-                pos_x = plot_scale * val * math.cos(rad_angle)
-                pos_y = plot_scale * val * math.sin(rad_angle)
-                
-                fig.add_annotation(
-                    x=pos_x,
-                    y=pos_y,
-                    text=f"{val:.2f}",
-                    showarrow=False,
-                    font=dict(size=12, color=TT_DarkBlue)
-                )
-                break
+    # Add the maximum c_dir value annotation
+    max_dir = max(uk_dir_factors, key=uk_dir_factors.get)
+    max_value = uk_dir_factors[max_dir]
+    max_angle_rad = math.radians((270 - max_dir) % 360)
+    max_x = plot_scale * max_value * math.cos(max_angle_rad)
+    max_y = plot_scale * max_value * math.sin(max_angle_rad)
     
-    # Set layout with equal aspect ratio
+    fig.add_annotation(
+        x=max_x,
+        y=max_y,
+        text=f"{max_value:.1f}",
+        showarrow=False,
+        font=dict(size=14, color=TT_Orange)
+    )
+    
+    # Set layout with equal aspect ratio and square dimensions
     fig.update_layout(
         showlegend=False,
         xaxis=dict(
@@ -266,9 +209,33 @@ def create_direction_viz(rotation_angle=0, NS_dimension=4, EW_dimension=2):
             scaleratio=1
         ),
         plot_bgcolor='white',
-        height=600,
-        width=600,
-        margin=dict(l=20, r=20, t=20, b=20)
+        height=500,
+        width=500,
+        margin=dict(l=20, r=20, t=20, b=20),
+        autosize=False
     )
     
+    # Add cardinal direction markers at the edges
+    cardinal_markers = [
+        {"dir": "N", "angle": 0, "x": 0, "y": max_dimension*1.15},
+        {"dir": "E", "angle": 90, "x": max_dimension*1.15, "y": 0},
+        {"dir": "S", "angle": 180, "x": 0, "y": -max_dimension*1.15},
+        {"dir": "W", "angle": 270, "x": -max_dimension*1.15, "y": 0}
+    ]
+    
+    for marker in cardinal_markers:
+        fig.add_annotation(
+            x=marker["x"],
+            y=marker["y"],
+            text=marker["dir"],
+            showarrow=False,
+            font=dict(size=14, color=TT_Grey)
+        )
+    
     return fig
+
+def create_direction_viz(rotation_angle, NS_dimension, EW_dimension):
+    """
+    Wrapper function to match the expected interface in the main application
+    """
+    return create_simplified_direction_viz(rotation_angle, NS_dimension, EW_dimension)
