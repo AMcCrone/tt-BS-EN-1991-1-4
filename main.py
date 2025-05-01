@@ -722,8 +722,8 @@ if st.session_state.inputs.get("region") == "United Kingdom":
             from visualisation.directional_viz import create_direction_viz
             
             # Create and display the visualization
-            direction_viz = create_direction_viz(rotation_angle, NS_dimension, EW_dimension)
-            st.plotly_chart(direction_viz, height=50)
+            direction_viz = create_direction_viz(rotation_angle, NS_dimension, EW_dimension, height=400, width=400)
+            st.plotly_chart(direction_viz)
         else:
             # Show a placeholder message when directional factor is not enabled
             st.info("Enable UK directional factor to see the building orientation visualization.")
