@@ -84,60 +84,54 @@ A.3 Numerical calculation of orography coefficients
 
 (1) At isolated hills and ridges or cliffs and escarpments, different wind velocities occur depending on the upstream slope
    $$\Phi = \frac{H}{L_u}$$
-   in the wind direction, where the height H and the length $L_u$ are defined in Figure A.1.
+   in the wind direction, where the height $H$ and the length $L_u$ are defined in Figure A.1.
 
 (2) The largest increase of the wind velocities occurs near the top of the slope and is determined by the orography factor $c_{oe}(z)$; see Figure A.1.
-   The slope has no significant effect on the standard deviation of the turbulence defined in 4.4 (1).
+    The slope has no significant effect on the standard deviation of the turbulence defined in 4.4 (1).
 
-   NOTE: The turbulence intensity will decrease with increasing wind velocity at equal standard deviation.
+    NOTE: The turbulence intensity will decrease with increasing wind velocity at equal standard deviation.
 
 (3) The orography factor
-   $$c_{oe}(z) = \frac{v_m}{v_{eff}}$$
-   accounts for the increase in mean wind speed over isolated hills and escarpments (not undulating and mountainous regions).
-   It is related to the wind velocity at the base of the hill or escarpment.
-   The effects of orography should be taken into account in the following situations:
+    $$c_{oe}(z) = \frac{v_m}{v_{eff}}$$
+    accounts for the increase in mean wind speed over isolated hills and escarpments (not undulating and mountainous regions).
+    It is related to the wind velocity at the base of the hill or escarpment.
+    The effects of orography should be taken into account in the following situations:
 
-   - For sites on upwind slopes of hills and ridges: where $0.05 < \Phi < 0.3$ and $|x| \le L_u/2$
-   - For sites on downwind slopes of hills and ridges:
-     - where $\Phi < 0.3$ and $x < L_d/2$
-     - where $\Phi > 0.3$ and $x < 1.6\,H$
-   - For sites on upwind slopes of cliffs and escarpments:
-     - where $0.05 < \Phi < 0.3$ and $|x| \le L_u/2$
-   - For sites on downwind slopes of cliffs and escarpments:
-     - where $\Phi < 0.3$ and $x < 1.6\,H$
-     - where $\Phi > 0.3$ and $x < 5\,H$
+    - For upwind slopes of hills and ridges: $0.05 < \Phi < 0.3$ and $|x| \le \tfrac{L_u}{2}$
+    - For downwind slopes of hills and ridges:
+      - $\Phi < 0.3$ and $x < \tfrac{L_d}{2}$
+      - $\Phi > 0.3$ and $x < 1.6\,H$
+    - For upwind slopes of cliffs and escarpments: $0.05 < \Phi < 0.3$ and $|x| \le \tfrac{L_u}{2}$
+    - For downwind slopes of cliffs and escarpments:
+      - $\Phi < 0.3$ and $x < 1.6\,H$
+      - $\Phi > 0.3$ and $x < 5\,H$
 
-   It is defined by:
-   $$
-   c_{oe} = \begin{cases}
-     1, & \Phi < 0.05 \\  
-     1 + 2\,s\,\Phi, & 0.05 < \Phi < 0.3 \\  
-     1 + 0.6\,s, & \Phi > 0.3
-   \end{cases}
-   $$
+    The factor $c_{oe}$ is defined as:
+    $$
+    c_{oe} =
+    \begin{cases}
+      1, & \Phi < 0.05, \\
+      1 + 2\,s\,\Phi, & 0.05 \le \Phi \le 0.3, \\
+      1 + 0.6\,s, & \Phi > 0.3,
+    \end{cases}
+    $$
 
-   where:
-   - $s$ is the orographic location factor, to be obtained from Figure A.2 or Figure A.3 scaled to the length of the effective upwind slope $L_{oe}$
-   - $\Phi$ is the upwind slope $H/L_u$, in the wind direction (see Figure A.2 and Figure A.3)
-   - $L_{oe}$ is the effective length of the upwind slope, defined in Table A.2
-   - $L_u$ is the actual length of the upwind slope in the wind direction
-   - $L_d$ is the actual length of the downwind slope in the wind direction
-   - $H$ is the effective height of the feature
-   - $x$ is the horizontal distance of the site from the top of the crest
-   - $z$ is the vertical distance from the ground level of the site
+    where:
+    - $s$ is the orographic location factor (from Figures A.2/A.3), scaled to $L_{oe}$
+    - $\Phi = H/L_u$
+    - $L_{oe}$ is the effective upwind length (Table A.2)
+    - $L_u$ and $L_d$ are the upwind/downwind slope lengths
+    - $H$ is the feature height
+    - $x$ is the distance from crest
+    - $z$ is the site elevation above ground
 
-Table A.2 — Values of the effective length $L_{oe}$:
+Table A.2 — Effective length $L_{oe}$:
 
-Type of slope ($\Phi = H/L_u$) | Effective length
---------------------------------|-----------------
-Shallow ($0.05 < \Phi < 0.3$)  | $L_{oe} = L_u$
-Steep ($\Phi > 0.3$)            | $L_{oe} = H / 0.3$
+Type of slope ($\Phi = H/L_u$) | $L_{oe}$
+--------------------------------|--------
+Shallow ($0.05 < \Phi < 0.3$)  | $L_{u}$
+Steep ($\Phi > 0.3$)            | $H / 0.3$
 
-NOTE: The calculated graphs in Figures A.2 and A.3 exceed the area of application as defined above.
-      The consideration of orographic effects beyond these boundaries is optional.
-
-(4) In valleys, $c_{oe}(z)$ may be set to 1.0 if no speed-up due to funneling effects is to be expected.
-    For structures situated within, or for bridges spanning steep-sided valleys care should be taken to account for
-    any increase of wind speed caused by funneling.
+NOTE: Use $c_{oe}(z)=1.0$ in valleys unless funneling effects apply.
 
 """
