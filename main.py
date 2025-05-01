@@ -500,6 +500,7 @@ if st.session_state.get("show_educational", False):
     
     with st.expander("What Should The Wind Pressure Profile Look Like?", expanded=False):
         st.image("educational/images/Velocity_Profile.png", use_container_width=True)
+        st.markdown(f'<div class="educational-content">{text_content.velocity_profile_help}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Import the pressure profile functions
