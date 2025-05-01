@@ -663,7 +663,7 @@ if st.session_state.inputs.get("region") == "United Kingdom":
     )
     st.session_state.inputs["use_direction_factor"] = use_direction_factor
     # Create a two-column layout
-    col1, col2 = st.columns([0.4, 0.6])
+    col1, col2 = st.columns([1, 1])
     
     with col1:        
         # Building rotation dropdown (only shown if directional factor is enabled)
