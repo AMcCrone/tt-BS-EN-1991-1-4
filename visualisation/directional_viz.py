@@ -9,7 +9,7 @@ TT_DarkBlue = "rgb(0,48,60)"
 TT_Grey = "rgb(99,102,105)"
 TT_LightGrey = "rgb(223,224,225)"
 
-def create_simplified_direction_viz(rotation_angle=0, NS_dimension=4, EW_dimension=2):
+def create_direction_viz(rotation_angle=0, NS_dimension=4, EW_dimension=2):
     """
     Create a simplified visualization showing the building orientation and directional factors.
     
