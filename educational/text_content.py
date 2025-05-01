@@ -48,7 +48,7 @@ For projects in the UK, $V_{b,map}$ may be read from **Figure NA.1** (shown righ
 
 velocity_profile_help = """
 
-(1) The reference heights, $$ z_e $$, for windward walls of rectangular plan buildings (zone D, see Figure 7.5) depend on the aspect ratio $$ h/b $$ and are always the upper heights of the different parts of the walls. They are given in Figure 7.4 for the following three cases:
+The reference heights, $$ z_e $$, for windward walls of rectangular plan buildings (zone D, see Figure 7.5) depend on the aspect ratio $$ h/b $$ and are always the upper heights of the different parts of the walls. They are given in Figure 7.4 for the following three cases:
 
 - A building, whose height $$ h $$ is less than $$ b $$ should be considered to be one part.
 
