@@ -653,7 +653,7 @@ st.plotly_chart(ew_elevation_fig, use_container_width=True)
 st.markdown("---")
 st.markdown('<div class="pagebreak"></div>', unsafe_allow_html=True)
 st.header("Results Summary")
-from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures, visualize_wind_pressures
+from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures
 
 results_by_direction = calculate_cpe()  # Make sure this function exists
 summary_df = create_pressure_summary(st.session_state, results_by_direction)
