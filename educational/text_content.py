@@ -87,9 +87,9 @@ $\Phi = H / L_u$
 in the wind direction, where the height $H$ and the length $L_u$ are defined in Figure A.1.
 
 The largest increase of the wind velocities occurs near the top of the slope and is determined by the orography factor $c_{oe}(z)$; see Figure A.1.
- The slope has no significant effect on the standard deviation of the turbulence defined in 4.4 (1).
+The slope has no significant effect on the standard deviation of the turbulence defined in 4.4 (1).
 
- NOTE The turbulence intensity will decrease with increasing wind velocity at equal standard deviation.
+NOTE The turbulence intensity will decrease with increasing wind velocity at equal standard deviation.
 
 The orography factor
 $c_{oe}(z) = v_m / v_{eff}$
@@ -106,15 +106,10 @@ The effects of orography should be taken into account in the following situation
 - $\Phi < 0.3$ and $x < 1.6 \cdot H$
 - $\Phi > 0.3$ and $x < 5 \cdot H$
 
-The factor $c_{oe}$ is defined as:
-$
-c_{oe} =
-\begin{cases}
-1, & \Phi < 0.05, \\
-1 + 2 \cdot s \cdot \Phi, & 0.05 \le \Phi \le 0.3, \\
-1 + 0.6 \cdot s, & \Phi > 0.3,
-\end{cases}
-$
+The factor $c_{oe}$ is defined as follows:
+- If $\Phi < 0.05$, then $c_{oe} = 1$.
+- If $0.05 \le \Phi \le 0.3$, then $c_{oe} = 1 + 2 \cdot s \cdot \Phi$.
+- If $\Phi > 0.3$, then $c_{oe} = 1 + 0.6 \cdot s$.
 
 where:
 - $s$ is the orographic location factor (from Figures A.2/A.3), scaled to $L_{oe}$
