@@ -649,20 +649,79 @@ st.plotly_chart(ns_elevation_fig, use_container_width=True)
 # Display East-West Elevation
 st.plotly_chart(ew_elevation_fig, use_container_width=True)
 
-# Section 6: RESULTS SUMMARY
+# Wind pressure parameters
+st.markdown("---")
+st.header("Wind Direction Settings")
+
+# Only show directional factor option for UK region
+if st.session_state.inputs.get("region") == "UK":
+    # Directional factor checkbox
+    use_direction_factor = st.checkbox(
+        "Use UK directional factor (c_dir)", 
+        value=st.session_state.inputs.get("use_direction_factor", False),
+        help="Apply UK directional factor based on wind direction"
+    )
+    st.session_state.inputs["use_direction_factor"] = use_direction_factor
+    
+    # Building rotation dropdown (only shown if directional factor is enabled)
+    if use_direction_factor:
+        rotation_options = {
+            "North (0°)": 0,
+            "NE (30°)": 30,
+            "E (60°)": 60, 
+            "SE (90°)": 90,
+            "S (120°)": 120,
+            "SW (150°)": 150,
+            "South (180°)": 180,
+            "SW (210°)": 210,
+            "W (240°)": 240,
+            "NW (270°)": 270,
+            "N (300°)": 300,
+            "NE (330°)": 330
+        }
+        
+        rotation_label = st.selectbox(
+            "Building rotation (clockwise from north)",
+            options=list(rotation_options.keys()),
+            index=0,
+            help="Rotate the building orientation clockwise from north"
+        )
+        
+        # Store the selected rotation angle in session state
+        st.session_state.inputs["building_rotation"] = rotation_options[rotation_label]
+        
+        # Display the directional factors for the selected rotation
+        st.write("Directional factors for the current orientation:")
+        
+        # Get the directional factors based on the rotation
+        from calc_engine.common.pressure_summary import get_direction_factor
+        direction_factors = get_direction_factor(
+            st.session_state.inputs["building_rotation"], 
+            st.session_state.inputs["use_direction_factor"]
+        )
+        
+        # Display factors as a table
+        factor_data = pd.DataFrame({
+            "Direction": list(direction_factors.keys()),
+            "c_dir": list(direction_factors.values())
+        })
+        st.dataframe(factor_data, hide_index=True, height=35*len(factor_data)+38)
+else:
+    # For non-UK regions, set directional factor to 1.0 (not used)
+    st.session_state.inputs["use_direction_factor"] = False
+    st.session_state.inputs["building_rotation"] = 0
+
+# Results Summary section (your existing code)
 st.markdown("---")
 st.markdown('<div class="pagebreak"></div>', unsafe_allow_html=True)
 st.header("Results Summary")
 from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures
-
 results_by_direction = calculate_cpe()  # Make sure this function exists
 summary_df = create_pressure_summary(st.session_state, results_by_direction)
 elevation_figures = plot_elevation_with_pressures(st.session_state, results_by_direction)
-
 # Display results manually
 st.subheader("Pressure Summary")
 st.dataframe(summary_df, hide_index=True, height=35*len(summary_df)+38)
-
 # Display figures
 for direction, fig in elevation_figures.items():
     st.plotly_chart(fig)
