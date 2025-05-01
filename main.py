@@ -222,11 +222,7 @@ def render_terrain_category():
         # inside that div, render a normal Streamlit expander
         with st.expander("Which Terrain Type Should I Use?", expanded=False):
             st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
-            st.markdown(
-                f'<div class="educational-content">{text_content.terrain_help}</div>',
-                unsafe_allow_html=True
-            )
-        
+            st.markdown(f'<div class="educational-content">{text_content.terrain_help}</div>', unsafe_allow_html=True)
         # close the wrapper div
         st.markdown('</div>', unsafe_allow_html=True)
 render_terrain_category()
@@ -373,6 +369,7 @@ def wind_velocity_section():
     
         with st.expander("What Is All $$h_{dis}$$ About?", expanded=False):
             st.image("educational/images/h_dis_diagram.png", use_container_width=True)
+            st.markdown(f'<div class="educational-content">{text_content.h_dis_help}</div>', unsafe_allow_html=True)
     
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -460,6 +457,7 @@ def peak_pressure_section():
     
         with st.expander("Is Orography Significant?", expanded=False):
             st.image("educational/images/Orography_Diagram.png", use_container_width=True)
+            st.markdown(f'<div class="educational-content">{text_content.orography_help}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Check the region selection for peak pressure calculation
