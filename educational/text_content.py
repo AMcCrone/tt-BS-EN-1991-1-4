@@ -48,34 +48,34 @@ For projects in the UK, $V_{b,map}$ may be read from **Figure NA.1** (shown righ
 
 velocity_profile_help = """
 
-The reference heights, $$ z_e $$, for windward walls of rectangular plan buildings (zone D, see Figure 7.5) depend on the aspect ratio $$ h/b $$ and are always the upper heights of the different parts of the walls. They are given in Figure 7.4 for the following three cases:
+The reference heights, $ z_e $, for windward walls of rectangular plan buildings (zone D, see Figure 7.5) depend on the aspect ratio $ h/b $ and are always the upper heights of the different parts of the walls. They are given in Figure 7.4 for the following three cases:
 
-- A building, whose height $$ h $$ is less than $$ b $$ should be considered to be one part.
+- A building, whose height $ h $ is less than $ b $ should be considered to be one part.
 
-- A building, whose height $$ h $$ is greater than $$ b $$, but less than $$ 2b $$, may be considered to be two parts, comprising: a lower part extending upwards from the ground by a height equal to $$ b $$ and an upper part consisting of the remainder.
+- A building, whose height $ h $ is greater than $ b $, but less than $ 2b $, may be considered to be two parts, comprising: a lower part extending upwards from the ground by a height equal to $ b $ and an upper part consisting of the remainder.
 
-- A building, whose height $$ h $$ is greater than $$ 2b $$ may be considered to be in multiple parts, comprising: a lower part extending upwards from the ground by a height equal to $$ b $$; an upper part extending downwards from the top by a height equal to $$ b $$ and a middle region, between the upper and lower parts, which may be divided into horizontal strips with a height $$ h_{strip} $$ as shown in Figure 7.4.
+- A building, whose height $ h $ is greater than $ 2b $ may be considered to be in multiple parts, comprising: a lower part extending upwards from the ground by a height equal to $ b $; an upper part extending downwards from the top by a height equal to $ b $ and a middle region, between the upper and lower parts, which may be divided into horizontal strips with a height $ h_{strip} $ as shown in Figure 7.4.
 
 NOTE The rules for the velocity pressure distribution for leeward wall and sidewalls (zones A, B, C and E, see Figure 7.5) may be given in the National Annex or be defined for the individual project. The recommended procedure is to take the reference height as the height of the building.
 
 """
 
 h_dis_help = """
-For buildings in terrain category IV, closely spaced buildings and other obstructions cause the wind to behave as if the ground level was raised to a displacement height, 
-$$h_{dis}$$.
 
-The displacement height $$h_{dis}$$ may be determined by Expression (A.15) (see Figure A.5). The profile of peak velocity pressure over height (see Figure 4.2) may be lifted by $$h_{dis}$$.
+For buildings in terrain category IV, closely spaced buildings and other obstructions cause the wind to behave as if the ground level was raised to a displacement height, $h_{dis}$.
 
-• If $$x \le 2\,h_{ave}$$, then $$h_{dis}$$ is the lesser of
-  $$0.8\,h_{ave}$$ or $$0.6\,h$$.
+The displacement height $h_{dis}$ may be determined by Expression (A.15) (see Figure A.5). The profile of peak velocity pressure over height (see Figure 4.2) may be lifted by $h_{dis}$.
 
-• If $$2\,h_{ave} < x < 6\,h_{ave}$$, then $$h_{dis}$$ is the lesser of
-  $$1.2\,h_{ave} - 0.2\,x$$ or $$0.6\,h$$.
+• If $x \le 2\,h_{ave}$, then $h_{dis}$ is the lesser of
+  $0.8\,h_{ave}$ or $0.6\,h$.
 
-• If $$x \ge 6\,h_{ave}$$, then
-  $$h_{dis} = 0$$.
+• If $2\,h_{ave} < x < 6\,h_{ave}$, then $h_{dis}$ is the lesser of
+  $1.2\,h_{ave} - 0.2\,x$ or $0.6\,h$.
 
-In the absence of more accurate information, the obstruction height may be taken as $$h_{ave} = 15\text{ m}$$ for terrain category IV. These rules are direction-dependent: the values of $$h_{ave}$$ and $$x$$ should be established for each 30° sector as described in 4.3.2.
+• If $x \ge 6\,h_{ave}$, then
+  $h_{dis} = 0$.
+
+In the absence of more accurate information, the obstruction height may be taken as $h_{ave} = 15\text{ m}$ for terrain category IV. These rules are direction-dependent: the values of $h_{ave}$ and $x$ should be established for each 30° sector as described in 4.3.2.
 """
 
 orography_help = """
@@ -83,7 +83,7 @@ orography_help = """
 A.3 Numerical calculation of orography coefficients
 
 (1) At isolated hills and ridges or cliffs and escarpments, different wind velocities occur depending on the upstream slope
-   $$\Phi = H / L_u$$
+   $\Phi = H / L_u$
    in the wind direction, where the height $H$ and the length $L_u$ are defined in Figure A.1.
 
 (2) The largest increase of the wind velocities occurs near the top of the slope and is determined by the orography factor $c_{oe}(z)$; see Figure A.1.
@@ -92,7 +92,7 @@ A.3 Numerical calculation of orography coefficients
     NOTE The turbulence intensity will decrease with increasing wind velocity at equal standard deviation.
 
 (3) The orography factor
-    $$c_{oe}(z) = v_m / v_{eff}$$
+    $c_{oe}(z) = v_m / v_{eff}$
     accounts for the increase in mean wind speed over isolated hills and escarpments (not undulating and mountainous regions).
     It is related to the wind velocity at the base of the hill or escarpment.
     The effects of orography should be taken into account in the following situations:
@@ -107,14 +107,14 @@ A.3 Numerical calculation of orography coefficients
       - $\Phi > 0.3$ and $x < 5 \cdot H$
 
     The factor $c_{oe}$ is defined as:
-    $$
+    $
     c_{oe} =
     \begin{cases}
       1, & \Phi < 0.05, \\
       1 + 2 \cdot s \cdot \Phi, & 0.05 \le \Phi \le 0.3, \\
       1 + 0.6 \cdot s, & \Phi > 0.3,
     \end{cases}
-    $$
+    $
 
     where:
     - $s$ is the orographic location factor (from Figures A.2/A.3), scaled to $L_{oe}$
