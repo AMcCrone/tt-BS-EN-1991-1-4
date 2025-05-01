@@ -654,7 +654,7 @@ st.markdown("---")
 st.header("Wind Directional Factor, $c_{dir}$")
 
 # Only show directional factor option for UK region
-if st.session_state.inputs.get("region") == "UK":
+if st.session_state.inputs.get("region") == "United Kingdom":
     # Create a two-column layout
     col1, col2 = st.columns([1, 1])
     
