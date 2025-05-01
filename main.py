@@ -371,7 +371,7 @@ def wind_velocity_section():
     if st.session_state.get("show_educational", False):
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
     
-        with st.expander("What Is All $$h_dis$$ About?", expanded=False):
+        with st.expander("What Is All $$h_{dis}$$ About?", expanded=False):
             st.image("educational/images/h_dis_diagram.png", use_container_width=True)
     
         st.markdown('</div>', unsafe_allow_html=True)
