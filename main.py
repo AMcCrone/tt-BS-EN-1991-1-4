@@ -654,7 +654,7 @@ st.markdown("---")
 st.header("Wind Direction Settings")
 
 # Only show directional factor option for UK region
-if st.session_state.inputs.get("region") == "UK":
+if st.session_state.inputs.get("region") == "United Kingdom":
     # Directional factor checkbox
     use_direction_factor = st.checkbox(
         "Use UK directional factor (c_dir)", 
