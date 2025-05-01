@@ -66,7 +66,7 @@ PLOT_CONFIGS = {
 }
 
 # Common y-axis name
-Y_AXIS_NAME = "$$z-h_{dis}$$ (m)"
+Y_AXIS_NAME = "z-h_{dis} (m)"
 
 # -----------------------
 # Data Loading Function
