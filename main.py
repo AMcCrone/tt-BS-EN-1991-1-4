@@ -656,12 +656,12 @@ st.header("Wind Directional Factor, $c_{dir}$")
 # Only show directional factor option for UK region
 if st.session_state.inputs.get("region") == "United Kingdom":
     # Directional factor checkbox
-        use_direction_factor = st.checkbox(
-            "Use UK directional factor (c_dir)", 
-            value=st.session_state.inputs.get("use_direction_factor", False),
-            help="Apply UK directional factor based on wind direction"
-        )
-        st.session_state.inputs["use_direction_factor"] = use_direction_factor
+    use_direction_factor = st.checkbox(
+        "Use UK directional factor (c_dir)", 
+        value=st.session_state.inputs.get("use_direction_factor", False),
+        help="Apply UK directional factor based on wind direction"
+    )
+    st.session_state.inputs["use_direction_factor"] = use_direction_factor
     # Create a two-column layout
     col1, col2 = st.columns([1, 1])
     
