@@ -221,7 +221,7 @@ def render_terrain_category():
         
         # inside that div, render a normal Streamlit expander
         with st.expander("Which Terrain Type Should I Use?", expanded=False):
-            st.image("educational/images/Terrain_Cat.png", caption="Terrain Types")
+            st.image("educational/images/Terrain_Cats.png", caption="Terrain Types")
             st.markdown(f'<div class="educational-content">{text_content.terrain_help}</div>', unsafe_allow_html=True)
         # close the wrapper div
         st.markdown('</div>', unsafe_allow_html=True)
