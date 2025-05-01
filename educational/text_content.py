@@ -89,7 +89,7 @@ A.3 Numerical calculation of orography coefficients
 (2) The largest increase of the wind velocities occurs near the top of the slope and is determined by the orography factor $c_{oe}(z)$; see Figure A.1.
     The slope has no significant effect on the standard deviation of the turbulence defined in 4.4 (1).
 
-    NOTE: The turbulence intensity will decrease with increasing wind velocity at equal standard deviation.
+    NOTE The turbulence intensity will decrease with increasing wind velocity at equal standard deviation.
 
 (3) The orography factor
     $$c_{oe}(z) = v_m / v_{eff}$$
@@ -132,6 +132,6 @@ Type of slope ($\Phi = H / L_u$) | $L_{oe}$
 Shallow ($0.05 < \Phi < 0.3$)    | $L_u$
 Steep ($\Phi > 0.3$)              | $H / 0.3$
 
-NOTE: Use $c_{oe}(z) = 1.0$ in valleys unless funneling effects apply.
+NOTE Use $c_{oe}(z) = 1.0$ in valleys unless funneling effects apply.
 
 """
