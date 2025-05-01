@@ -4,6 +4,64 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.colors as pc
 
+def get_direction_factor(rotation_angle, use_direction_factor=False):
+    """
+    Get the directional factor (c_dir) based on the building rotation angle.
+    
+    Parameters:
+    -----------
+    rotation_angle : int
+        Building rotation angle in degrees clockwise from north
+    use_direction_factor : bool
+        Whether to use directional factor or not
+        
+    Returns:
+    --------
+    dict
+        Dictionary mapping each cardinal direction to its c_dir value
+    """
+    if not use_direction_factor:
+        # If not using directional factor, return 1.0 for all directions
+        return {
+            "North": 1.0,
+            "East": 1.0,
+            "South": 1.0,
+            "West": 1.0
+        }
+    
+    # UK directional factors by angle (clockwise from north)
+    uk_direction_factors = {
+        0: 0.78,
+        30: 0.73,
+        60: 0.73,
+        90: 0.74,
+        120: 0.73,
+        150: 0.80,
+        180: 0.85,
+        210: 0.93,
+        240: 1.00,
+        270: 0.99,
+        300: 0.91,
+        330: 0.82
+    }
+    
+    # Map each cardinal direction to an angle after considering building rotation
+    direction_angles = {
+        "North": (0 + rotation_angle) % 360,
+        "East": (90 + rotation_angle) % 360,
+        "South": (180 + rotation_angle) % 360,
+        "West": (270 + rotation_angle) % 360
+    }
+    
+    # Get the nearest defined angle for each direction
+    direction_factors = {}
+    for direction, angle in direction_angles.items():
+        # Find the nearest angle in the UK factors table
+        nearest_angle = min(uk_direction_factors.keys(), key=lambda x: min(abs(x - angle), abs(x - angle + 360), abs(x - angle - 360)))
+        direction_factors[direction] = uk_direction_factors[nearest_angle]
+    
+    return direction_factors
+
 def create_pressure_summary(session_state, results_by_direction):
     """
     Create a summary DataFrame with pressure/suction values for each elevation.
@@ -24,6 +82,11 @@ def create_pressure_summary(session_state, results_by_direction):
     h = session_state.inputs.get("z", 10.0)  # Building height
     qp_value = session_state.inputs.get("qp_value", 1000.0)  # Peak velocity pressure in N/m²
     
+    # Get directional factors
+    use_direction_factor = session_state.inputs.get("use_direction_factor", False)
+    rotation_angle = session_state.inputs.get("building_rotation", 0)
+    direction_factors = get_direction_factor(rotation_angle, use_direction_factor)
+    
     # Define cp,i values
     cp_i_positive = 0.2
     cp_i_negative = -0.3
@@ -33,6 +96,12 @@ def create_pressure_summary(session_state, results_by_direction):
     
     # Process each direction (elevation)
     for direction, cp_df in results_by_direction.items():
+        # Get directional factor for this direction
+        c_dir = direction_factors.get(direction, 1.0)
+        
+        # Apply directional factor to qp
+        adjusted_qp = qp_value * c_dir
+        
         # For each zone in this direction
         for _, row in cp_df.iterrows():
             zone = row['Zone']
@@ -46,12 +115,12 @@ def create_pressure_summary(session_state, results_by_direction):
             # Round cp,e to 2 decimal places
             cp_e = round(cp_e, 2)
             
-            # Calculate external pressure
-            we = qp_value * cp_e
+            # Calculate external pressure with directional factor
+            we = adjusted_qp * cp_e
             
-            # Calculate internal pressures
-            wi_positive = qp_value * cp_i_positive
-            wi_negative = qp_value * cp_i_negative
+            # Calculate internal pressures with directional factor
+            wi_positive = adjusted_qp * cp_i_positive
+            wi_negative = adjusted_qp * cp_i_negative
             
             # Calculate net pressures - most onerous combination
             net_positive = max(we + wi_positive, we - wi_negative)  # Maximum positive pressure
@@ -92,6 +161,7 @@ def create_pressure_summary(session_state, results_by_direction):
             summary_data.append({
                 "Direction": direction,
                 "Zone": zone,
+                "c_dir": round(c_dir, 2),
                 "cp,e": cp_e,
                 "cp,i (used)": cp_i_used,
                 "We (kPa)": we_kpa,
@@ -128,6 +198,11 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     EW_dimension = session_state.inputs.get("EW_dimension", 40.0)
     qp_value = session_state.inputs.get("qp_value", 1000.0)  # Peak velocity pressure at building height
     
+    # Get directional factors
+    use_direction_factor = session_state.inputs.get("use_direction_factor", False)
+    rotation_angle = session_state.inputs.get("building_rotation", 0)
+    direction_factors = get_direction_factor(rotation_angle, use_direction_factor)
+    
     # Create a continuous color scale for pressure
     colorscale = pc.sequential.Blues_r
     
@@ -144,16 +219,22 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     
     # First pass to find global pressure range
     for direction, cp_df in results_by_direction.items():
+        # Get directional factor for this direction
+        c_dir = direction_factors.get(direction, 1.0)
+        
+        # Apply directional factor to qp
+        adjusted_qp = qp_value * c_dir
+        
         # Check all zones
         for zone_name in ['A', 'B', 'C']:
             # Only process if this zone exists in this direction
             if zone_name in cp_df['Zone'].values:
                 cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
-                we = qp_value * cp_e
+                we = adjusted_qp * cp_e
                 
                 # Calculate internal pressures
-                wi_positive = qp_value * cp_i_positive
-                wi_negative = qp_value * cp_i_negative
+                wi_positive = adjusted_qp * cp_i_positive
+                wi_negative = adjusted_qp * cp_i_negative
                 
                 # Calculate net pressures (minimum of two internal pressure cases)
                 net_pressure = min(we + wi_positive, we + wi_negative)
@@ -171,6 +252,12 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     
     # Process each direction (elevation)
     for direction, cp_df in results_by_direction.items():
+        # Get directional factor for this direction
+        c_dir = direction_factors.get(direction, 1.0)
+        
+        # Apply directional factor to qp
+        adjusted_qp = qp_value * c_dir
+        
         # Filter for just the A, B, C zones
         suction_zones = cp_df[cp_df['Zone'].isin(['A', 'B', 'C'])]
         
@@ -179,12 +266,12 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             width = EW_dimension
             height = h
             crosswind_dim = NS_dimension
-            title = f"{direction} Elevation - Wind Suction Zones"
+            title = f"{direction} Elevation - Wind Suction Zones (c_dir: {c_dir:.2f})"
         else:  # East or West
             width = NS_dimension
             height = h
             crosswind_dim = EW_dimension
-            title = f"{direction} Elevation - Wind Suction Zones"
+            title = f"{direction} Elevation - Wind Suction Zones (c_dir: {c_dir:.2f})"
         
         # Calculate parameter e according to Eurocode
         e = min(crosswind_dim, 2 * height)
@@ -256,11 +343,11 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             # Only calculate if this zone exists in this direction
             if zone_name in cp_df['Zone'].values:
                 cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
-                we = qp_value * cp_e
+                we = adjusted_qp * cp_e
                 
                 # Calculate internal pressures
-                wi_positive = qp_value * cp_i_positive
-                wi_negative = qp_value * cp_i_negative
+                wi_positive = adjusted_qp * cp_i_positive
+                wi_negative = adjusted_qp * cp_i_negative
                 
                 # Calculate net pressure (minimum of two internal pressure cases for suction)
                 net_pressure = min(we + wi_positive, we + wi_negative)
