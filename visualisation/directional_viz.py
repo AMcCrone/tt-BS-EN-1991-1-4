@@ -3,12 +3,13 @@ import plotly.graph_objects as go
 import math
 
 # Define color palette
-TT_LightBlue = "rgba(136,219,223,0.4)"  # Light blue with transparency
+TT_LightBlue = "rgba(136,219,223,0.5)"  # Light blue with transparency
 TT_DarkBlue = "rgb(0,48,60)"  # Dark blue for labels
+TT_Orange = "rgb(211,69,29)"  # Orange for the 1.0 line
 
 def create_cdir_radial_plot(height=400, width=400):
     """
-    Create a simple radial plot of c_dir values.
+    Create a radial plot of c_dir values with concentric circles.
     
     Parameters:
     -----------
@@ -24,18 +25,18 @@ def create_cdir_radial_plot(height=400, width=400):
     """
     # UK directional factors
     uk_dir_factors = {
-        0: 0.78,    # North
-        30: 0.73,
-        60: 0.73,
-        90: 0.74,   # East
-        120: 0.73,
-        150: 0.80,
-        180: 0.85,  # South
-        210: 0.93,
-        240: 1.00,  # Maximum value
-        270: 0.99,  # West
-        300: 0.91,
-        330: 0.82
+        0: 0.78,    # North (top)
+        30: 0.73,   # NE
+        60: 0.73,   # ENE
+        90: 0.74,   # East (right)
+        120: 0.73,  # ESE
+        150: 0.80,  # SE
+        180: 0.85,  # South (bottom)
+        210: 0.93,  # SW
+        240: 1.00,  # WSW (max value)
+        270: 0.99,  # West (left)
+        300: 0.91,  # WNW
+        330: 0.82   # NW
     }
     
     # Create the figure
@@ -45,56 +46,103 @@ def create_cdir_radial_plot(height=400, width=400):
     directions = list(uk_dir_factors.keys())
     r_values = list(uk_dir_factors.values())
     
-    # Convert angles to match North at top (0 = North, clockwise)
-    # and adjust for Plotly's polar coordinates (0 = East, counterclockwise)
-    plot_angles = [(270 - angle) % 360 for angle in directions]
-    plot_angles_rad = [math.radians(angle) for angle in plot_angles]
-    
     # Scale factor for the plot
     scale = 5
+    max_dim = scale * 1.1
     
-    # Calculate x and y coordinates for the radar chart
-    radar_x = [scale * r * math.cos(theta) for r, theta in zip(r_values, plot_angles_rad)]
-    radar_y = [scale * r * math.sin(theta) for r, theta in zip(r_values, plot_angles_rad)]
+    # Draw concentric circles at 0.1 intervals
+    for radius in np.arange(0.1, 1.0, 0.1):
+        # Create a circle at this radius
+        theta = np.linspace(0, 2*np.pi, 100)
+        x = scale * radius * np.cos(theta)
+        y = scale * radius * np.sin(theta)
+        
+        fig.add_trace(go.Scatter(
+            x=x,
+            y=y,
+            mode='lines',
+            line=dict(color=TT_LightBlue, width=1),
+            showlegend=False
+        ))
+        
+        # Add subtle radius label
+        fig.add_annotation(
+            x=0,
+            y=scale * radius,
+            text=f"{radius:.1f}",
+            showarrow=False,
+            font=dict(size=8, color=TT_LightBlue),
+            yshift=8
+        )
+    
+    # Add special circle for 1.0 (maximum value)
+    theta = np.linspace(0, 2*np.pi, 100)
+    x = scale * np.cos(theta)
+    y = scale * np.sin(theta)
+    
+    fig.add_trace(go.Scatter(
+        x=x,
+        y=y,
+        mode='lines',
+        line=dict(color=TT_Orange, width=1.5, dash='dash'),
+        showlegend=False
+    ))
+    
+    # Add 1.0 radius label
+    fig.add_annotation(
+        x=0,
+        y=scale,
+        text="1.0",
+        showarrow=False,
+        font=dict(size=10, color=TT_Orange),
+        yshift=8
+    )
+    
+    # Convert angles to match top=0, clockwise direction
+    # In this system: top=0°, right=90°, bottom=180°, left=270°
+    plot_angles_rad = [math.radians(angle) for angle in directions]
+    
+    # Calculate x and y coordinates for the plot points
+    # For clockwise from top: x=r*sin(θ), y=r*cos(θ)
+    points_x = [scale * r * math.sin(theta) for r, theta in zip(r_values, plot_angles_rad)]
+    points_y = [scale * r * math.cos(theta) for r, theta in zip(r_values, plot_angles_rad)]
     
     # Close the loop by adding the first point again
-    radar_x.append(radar_x[0])
-    radar_y.append(radar_y[0])
+    points_x.append(points_x[0])
+    points_y.append(points_y[0])
     
-    # Add the radial plot
+    # Add the c_dir plot line
     fig.add_trace(go.Scatter(
-        x=radar_x,
-        y=radar_y,
+        x=points_x,
+        y=points_y,
         mode='lines',
         line=dict(color=TT_DarkBlue, width=2),
-        fill='toself',
-        fillcolor=TT_LightBlue,
         showlegend=False
     ))
     
     # Add c_dir value annotations
     for angle, value in uk_dir_factors.items():
-        # Convert to plotting coordinates
-        plot_angle = math.radians((270 - angle) % 360)
-        x = scale * value * math.cos(plot_angle)
-        y = scale * value * math.sin(plot_angle)
+        # Convert to plotting coordinates (clockwise from top)
+        angle_rad = math.radians(angle)
+        x = scale * value * math.sin(angle_rad)
+        y = scale * value * math.cos(angle_rad)
         
-        # Add annotation
+        # Add annotation with slight offset
+        offset_factor = 1.05  # Small offset for readability
         fig.add_annotation(
-            x=x,
-            y=y,
+            x=x * offset_factor,
+            y=y * offset_factor,
             text=f"{value:.2f}",
             showarrow=False,
             font=dict(size=10, color=TT_DarkBlue)
         )
     
     # Add cardinal directions at the edges
-    max_dim = scale * 1.1
     cardinals = [
-        {"dir": "N", "x": 0, "y": max_dim},
-        {"dir": "E", "x": max_dim, "y": 0},
-        {"dir": "S", "x": 0, "y": -max_dim},
-        {"dir": "W", "x": -max_dim, "y": 0}
+        {"dir": "N", "angle": 0, "x": 0, "y": max_dim},
+        {"dir": "E", "angle": 90, "x": max_dim, "y": 0},
+        {"dir": "S", "angle": 180, "x": 0, "y": -max_dim},
+        {"dir": "W", "angle": 270, "x": -max_dim, "y": 0}
     ]
     
     for cardinal in cardinals:
@@ -105,6 +153,20 @@ def create_cdir_radial_plot(height=400, width=400):
             showarrow=False,
             font=dict(size=12, color=TT_DarkBlue, weight="bold")
         )
+    
+    # Add radial lines at 30° intervals
+    for angle in range(0, 360, 30):
+        angle_rad = math.radians(angle)
+        line_x = [0, scale * math.sin(angle_rad)]
+        line_y = [0, scale * math.cos(angle_rad)]
+        
+        fig.add_trace(go.Scatter(
+            x=line_x,
+            y=line_y,
+            mode='lines',
+            line=dict(color="rgba(99,102,105,0.3)", width=1),
+            showlegend=False
+        ))
     
     # Set layout with equal aspect ratio
     fig.update_layout(
