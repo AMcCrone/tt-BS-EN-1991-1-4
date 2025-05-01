@@ -651,7 +651,7 @@ st.plotly_chart(ew_elevation_fig, use_container_width=True)
 
 # Wind pressure parameters
 st.markdown("---")
-st.header("Wind Direction Settings")
+st.header("Directional Factor, $c_{dir}$")
 
 # Only show directional factor option for UK region
 if st.session_state.inputs.get("region") == "United Kingdom":
@@ -711,7 +711,7 @@ else:
     st.session_state.inputs["use_direction_factor"] = False
     st.session_state.inputs["building_rotation"] = 0
 
-# Results Summary section (your existing code)
+# Results Summary section
 st.markdown("---")
 st.markdown('<div class="pagebreak"></div>', unsafe_allow_html=True)
 st.header("Results Summary")
