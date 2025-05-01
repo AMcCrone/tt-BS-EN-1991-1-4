@@ -61,50 +61,21 @@ NOTE The rules for the velocity pressure distribution for leeward wall and sidew
 """
 
 h_dis_help = """
-
-# Obstruction Height and Upwind Spacing Help
-
 For buildings in terrain category IV, closely spaced buildings and other obstructions cause the wind to behave as if the ground level was raised to a displacement height, 
-$$h_{dis}$$
-. 
+$$h_{dis}$$.
 
-$$h_{dis}$$
- may be determined by Expression (A.15), see Figure A.5. The profile of peak velocity pressure over height (see Figure 4.2) may be lifted by a height 
-$$h_{dis}$$
-.
+The displacement height $$h_{dis}$$ may be determined by Expression (A.15) (see Figure A.5). The profile of peak velocity pressure over height (see Figure 4.2) may be lifted by $$h_{dis}$$.
 
+• If $$x \le 2\,h_{ave}$$, then $$h_{dis}$$ is the lesser of
+  $$0.8\,h_{ave}$$ or $$0.6\,h$$.
 
-- If 
-$$x \leq 2 \cdot h_{ave}$$
+• If $$2\,h_{ave} < x < 6\,h_{ave}$$, then $$h_{dis}$$ is the lesser of
+  $$1.2\,h_{ave} - 0.2\,x$$ or $$0.6\,h$$.
 
-$$h_{dis}$$
- is the lesser of 
-$$0.8 \cdot h_{ave}$$
- or 
-$$0.6 \cdot h$$
+• If $$x \ge 6\,h_{ave}$$, then
+  $$h_{dis} = 0$$.
 
-- If 
-$$2 \cdot h_{ave} < x < 6 \cdot h_{ave}$$
-
-$$h_{dis}$$
- is the lesser of 
-$$1.2 \cdot h_{ave} - 0.2 \cdot x$$
- or 
-$$0.6 \cdot h$$
-
-- If 
-$$x \geq 6 \cdot h_{ave}$$
-
-$$h_{dis} = 0$$
-
-In the absence of more accurate information, the obstruction height may be taken as 
-$$h_{ave} = 15$$
- m for terrain category IV. These rules are direction dependent, the values of 
-$$h_{ave}$$
- and 
-$$x$$
- should be established for each 30° sector as described in 4.3.2.
-
+In the absence of more accurate information, the obstruction height may be taken as $$h_{ave} = 15\text{ m}$$ for terrain category IV. These rules are direction-dependent: the values of $$h_{ave}$$ and $$x$$ should be established for each 30° sector as described in 4.3.2.
 """
 
 orography_help = """
