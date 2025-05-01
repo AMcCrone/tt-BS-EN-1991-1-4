@@ -48,13 +48,13 @@ For projects in the UK, $V_{b,map}$ may be read from **Figure NA.1** (shown righ
 
 velocity_profile_help = """
 
-(1) The reference heights, \( z_e \), for windward walls of rectangular plan buildings (zone D, see Figure 7.5) depend on the aspect ratio \( h/b \) and are always the upper heights of the different parts of the walls. They are given in Figure 7.4 for the following three cases:
+(1) The reference heights, $$ z_e $$, for windward walls of rectangular plan buildings (zone D, see Figure 7.5) depend on the aspect ratio $$ h/b $$ and are always the upper heights of the different parts of the walls. They are given in Figure 7.4 for the following three cases:
 
-- A building, whose height \( h \) is less than \( b \) should be considered to be one part.
+- A building, whose height $$ h $$ is less than $$ b $$ should be considered to be one part.
 
-- A building, whose height \( h \) is greater than \( b \), but less than \( 2b \), may be considered to be two parts, comprising: a lower part extending upwards from the ground by a height equal to \( b \) and an upper part consisting of the remainder.
+- A building, whose height $$ h $$ is greater than $$ b $$, but less than $$ 2b $$, may be considered to be two parts, comprising: a lower part extending upwards from the ground by a height equal to $$ b $$ and an upper part consisting of the remainder.
 
-- A building, whose height \( h \) is greater than \( 2b \) may be considered to be in multiple parts, comprising: a lower part extending upwards from the ground by a height equal to \( b \); an upper part extending downwards from the top by a height equal to \( b \) and a middle region, between the upper and lower parts, which may be divided into horizontal strips with a height \( h_{strip} \) as shown in Figure 7.4.
+- A building, whose height $$ h $$ is greater than $$ 2b $$ may be considered to be in multiple parts, comprising: a lower part extending upwards from the ground by a height equal to $$ b $$; an upper part extending downwards from the top by a height equal to $$ b $$ and a middle region, between the upper and lower parts, which may be divided into horizontal strips with a height $$ h_{strip} $$ as shown in Figure 7.4.
 
 NOTE The rules for the velocity pressure distribution for leeward wall and sidewalls (zones A, B, C and E, see Figure 7.5) may be given in the National Annex or be defined for the individual project. The recommended procedure is to take the reference height as the height of the building.
 
