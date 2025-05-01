@@ -80,50 +80,50 @@ In the absence of more accurate information, the obstruction height may be taken
 
 orography_help = """
 
-A.3 Numerical calculation of orography coefficients
+Numerical calculation of orography coefficients
 
-(1) At isolated hills and ridges or cliffs and escarpments, different wind velocities occur depending on the upstream slope
-   $\Phi = H / L_u$
-   in the wind direction, where the height $H$ and the length $L_u$ are defined in Figure A.1.
+At isolated hills and ridges or cliffs and escarpments, different wind velocities occur depending on the upstream slope
+$\Phi = H / L_u$
+in the wind direction, where the height $H$ and the length $L_u$ are defined in Figure A.1.
 
-(2) The largest increase of the wind velocities occurs near the top of the slope and is determined by the orography factor $c_{oe}(z)$; see Figure A.1.
-    The slope has no significant effect on the standard deviation of the turbulence defined in 4.4 (1).
+The largest increase of the wind velocities occurs near the top of the slope and is determined by the orography factor $c_{oe}(z)$; see Figure A.1.
+ The slope has no significant effect on the standard deviation of the turbulence defined in 4.4 (1).
 
-    NOTE The turbulence intensity will decrease with increasing wind velocity at equal standard deviation.
+ NOTE The turbulence intensity will decrease with increasing wind velocity at equal standard deviation.
 
-(3) The orography factor
-    $c_{oe}(z) = v_m / v_{eff}$
-    accounts for the increase in mean wind speed over isolated hills and escarpments (not undulating and mountainous regions).
-    It is related to the wind velocity at the base of the hill or escarpment.
-    The effects of orography should be taken into account in the following situations:
+The orography factor
+$c_{oe}(z) = v_m / v_{eff}$
+accounts for the increase in mean wind speed over isolated hills and escarpments (not undulating and mountainous regions).
+It is related to the wind velocity at the base of the hill or escarpment.
+The effects of orography should be taken into account in the following situations:
 
-    - For upwind slopes of hills and ridges: $0.05 < \Phi < 0.3$ and $|x| \le L_u / 2$
-    - For downwind slopes of hills and ridges:
-      - $\Phi < 0.3$ and $x < L_d / 2$
-      - $\Phi > 0.3$ and $x < 1.6 \cdot H$
-    - For upwind slopes of cliffs and escarpments: $0.05 < \Phi < 0.3$ and $|x| \le L_u / 2$
-    - For downwind slopes of cliffs and escarpments:
-      - $\Phi < 0.3$ and $x < 1.6 \cdot H$
-      - $\Phi > 0.3$ and $x < 5 \cdot H$
+- For upwind slopes of hills and ridges: $0.05 < \Phi < 0.3$ and $|x| \le L_u / 2$
+- For downwind slopes of hills and ridges:
+- $\Phi < 0.3$ and $x < L_d / 2$
+- $\Phi > 0.3$ and $x < 1.6 \cdot H$
+- For upwind slopes of cliffs and escarpments: $0.05 < \Phi < 0.3$ and $|x| \le L_u / 2$
+- For downwind slopes of cliffs and escarpments:
+- $\Phi < 0.3$ and $x < 1.6 \cdot H$
+- $\Phi > 0.3$ and $x < 5 \cdot H$
 
-    The factor $c_{oe}$ is defined as:
-    $
-    c_{oe} =
-    \begin{cases}
-      1, & \Phi < 0.05, \\
-      1 + 2 \cdot s \cdot \Phi, & 0.05 \le \Phi \le 0.3, \\
-      1 + 0.6 \cdot s, & \Phi > 0.3,
-    \end{cases}
-    $
+The factor $c_{oe}$ is defined as:
+$
+c_{oe} =
+\begin{cases}
+1, & \Phi < 0.05, \\
+1 + 2 \cdot s \cdot \Phi, & 0.05 \le \Phi \le 0.3, \\
+1 + 0.6 \cdot s, & \Phi > 0.3,
+\end{cases}
+$
 
-    where:
-    - $s$ is the orographic location factor (from Figures A.2/A.3), scaled to $L_{oe}$
-    - $\Phi = H / L_u$
-    - $L_{oe}$ is the effective upwind length (Table A.2)
-    - $L_u$ and $L_d$ are the upwind/downwind slope lengths
-    - $H$ is the feature height
-    - $x$ is the distance from crest
-    - $z$ is the site elevation above ground
+where:
+- $s$ is the orographic location factor (from Figures A.2/A.3), scaled to $L_{oe}$
+- $\Phi = H / L_u$
+- $L_{oe}$ is the effective upwind length (Table A.2)
+- $L_u$ and $L_d$ are the upwind/downwind slope lengths
+- $H$ is the feature height
+- $x$ is the distance from crest
+- $z$ is the site elevation above ground
 
 Table A.2 — Effective length $L_{oe}$:
 
