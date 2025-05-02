@@ -708,6 +708,9 @@ if st.session_state.inputs.get("region") == "United Kingdom":
                 "c_dir": list(direction_factors.values())
             })
             st.dataframe(factor_data, hide_index=True, height=35*len(factor_data)+38)
+
+    else st.markdown("Uniform $$c_{dir}=1.0$$ applied.
+    
     
     # Show the visualization in the second column
     with col2:
@@ -727,7 +730,7 @@ else:
     # For non-UK regions, set directional factor to 1.0 (not used)
     st.session_state.inputs["use_direction_factor"] = False
     st.session_state.inputs["building_rotation"] = 0
-    st.info("Wind directional factors are only available for UK region.")
+    st.write("Wind directional factors are only available for UK region.")
 
 # Results Summary section (your existing code)
 st.markdown("---")
