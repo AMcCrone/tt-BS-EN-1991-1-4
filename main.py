@@ -709,7 +709,7 @@ if st.session_state.inputs.get("region") == "United Kingdom":
             })
             st.dataframe(factor_data, hide_index=True, height=35*len(factor_data)+38)
 
-    else st.markdown("Uniform $$c_{dir}=1.0$$ applied.
+    else st.markdown("Uniform $$c_{dir}=1.0$$ applied.")
     
     
     # Show the visualization in the second column
