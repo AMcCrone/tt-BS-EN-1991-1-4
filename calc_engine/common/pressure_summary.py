@@ -667,12 +667,13 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         }
     }
     
-    # Add direction labels (N, E, S, W) on the ground
+    # Add direction labels (N, E, S, W) on the ground with increased offset
+    offset_factor = max(NS_dimension, EW_dimension) * 0.1  # 10% of the maximum dimension
     direction_labels = {
-        "North": {"pos": [NS_dimension/2, -1, 0], "text": "N"},
-        "South": {"pos": [NS_dimension/2, EW_dimension + 1, 0], "text": "S"},
-        "East": {"pos": [NS_dimension + 1, EW_dimension/2, 0], "text": "E"},
-        "West": {"pos": [-1, EW_dimension/2, 0], "text": "W"}
+        "North": {"pos": [NS_dimension/2, -offset_factor, 0], "text": "N"},
+        "South": {"pos": [NS_dimension/2, EW_dimension + offset_factor, 0], "text": "S"},
+        "East": {"pos": [NS_dimension + offset_factor, EW_dimension/2, 0], "text": "E"},
+        "West": {"pos": [-offset_factor, EW_dimension/2, 0], "text": "W"}
     }
     
     # Add direction labels
@@ -957,35 +958,38 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         hoverinfo='none'
     ))
     
-    # Set the layout
+    # Set the layout with complete removal of all axes elements
     fig.update_layout(
         scene=dict(
             xaxis=dict(
-                showticklabels=False,  # Hide axis numbers
-                showgrid=False, 
+                showticklabels=False,
+                showgrid=False,
                 zeroline=False,
                 showline=False,
                 showbackground=False,
                 showaxeslabels=False,
-                visible=False
+                visible=False,
+                title=''  # Empty title
             ),
             yaxis=dict(
-                showticklabels=False,  # Hide axis numbers
-                showgrid=False, 
+                showticklabels=False,
+                showgrid=False,
                 zeroline=False,
                 showline=False,
                 showbackground=False,
                 showaxeslabels=False,
-                visible=False
+                visible=False,
+                title=''  # Empty title
             ),
             zaxis=dict(
-                showticklabels=False,  # Hide axis numbers
-                showgrid=False, 
+                showticklabels=False,
+                showgrid=False,
                 zeroline=False,
                 showline=False,
                 showbackground=False,
                 showaxeslabels=False,
-                visible=False
+                visible=False,
+                title=''  # Empty title
             ),
             aspectmode='data',
             bgcolor='rgba(0,0,0,0)'  # Transparent scene background
@@ -999,7 +1003,8 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         height=600,
         width=800,
         paper_bgcolor='rgba(0,0,0,0)',  # Transparent paper background
-        plot_bgcolor='rgba(0,0,0,0)'    # Transparent plot background
+        plot_bgcolor='rgba(0,0,0,0)',   # Transparent plot background
+        annotations=[]  # Remove any default annotations
     )
     
     # Apply hover mode to closest data
@@ -1010,6 +1015,19 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
             font_size=12,
             font_family="Arial"
         )
+    )
+    
+    # Explicitly remove axes title, ticks, spikes, etc.
+    fig.update_scenes(
+        xaxis_title=None,
+        yaxis_title=None,
+        zaxis_title=None,
+        xaxis_showspikes=False,
+        yaxis_showspikes=False,
+        zaxis_showspikes=False,
+        xaxis_showticklabels=False,
+        yaxis_showticklabels=False,
+        zaxis_showticklabels=False
     )
     
     return fig
