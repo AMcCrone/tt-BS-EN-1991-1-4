@@ -987,5 +987,3 @@ def create_wind_visualization_ui(session_state, results_by_direction):
         st.info("Suction Mode: Displaying zones A, B, C where wind creates negative pressure (suction).")
     else:
         st.info("Pressure Mode: Displaying zone D where wind creates positive pressure.")
-    
-    st.dataframe(filtered_summary, use_container_width=True)
