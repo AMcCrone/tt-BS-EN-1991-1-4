@@ -573,6 +573,21 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         [1, 'rgb(8,81,156)']
     ]
     
+    # Add a ground plane
+    ground_extension = max(NS_dimension, EW_dimension) * 0.5
+    fig.add_trace(go.Mesh3d(
+        x=[-ground_extension, NS_dimension + ground_extension, NS_dimension + ground_extension, -ground_extension],
+        y=[-ground_extension, -ground_extension, EW_dimension + ground_extension, EW_dimension + ground_extension],
+        z=[0, 0, 0, 0],
+        i=[0, 0],
+        j=[1, 2],
+        k=[2, 3],
+        color='rgb(240,240,240)',  # Light grey ground
+        opacity=0.7,
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    
     # Get pressure summary data
     pressure_summary = create_pressure_summary(session_state, results_by_direction)
     
@@ -930,11 +945,22 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         hoverinfo='text'
     ))
     
+    # Add black outline around roof
+    fig.add_trace(go.Scatter3d(
+        x=[0, NS_dimension, NS_dimension, 0, 0],
+        y=[0, 0, EW_dimension, EW_dimension, 0],
+        z=[h, h, h, h, h],
+        mode='lines',
+        line=dict(color='black', width=2),
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    
     # Set the layout
     fig.update_layout(
         scene=dict(
             xaxis=dict(
-                showticklabels=False, 
+                showticklabels=False,  # Hide axis numbers
                 showgrid=False, 
                 zeroline=False,
                 showline=False,
@@ -943,7 +969,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 visible=False
             ),
             yaxis=dict(
-                showticklabels=False, 
+                showticklabels=False,  # Hide axis numbers
                 showgrid=False, 
                 zeroline=False,
                 showline=False,
@@ -952,7 +978,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 visible=False
             ),
             zaxis=dict(
-                showticklabels=False, 
+                showticklabels=False,  # Hide axis numbers
                 showgrid=False, 
                 zeroline=False,
                 showline=False,
@@ -961,7 +987,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 visible=False
             ),
             aspectmode='data',
-            bgcolor='rgba(0,0,0,0)'  # Transparent background
+            bgcolor='rgba(0,0,0,0)'  # Transparent scene background
         ),
         margin=dict(l=0, r=0, b=0, t=30),
         showlegend=False,
