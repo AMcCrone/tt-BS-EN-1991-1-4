@@ -749,3 +749,8 @@ st.sidebar.title("Options")
 show_educational = st.sidebar.checkbox("Show Educational Content", 
                               value=st.session_state.show_educational)
 st.session_state.show_educational = show_educational
+
+st.header("3D Wind Visualization")
+    
+# Call the create_wind_visualization_ui function
+create_wind_visualization_ui(st.session_state, results_by_direction)
