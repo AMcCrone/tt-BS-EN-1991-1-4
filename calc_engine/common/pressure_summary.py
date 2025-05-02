@@ -543,14 +543,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     """
     import plotly.graph_objects as go
     import numpy as np
-    
-    # Define the TT color palette
-    TT_LightBlue = "rgb(136,219,223)"
-    TT_MidBlue = "rgb(0,163,173)"
-    TT_DarkBlue = "rgb(0,48,60)"
-    TT_Grey = "rgb(99,102,105)"
-    TT_LightLightBlue = "rgb(207,241,242)"
-    TT_LightGrey = "rgb(223,224,225)"
+    import plotly.colors as colors
     
     # Extract building dimensions
     NS_dimension = session_state.inputs.get("NS_dimension", 20.0)
@@ -570,6 +563,13 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     # Create a figure
     fig = go.Figure()
     
+    # Use Blues colorscale from plotly
+    blues_colorscale = colors.sequential.Blues
+    
+    # Ground color
+    ground_color = "rgb(240,240,240)"  # Light grey
+    roof_color = "rgb(220,220,220)"    # Slightly darker grey
+    
     # Add ground base (extending beyond the building footprint)
     ground_extension = max(NS_dimension, EW_dimension) * 0.3
     fig.add_trace(go.Mesh3d(
@@ -579,7 +579,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         i=[0, 0],
         j=[1, 2],
         k=[2, 3],
-        color=TT_LightGrey,
+        color=ground_color,
         opacity=0.7,
         showlegend=False,
         hoverinfo='none'
@@ -592,29 +592,14 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     if mode == "suction":
         # Only include zones A, B, C (suction zones)
         pressure_data = pressure_summary[pressure_summary['Zone'].isin(['A', 'B', 'C'])]
+        colorbar_title = "Suction (kPa)"
     else:  # pressure
         # Only include zone D (pressure zone)
         pressure_data = pressure_summary[pressure_summary['Zone'] == 'D']
+        colorbar_title = "Pressure (kPa)"
     
     # Get the elevation plots to access zone boundaries and names
     elevation_plots = plot_elevation_with_pressures(session_state, results_by_direction)
-    
-    # Create colorscale for suction/pressure using the TT colors
-    if mode == "suction":
-        custom_colorscale = [
-            [0.0, TT_DarkBlue],
-            [0.33, TT_MidBlue],
-            [0.66, TT_LightBlue],
-            [1.0, TT_LightLightBlue]
-        ]
-        colorbar_title = "Suction (kPa)"
-    else:  # pressure
-        custom_colorscale = [
-            [0.0, TT_LightLightBlue],
-            [0.5, TT_MidBlue],
-            [1.0, TT_DarkBlue]
-        ]
-        colorbar_title = "Pressure (kPa)"
     
     # Get global pressure range for consistent color mapping
     if len(pressure_data) > 0:
@@ -635,7 +620,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         z=dummy_z,
         x=[0, 0.1],  # Outside visible area
         y=[0, 0.1],  # Outside visible area
-        colorscale=custom_colorscale,
+        colorscale=blues_colorscale,
         showscale=True,
         colorbar=dict(
             title=colorbar_title,
@@ -644,7 +629,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
             lenmode="fraction",
             len=0.9
         ),
-        visible=False
+        visible=True
     ))
     
     # Dictionary to map direction to face coordinates
@@ -671,6 +656,26 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         }
     }
     
+    # Add direction labels (N, E, S, W) on the ground
+    direction_labels = {
+        "North": {"pos": [NS_dimension/2, -ground_extension/2, 0], "text": "N"},
+        "South": {"pos": [NS_dimension/2, EW_dimension + ground_extension/2, 0], "text": "S"},
+        "East": {"pos": [NS_dimension + ground_extension/2, EW_dimension/2, 0], "text": "E"},
+        "West": {"pos": [-ground_extension/2, EW_dimension/2, 0], "text": "W"}
+    }
+    
+    # Add direction labels
+    for direction, label_info in direction_labels.items():
+        fig.add_trace(go.Scatter3d(
+            x=[label_info["pos"][0]],
+            y=[label_info["pos"][1]],
+            z=[label_info["pos"][2]],
+            text=[label_info["text"]],
+            mode='text',
+            textfont=dict(size=24, color='black'),
+            showlegend=False
+        ))
+    
     # Process each direction (North, South, East, West)
     for direction in ["North", "South", "East", "West"]:
         # Skip if we don't have data for this direction
@@ -696,11 +701,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         else:  # East or West
             width = EW_dimension
         
-        # Extract zone boundaries from the elevation plot
-        # In the real implementation, we should extract this data directly from plot_elevation_with_pressures
-        # But since we don't have direct access to its internals, we'll derive it
-        
-        # Calculate parameter e according to Eurocode (same as in plot_elevation_with_pressures)
+        # Calculate parameter e according to Eurocode
         if direction in ["North", "South"]:
             crosswind_dim = EW_dimension
         else:  # East or West
@@ -708,7 +709,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         
         e = min(crosswind_dim, 2 * h)
         
-        # Determine zone boundaries based on relation between e and width (same logic as in plot_elevation_with_pressures)
+        # Determine zone boundaries based on relation between e and width
         zone_boundaries = []
         zone_names = []
         
@@ -789,26 +790,42 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
                 
                 # Get color based on normalized value
-                color_idx = int(normalized_value * (len(custom_colorscale) - 1))
-                zone_color = custom_colorscale[color_idx][1]
+                color_index = min(int(normalized_value * (len(blues_colorscale) - 1)), len(blues_colorscale) - 1)
+                zone_color = blues_colorscale[color_index]
                 
                 # Calculate the vertices for this zone
                 if direction == "North":
                     x = [x_start, x_end, x_end, x_start]
                     y = [0, 0, 0, 0]
                     z = [0, 0, h, h]
+                    # Label position
+                    label_x = (x_start + x_end) / 2
+                    label_y = 0
+                    label_z = h / 2
                 elif direction == "South":
                     x = [width - x_end, width - x_start, width - x_start, width - x_end]
                     y = [EW_dimension, EW_dimension, EW_dimension, EW_dimension]
                     z = [0, 0, h, h]
+                    # Label position
+                    label_x = width - (x_start + x_end) / 2
+                    label_y = EW_dimension
+                    label_z = h / 2
                 elif direction == "East":
                     x = [NS_dimension, NS_dimension, NS_dimension, NS_dimension]
                     y = [x_start, x_end, x_end, x_start]
                     z = [0, 0, h, h]
+                    # Label position
+                    label_x = NS_dimension
+                    label_y = (x_start + x_end) / 2
+                    label_z = h / 2
                 elif direction == "West":
                     x = [0, 0, 0, 0]
                     y = [width - x_end, width - x_start, width - x_start, width - x_end]
                     z = [0, 0, h, h]
+                    # Label position
+                    label_x = 0
+                    label_y = width - (x_start + x_end) / 2
+                    label_z = h / 2
                 
                 # Add zone face with appropriate color
                 fig.add_trace(go.Mesh3d(
@@ -838,6 +855,17 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                     showlegend=False,
                     hovertext=f"Zone {zone_name}<br>Net Pressure: {net_pressure:.2f} kPa",
                     hoverinfo='text'
+                ))
+                
+                # Add zone label with pressure value
+                fig.add_trace(go.Scatter3d(
+                    x=[label_x],
+                    y=[label_y],
+                    z=[label_z],
+                    text=[f"{zone_name}: {net_pressure:.2f}"],
+                    mode='text',
+                    textfont=dict(size=12, color='black'),
+                    showlegend=False
                 ))
         else:  # pressure mode
             # For pressure mode (zone D), use the whole face
@@ -851,13 +879,31 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
                 
                 # Get color based on normalized value
-                color_idx = int(normalized_value * (len(custom_colorscale) - 1))
-                zone_color = custom_colorscale[color_idx][1]
+                color_index = min(int(normalized_value * (len(blues_colorscale) - 1)), len(blues_colorscale) - 1)
+                zone_color = blues_colorscale[color_index]
                 
                 # Use the whole face for zone D
                 x = face_coords["x"]
                 y = face_coords["y"]
                 z = face_coords["z"]
+                
+                # Label position - center of the face
+                if direction == "North":
+                    label_x = NS_dimension / 2
+                    label_y = 0
+                    label_z = h / 2
+                elif direction == "South":
+                    label_x = NS_dimension / 2
+                    label_y = EW_dimension
+                    label_z = h / 2
+                elif direction == "East":
+                    label_x = NS_dimension
+                    label_y = EW_dimension / 2
+                    label_z = h / 2
+                elif direction == "West":
+                    label_x = 0
+                    label_y = EW_dimension / 2
+                    label_z = h / 2
                 
                 # Add zone face with appropriate color
                 fig.add_trace(go.Mesh3d(
@@ -888,6 +934,17 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                     hovertext=f"Zone D<br>Net Pressure: {net_pressure:.2f} kPa",
                     hoverinfo='text'
                 ))
+                
+                # Add zone label with pressure value
+                fig.add_trace(go.Scatter3d(
+                    x=[label_x],
+                    y=[label_y],
+                    z=[label_z],
+                    text=[f"D: {net_pressure:.2f}"],
+                    mode='text',
+                    textfont=dict(size=12, color='black'),
+                    showlegend=False
+                ))
     
     # Add the roof (top face) as a solid light grey color
     fig.add_trace(go.Mesh3d(
@@ -897,7 +954,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         i=[0, 0],
         j=[1, 2],
         k=[2, 3],
-        color=TT_LightGrey,
+        color=roof_color,
         opacity=1.0,
         showlegend=False,
         hovertext="Roof",
@@ -907,9 +964,33 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     # Set the layout
     fig.update_layout(
         scene=dict(
-            xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
-            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
-            zaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            xaxis=dict(
+                showticklabels=False, 
+                showgrid=False, 
+                zeroline=False,
+                showline=False,
+                showbackground=False,
+                showaxeslabels=False,
+                visible=False
+            ),
+            yaxis=dict(
+                showticklabels=False, 
+                showgrid=False, 
+                zeroline=False,
+                showline=False,
+                showbackground=False,
+                showaxeslabels=False,
+                visible=False
+            ),
+            zaxis=dict(
+                showticklabels=False, 
+                showgrid=False, 
+                zeroline=False,
+                showline=False,
+                showbackground=False,
+                showaxeslabels=False,
+                visible=False
+            ),
             aspectmode='data'
         ),
         margin=dict(l=0, r=0, b=0, t=30),
@@ -920,6 +1001,16 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         title=f"3D Building Visualization - {mode.capitalize()} Mode",
         height=600,
         width=800
+    )
+    
+    # Apply hover mode to closest data
+    fig.update_layout(
+        hovermode='closest',
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=12,
+            font_family="Arial"
+        )
     )
     
     return fig
