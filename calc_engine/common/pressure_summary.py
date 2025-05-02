@@ -62,6 +62,132 @@ def get_direction_factor(rotation_angle, use_direction_factor=False):
     
     return direction_factors
 
+def calculate_pressure_data(session_state, results_by_direction):
+    """
+    Calculate pressure data for all zones and directions.
+    
+    Parameters:
+    -----------
+    session_state : StreamlitSessionState
+        Streamlit session state containing building dimensions and qp value
+    results_by_direction : dict
+        Dictionary of DataFrames with cp,e values for each direction
+    
+    Returns:
+    --------
+    tuple
+        (summary_data, global_pressure_range, zone_pressures_by_direction)
+        - summary_data: List of dictionaries with pressure data for each zone
+        - global_pressure_range: Tuple of (min_pressure_kpa, max_pressure_kpa)
+        - zone_pressures_by_direction: Dict with pressure values by direction and zone
+    """
+    # Extract dimensions and peak velocity pressure
+    h = session_state.inputs.get("z", 10.0)  # Building height
+    qp_value = session_state.inputs.get("qp_value", 1000.0)  # Peak velocity pressure in N/m²
+    
+    # Get directional factors
+    use_direction_factor = session_state.inputs.get("use_direction_factor", False)
+    rotation_angle = session_state.inputs.get("building_rotation", 0)
+    direction_factors = get_direction_factor(rotation_angle, use_direction_factor)
+    
+    # Define cp,i values
+    cp_i_positive = 0.2
+    cp_i_negative = -0.3
+    
+    # Initialize data structures
+    summary_data = []
+    zone_pressures_by_direction = {}
+    global_max_pressure = 0
+    global_min_pressure = 0
+    
+    # Process each direction (elevation)
+    for direction, cp_df in results_by_direction.items():
+        # Get directional factor for this direction
+        c_dir = direction_factors.get(direction, 1.0)
+        
+        # Apply directional factor to qp
+        adjusted_qp = qp_value * c_dir
+        
+        # Initialize pressure data for this direction
+        zone_pressures_by_direction[direction] = {}
+        
+        # For each zone in this direction
+        for _, row in cp_df.iterrows():
+            zone = row['Zone']
+            
+            # Skip Zone E for summary table but still calculate for plotting
+            if zone in ['A', 'B', 'C', 'D']:
+                cp_e = row['cp,e']
+                
+                # Round cp,e to 2 decimal places
+                cp_e = round(cp_e, 2)
+                
+                # Calculate external pressure with directional factor
+                we = adjusted_qp * cp_e
+                
+                # Determine which internal pressure coefficient to use based on cp,e
+                # If cp,e is negative (suction), use positive cp,i to maximize net pressure
+                # If cp,e is positive (pressure), use negative cp,i to maximize net pressure
+                if cp_e < 0:
+                    cp_i_used = cp_i_positive
+                else:
+                    cp_i_used = cp_i_negative
+                
+                # Calculate internal pressure
+                wi = adjusted_qp * cp_i_used
+                
+                # Calculate net pressure as the difference between external and internal pressure
+                net_pressure = we - wi
+                
+                # Update global pressure range (for plotting)
+                global_max_pressure = max(global_max_pressure, net_pressure)
+                global_min_pressure = min(global_min_pressure, net_pressure)
+                
+                # Round cp,i to 2 decimal places
+                cp_i_used = round(cp_i_used, 2)
+                
+                # Convert N/m² to kPa and round to 2 decimal places
+                we_kpa = round(we / 1000, 2)
+                wi_kpa = round(wi / 1000, 2)
+                net_kpa = round(net_pressure / 1000, 2)
+                
+                # Store zone pressure data for plotting
+                zone_pressures_by_direction[direction][zone] = {
+                    'net_pressure': net_pressure,
+                    'net_pressure_kpa': net_kpa,
+                    'cp_e': cp_e,
+                    'cp_i_used': cp_i_used
+                }
+                
+                # Determine action type based on net pressure
+                action_type = "Pressure" if net_pressure > 0 else "Suction"
+                
+                # For zones A, B, C, D (not E), add to summary data
+                if zone != 'E':
+                    summary_data.append({
+                        "Direction": direction,
+                        "Zone": zone,
+                        "c_dir": round(c_dir, 2),
+                        "cp,e": cp_e,
+                        "cp,i (used)": cp_i_used,
+                        "We (kPa)": we_kpa,
+                        "Wi (kPa)": wi_kpa,
+                        "Net (kPa)": net_kpa,
+                        "Action": action_type
+                    })
+    
+    # Ensure we have some range to avoid division by zero
+    if global_max_pressure == global_min_pressure:
+        global_max_pressure = global_min_pressure + 1
+    
+    # Convert global pressure range from N/m² to kPa
+    global_pressure_range = (
+        global_min_pressure / 1000,  # Min pressure (usually negative/suction)
+        global_max_pressure / 1000   # Max pressure (usually positive/pressure)
+    )
+    
+    return summary_data, global_pressure_range, zone_pressures_by_direction
+
 def create_pressure_summary(session_state, results_by_direction):
     """
     Create a summary DataFrame with pressure/suction values for each elevation.
@@ -78,83 +204,8 @@ def create_pressure_summary(session_state, results_by_direction):
     pd.DataFrame
         Summary of pressure/suction values for all elevations
     """
-    # Extract dimensions and peak velocity pressure
-    h = session_state.inputs.get("z", 10.0)  # Building height
-    qp_value = session_state.inputs.get("qp_value", 1000.0)  # Peak velocity pressure in N/m²
-    
-    # Get directional factors
-    use_direction_factor = session_state.inputs.get("use_direction_factor", False)
-    rotation_angle = session_state.inputs.get("building_rotation", 0)
-    direction_factors = get_direction_factor(rotation_angle, use_direction_factor)
-    
-    # Define cp,i values
-    cp_i_positive = 0.2
-    cp_i_negative = -0.3
-    
-    # Initialize summary data
-    summary_data = []
-    
-    # Process each direction (elevation)
-    for direction, cp_df in results_by_direction.items():
-        # Get directional factor for this direction
-        c_dir = direction_factors.get(direction, 1.0)
-        
-        # Apply directional factor to qp
-        adjusted_qp = qp_value * c_dir
-        
-        # For each zone in this direction
-        for _, row in cp_df.iterrows():
-            zone = row['Zone']
-            
-            # Skip Zone E
-            if zone == 'E':
-                continue
-                
-            cp_e = row['cp,e']
-            
-            # Round cp,e to 2 decimal places
-            cp_e = round(cp_e, 2)
-            
-            # Calculate external pressure with directional factor
-            we = adjusted_qp * cp_e
-            
-            # Determine which internal pressure coefficient to use based on cp,e
-            # If cp,e is negative (suction), use positive cp,i to maximize net pressure
-            # If cp,e is positive (pressure), use negative cp,i to maximize net pressure
-            if cp_e < 0:
-                cp_i_used = cp_i_positive
-            else:
-                cp_i_used = cp_i_negative
-            
-            # Calculate internal pressure
-            wi = adjusted_qp * cp_i_used
-            
-            # Calculate net pressure as the difference between external and internal pressure
-            net_pressure = we - wi
-            
-            # Round cp,i to 2 decimal places
-            cp_i_used = round(cp_i_used, 2)
-            
-            # Convert N/m² to kPa and round to 2 decimal places
-            we_kpa = round(we / 1000, 2)
-            wi_kpa = round(wi / 1000, 2)
-            net_kpa = round(net_pressure / 1000, 2)
-            
-            # Determine action type based on net pressure
-            action_type = "Pressure" if net_pressure > 0 else "Suction"
-            
-            # Add to summary data
-            summary_data.append({
-                "Direction": direction,
-                "Zone": zone,
-                "c_dir": round(c_dir, 2),
-                "cp,e": cp_e,
-                "cp,i (used)": cp_i_used,
-                "We (kPa)": we_kpa,
-                "Wi (kPa)": wi_kpa,
-                "Net (kPa)": net_kpa,
-                "Action": action_type
-            })
+    # Calculate pressure data for all zones
+    summary_data, _, _ = calculate_pressure_data(session_state, results_by_direction)
     
     # Create DataFrame
     summary_df = pd.DataFrame(summary_data)
@@ -178,11 +229,10 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     dict
         Dictionary of plotly figures for each elevation
     """
-    # Extract dimensions and peak velocity pressure
+    # Extract dimensions
     h = session_state.inputs.get("z", 10.0)  # Building height
     NS_dimension = session_state.inputs.get("NS_dimension", 20.0)
     EW_dimension = session_state.inputs.get("EW_dimension", 40.0)
-    qp_value = session_state.inputs.get("qp_value", 1000.0)  # Peak velocity pressure at building height
     
     # Get directional factors
     use_direction_factor = session_state.inputs.get("use_direction_factor", False)
@@ -192,67 +242,21 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     # Create a continuous color scale for pressure
     colorscale = pc.sequential.Blues_r
     
-    # Define cp,i values
-    cp_i_positive = 0.2
-    cp_i_negative = -0.3
+    # Get pre-calculated pressure data
+    _, global_pressure_range, zone_pressures_by_direction = calculate_pressure_data(
+        session_state, results_by_direction
+    )
+    
+    # Unpack global pressure range
+    global_min_suction_kpa, global_max_suction_kpa = global_pressure_range
     
     # Storage for all figures
     figures = {}
-    
-    # Find global pressure range across all directions for consistent colorscale
-    global_max_suction = 0
-    global_min_suction = 0
-    
-    # First pass to find global pressure range
-    for direction, cp_df in results_by_direction.items():
-        # Get directional factor for this direction
-        c_dir = direction_factors.get(direction, 1.0)
-        
-        # Apply directional factor to qp
-        adjusted_qp = qp_value * c_dir
-        
-        # Check all zones
-        for zone_name in ['A', 'B', 'C']:
-            # Only process if this zone exists in this direction
-            if zone_name in cp_df['Zone'].values:
-                cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
-                we = adjusted_qp * cp_e
-                
-                # Determine which internal pressure coefficient to use based on cp,e
-                # If cp,e is negative (suction), use positive cp,i to maximize net pressure
-                # If cp,e is positive (pressure), use negative cp,i to maximize net pressure
-                if cp_e < 0:
-                    cp_i_used = cp_i_positive
-                else:
-                    cp_i_used = cp_i_negative
-                
-                # Calculate internal pressure
-                wi = adjusted_qp * cp_i_used
-                
-                # Calculate net pressure as the difference between external and internal pressure
-                net_pressure = we - wi
-                
-                global_max_suction = min(global_max_suction, net_pressure)
-                global_min_suction = max(global_min_suction, net_pressure)
-    
-    # Ensure we have some range to avoid division by zero
-    if global_max_suction == global_min_suction:
-        global_max_suction = global_min_suction - 1
-    
-    # Convert pressure range from N/m² to kPa
-    global_max_suction_kpa = global_max_suction / 1000
-    global_min_suction_kpa = global_min_suction / 1000
     
     # Process each direction (elevation)
     for direction, cp_df in results_by_direction.items():
         # Get directional factor for this direction
         c_dir = direction_factors.get(direction, 1.0)
-        
-        # Apply directional factor to qp
-        adjusted_qp = qp_value * c_dir
-        
-        # Filter for just the A, B, C zones
-        suction_zones = cp_df[cp_df['Zone'].isin(['A', 'B', 'C'])]
         
         # Set up width and height based on direction
         if direction in ["North", "South"]:
@@ -339,45 +343,20 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             zone_boundaries = [(0, width)]
             zone_names = ['A']
         
-        # Store the pressure values for each zone
-        zone_pressures = {}
-        
-        for zone_name in set(zone_names):
-            # Only calculate if this zone exists in this direction
-            if zone_name in cp_df['Zone'].values:
-                cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
-                we = adjusted_qp * cp_e
-                
-                # Determine which internal pressure coefficient to use based on cp,e
-                # If cp,e is negative (suction), use positive cp,i to maximize net pressure
-                # If cp,e is positive (pressure), use negative cp,i to maximize net pressure
-                if cp_e < 0:
-                    cp_i_used = cp_i_positive
-                else:
-                    cp_i_used = cp_i_negative
-                
-                # Calculate internal pressure
-                wi = adjusted_qp * cp_i_used
-                
-                # Calculate net pressure as the difference between external and internal pressure
-                net_pressure = we - wi
-                
-                # Convert to kPa and round to 2 decimal places
-                net_pressure_kpa = round(net_pressure / 1000, 2)
-                
-                # Store the pressure for this zone
-                zone_pressures[zone_name] = net_pressure_kpa
+        # Get the pre-calculated zone pressures for this direction
+        direction_zone_pressures = zone_pressures_by_direction.get(direction, {})
         
         # For each zone, create a single colored rectangle with constant pressure
         for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
-            # Get the pressure value for this zone
-            zone_pressure = zone_pressures.get(zone_name, 0)
+            # Get the pressure value for this zone from pre-calculated data
+            zone_data = direction_zone_pressures.get(zone_name, {'net_pressure_kpa': 0})
+            zone_pressure = zone_data.get('net_pressure_kpa', 0)
             
             # Normalize the pressure value for color mapping
             if global_max_suction_kpa == global_min_suction_kpa:
                 normalized_value = 0.5  # Default to middle of colorscale if no range
             else:
-                normalized_value = (zone_pressure - global_max_suction_kpa) / (global_min_suction_kpa - global_max_suction_kpa)
+                normalized_value = (zone_pressure - global_min_suction_kpa) / (global_max_suction_kpa - global_min_suction_kpa)
             normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
             
             # 1) Make sure we pass a list of sample points
@@ -414,8 +393,8 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             # Add colorbar to figure (only once)
             if i == 0:
                 # Create a dummy heatmap just for the colorbar
-                dummy_z = [[global_max_suction_kpa, global_max_suction_kpa], 
-                          [global_min_suction_kpa, global_min_suction_kpa]]
+                dummy_z = [[global_min_suction_kpa, global_min_suction_kpa], 
+                           [global_max_suction_kpa, global_max_suction_kpa]]
                 fig.add_trace(go.Heatmap(
                     z=dummy_z,
                     x=[0, 0.1],  # Outside visible area
@@ -423,7 +402,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                     colorscale=colorscale,
                     showscale=True,
                     colorbar=dict(
-                        title="Suction (kPa)",
+                        title="Pressure (kPa)",
                         x=1.05,
                         y=0.5,
                         lenmode="fraction",
