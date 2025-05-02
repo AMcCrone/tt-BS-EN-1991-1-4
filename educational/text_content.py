@@ -130,3 +130,8 @@ Steep ($\Phi > 0.3$)              | $H / 0.3$
 NOTE Use $c_{oe}(z) = 1.0$ in valleys unless funneling effects apply.
 
 """
+net_pressure_help = """
+
+ouhwoeuhouehd
+
+"""
