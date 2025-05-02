@@ -753,4 +753,5 @@ st.session_state.show_educational = show_educational
 st.header("3D Wind Visualization")
     
 # Call the create_wind_visualization_ui function
+from calc_engine.common.pressure_summary import create_wind_visualization_ui
 create_wind_visualization_ui(st.session_state, results_by_direction)
