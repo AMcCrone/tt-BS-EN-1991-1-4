@@ -118,40 +118,26 @@ def create_pressure_summary(session_state, results_by_direction):
             # Calculate external pressure with directional factor
             we = adjusted_qp * cp_e
             
-            # Calculate internal pressures with directional factor
-            wi_positive = adjusted_qp * cp_i_positive
-            wi_negative = adjusted_qp * cp_i_negative
-            
-            # Calculate net pressures - most onerous combination
-            net_positive = max(we + wi_positive, we - wi_negative)  # Maximum positive pressure
-            net_negative = min(we + wi_negative, we - wi_positive)  # Maximum negative pressure
-            
-            # Determine the governing case (maximum absolute value)
-            if abs(net_positive) > abs(net_negative):
-                net_pressure = net_positive
-                # Determine which internal pressure was used
-                if net_positive == (we + wi_positive):
-                    cp_i_used = cp_i_positive
-                    wi_used = wi_positive
-                else:
-                    cp_i_used = cp_i_negative
-                    wi_used = wi_negative
+            # Determine which internal pressure coefficient to use based on cp,e
+            # If cp,e is negative (suction), use positive cp,i to maximize net pressure
+            # If cp,e is positive (pressure), use negative cp,i to maximize net pressure
+            if cp_e < 0:
+                cp_i_used = cp_i_positive
             else:
-                net_pressure = net_negative
-                # Determine which internal pressure was used
-                if net_negative == (we + wi_negative):
-                    cp_i_used = cp_i_negative
-                    wi_used = wi_negative
-                else:
-                    cp_i_used = cp_i_positive
-                    wi_used = wi_positive
+                cp_i_used = cp_i_negative
+            
+            # Calculate internal pressure
+            wi = adjusted_qp * cp_i_used
+            
+            # Calculate net pressure as the difference between external and internal pressure
+            net_pressure = we - wi
             
             # Round cp,i to 2 decimal places
             cp_i_used = round(cp_i_used, 2)
             
             # Convert N/m² to kPa and round to 2 decimal places
             we_kpa = round(we / 1000, 2)
-            wi_kpa = round(wi_used / 1000, 2)
+            wi_kpa = round(wi / 1000, 2)
             net_kpa = round(net_pressure / 1000, 2)
             
             # Determine action type based on net pressure
@@ -232,12 +218,19 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
                 we = adjusted_qp * cp_e
                 
-                # Calculate internal pressures
-                wi_positive = adjusted_qp * cp_i_positive
-                wi_negative = adjusted_qp * cp_i_negative
+                # Determine which internal pressure coefficient to use based on cp,e
+                # If cp,e is negative (suction), use positive cp,i to maximize net pressure
+                # If cp,e is positive (pressure), use negative cp,i to maximize net pressure
+                if cp_e < 0:
+                    cp_i_used = cp_i_positive
+                else:
+                    cp_i_used = cp_i_negative
                 
-                # Calculate net pressures (minimum of two internal pressure cases)
-                net_pressure = min(we + wi_positive, we + wi_negative)
+                # Calculate internal pressure
+                wi = adjusted_qp * cp_i_used
+                
+                # Calculate net pressure as the difference between external and internal pressure
+                net_pressure = we - wi
                 
                 global_max_suction = min(global_max_suction, net_pressure)
                 global_min_suction = max(global_min_suction, net_pressure)
@@ -355,12 +348,19 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 cp_e = cp_df[cp_df['Zone'] == zone_name]['cp,e'].values[0]
                 we = adjusted_qp * cp_e
                 
-                # Calculate internal pressures
-                wi_positive = adjusted_qp * cp_i_positive
-                wi_negative = adjusted_qp * cp_i_negative
+                # Determine which internal pressure coefficient to use based on cp,e
+                # If cp,e is negative (suction), use positive cp,i to maximize net pressure
+                # If cp,e is positive (pressure), use negative cp,i to maximize net pressure
+                if cp_e < 0:
+                    cp_i_used = cp_i_positive
+                else:
+                    cp_i_used = cp_i_negative
                 
-                # Calculate net pressure (minimum of two internal pressure cases for suction)
-                net_pressure = min(we + wi_positive, we + wi_negative)
+                # Calculate internal pressure
+                wi = adjusted_qp * cp_i_used
+                
+                # Calculate net pressure as the difference between external and internal pressure
+                net_pressure = we - wi
                 
                 # Convert to kPa and round to 2 decimal places
                 net_pressure_kpa = round(net_pressure / 1000, 2)
