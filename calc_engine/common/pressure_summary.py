@@ -930,17 +930,6 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         hoverinfo='text'
     ))
     
-    # Add black outline around roof
-    fig.add_trace(go.Scatter3d(
-        x=[0, NS_dimension, NS_dimension, 0, 0],
-        y=[0, 0, EW_dimension, EW_dimension, 0],
-        z=[h, h, h, h, h],
-        mode='lines',
-        line=dict(color='black', width=2),
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    
     # Set the layout
     fig.update_layout(
         scene=dict(
