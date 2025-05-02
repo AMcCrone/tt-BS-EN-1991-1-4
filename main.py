@@ -745,6 +745,7 @@ if st.session_state.get("show_educational", False):
         st.image("educational/images/We_Wi.png", use_container_width=True)
         st.markdown(f'<div class="educational-content">{text_content.net_pressure_help}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
+
 from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures
 results_by_direction = calculate_cpe()  # Make sure this function exists
 summary_df = create_pressure_summary(st.session_state, results_by_direction)
