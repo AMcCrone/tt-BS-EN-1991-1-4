@@ -840,7 +840,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                     j=[1],
                     k=[2],
                     color=zone_color,
-                    opacity=0.9,
+                    opacity=1.0,
                     showlegend=False,
                     hovertext=f"Zone {zone_name}<br>Net Pressure: {net_pressure:.2f} kPa",
                     hoverinfo='text'
@@ -855,7 +855,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                     j=[2],
                     k=[3],
                     color=zone_color,
-                    opacity=0.9,
+                    opacity=1.0,
                     showlegend=False,
                     hovertext=f"Zone {zone_name}<br>Net Pressure: {net_pressure:.2f} kPa",
                     hoverinfo='text'
@@ -889,7 +889,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                     j=[1],
                     k=[2],
                     color=zone_color,
-                    opacity=0.9,
+                    opacity=1.0,
                     showlegend=False,
                     hovertext=f"Zone D<br>Net Pressure: {net_pressure:.2f} kPa",
                     hoverinfo='text'
@@ -904,7 +904,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                     j=[2],
                     k=[3],
                     color=zone_color,
-                    opacity=0.9,
+                    opacity=1.0,
                     showlegend=False,
                     hovertext=f"Zone D<br>Net Pressure: {net_pressure:.2f} kPa",
                     hoverinfo='text'
@@ -919,7 +919,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         j=[1, 2],
         k=[2, 3],
         color=TT_LightGrey,
-        opacity=0.9,
+        opacity=1.0,
         showlegend=False,
         hovertext="Roof",
         hoverinfo='text'
@@ -987,15 +987,5 @@ def create_wind_visualization_ui(session_state, results_by_direction):
         st.info("Suction Mode: Displaying zones A, B, C where wind creates negative pressure (suction).")
     else:
         st.info("Pressure Mode: Displaying zone D where wind creates positive pressure.")
-    
-    # Display pressure summary table
-    st.subheader("Pressure Summary Table")
-    pressure_summary = create_pressure_summary(session_state, results_by_direction)
-    
-    # Filter based on mode
-    if viz_mode == "suction":
-        filtered_summary = pressure_summary[pressure_summary['Zone'].isin(['A', 'B', 'C', 'F', 'G', 'H', 'I'])]
-    else:
-        filtered_summary = pressure_summary[pressure_summary['Zone'] == 'D']
     
     st.dataframe(filtered_summary, use_container_width=True)
