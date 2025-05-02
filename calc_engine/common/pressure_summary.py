@@ -624,12 +624,13 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     elevation_plots = plot_elevation_with_pressures(session_state, results_by_direction)
     
     # Create a dummy heatmap trace for the colorbar
+    # FIXED: Move dummy heatmap completely outside the visible area and set visible=False
     dummy_z = [[global_min_pressure, global_min_pressure], 
                [global_max_pressure, global_max_pressure]]
     fig.add_trace(go.Heatmap(
         z=dummy_z,
-        x=[0, 0.1],  # Outside visible area
-        y=[0, 0.1],  # Outside visible area
+        x=[-100, -99],  # Way outside visible area
+        y=[-100, -99],  # Way outside visible area
         colorscale=blues_colorscale,
         showscale=True,
         colorbar=dict(
@@ -639,7 +640,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
             lenmode="fraction",
             len=0.9
         ),
-        visible=True
+        visible=False  # Make the heatmap itself invisible, keep only the colorbar
     ))
     
     # Dictionary to map direction to face coordinates
@@ -1012,7 +1013,6 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     )
     
     return fig
-
 
 def create_wind_visualization_ui(session_state, results_by_direction):
     """
