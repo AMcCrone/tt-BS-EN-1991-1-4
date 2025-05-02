@@ -741,7 +741,7 @@ st.header("Net Pressures")
 if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
     
-    with st.expander("What Should The Wind Pressure Profile Look Like?", expanded=False):
+    with st.expander("How Is Net Pressure Calculated?", expanded=False):
         st.image("educational/images/We_Wi.png", use_container_width=True)
         st.markdown(f'<div class="educational-content">{text_content.net_pressure_help}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
