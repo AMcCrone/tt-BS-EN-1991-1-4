@@ -132,6 +132,25 @@ NOTE Use $c_{oe}(z) = 1.0$ in valleys unless funneling effects apply.
 """
 net_pressure_help = """
 
-ouhwoeuhouehd
+Wind pressure on surfaces
+
+The wind pressure acting on the external surfaces, $w_e$, should be obtained from:
+
+$$w_e = q_p(z_e)\cdot c_{pe}$$
+
+where:
+- $q_p(z_e)$ is the peak velocity pressure
+- $z_e$ is the reference height for the external pressure
+- $c_{pe}$ is the pressure coefficient for the external pressure
+
+The wind pressure acting on the internal surfaces of a structure, $w_i$, should be obtained from:
+
+$$w_i = q_p(z_i)\cdot c_{pi}$$
+
+where:
+- $q_p(z_i)$ is the peak velocity pressure  
+- $z_i$ is the reference height for the internal pressure
+- $c_{pi}$ is the pressure coefficient for the internal pressure taken as the most onerous of 0.2 and -0.3
 
 """
+
