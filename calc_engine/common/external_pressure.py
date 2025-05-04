@@ -251,10 +251,13 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     
     st.plotly_chart(fig)
 
-def calculate_cpe():
+def calculate_cpe(consider_funnelling=True):
     """
     Calculate external pressure coefficients (cp,e) for building elevations (N, E, S, W)
-    considering funnelling effects for all wind directions
+    considering funnelling effects for all wind directions if enabled
+    
+    Parameters:
+    - consider_funnelling: Boolean to enable/disable funnelling effects
     
     Returns:
     - Dictionary of DataFrames of cp,e values for different elevations
@@ -330,19 +333,20 @@ def calculate_cpe():
         # Calculate e (the smaller of b or 2h)
         e = min(b, 2*h)
         
-        # Apply funnelling according to the guidance and graph
+        # Initialize funnelling variables
         has_funnelling = False
         funnelling_increase_pct_A = 0
         funnelling_increase_pct_B = 0
         funnelling_increase_pct_C = 0
         
-        # Define the funnelling peak values
-        max_funnel_cp_A = -1.6
-        max_funnel_cp_B = -0.9
-        max_funnel_cp_C = -0.9
-        
-        if e/4 < gap < e:  # Funnelling applies when e/4 < gap < e
+        # Apply funnelling only if enabled and conditions are met
+        if consider_funnelling and e/4 < gap < e:
             has_funnelling = True
+            
+            # Define the funnelling peak values
+            max_funnel_cp_A = -1.6
+            max_funnel_cp_B = -0.9
+            max_funnel_cp_C = -0.9
             
             if gap <= e/2:
                 # Interpolate between e/4 and e/2 (increasing effect)
@@ -402,3 +406,46 @@ def calculate_cpe():
         results_by_elevation[elevation] = pd.DataFrame(elevation_results)
     
     return results_by_elevation
+
+def display_elevation_results(elevation, cp_results, h, NS_dimension, EW_dimension):
+    """
+    Display results for a specific building elevation
+    
+    Parameters:
+    - elevation: String name of the elevation (North, East, South, West)
+    - cp_results: Dictionary of DataFrames with cp,e values for each elevation
+    - h: Building height
+    - NS_dimension: North-South building dimension
+    - EW_dimension: East-West building dimension
+    """
+    st.write(f"#### {elevation} Elevation")
+    
+    # Calculate h/d, width (b), and e based on elevation orientation
+    if elevation in ["North", "South"]:
+        h_d = h / NS_dimension
+        b = EW_dimension
+        d = NS_dimension
+    else:  # East or West
+        h_d = h / EW_dimension
+        b = NS_dimension
+        d = EW_dimension
+    
+    # Calculate e (the smaller of b or 2h)
+    e = min(b, 2*h)
+    
+    # Get the gap value for this elevation
+    gap = st.session_state.inputs.get(f"{elevation.lower()}_gap", 10.0)
+    
+    # Determine funnelling status
+    if gap <= e/4:
+        funnelling_status = "No Funnelling since **gap ≤ e/4**"
+    elif gap >= e:
+        funnelling_status = "No Funnelling since **gap ≥ e**"
+    else:
+        funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
+    
+    # Display calculation info
+    st.write(f"h/d = {h_d:.2f}, e = {e:.2f}m, gap = {gap:.2f}m ({funnelling_status})")
+    
+    # Display the results table
+    st.dataframe(cp_results[elevation], hide_index=True)
