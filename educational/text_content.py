@@ -164,16 +164,16 @@ where:
 **Net Pressure Equation:**
 
 $$
-P_{\text{net}} = W_e - W_i
+W_{net} = W_e - W_i
 $$
 
 - For **Zone D**:
   $$
-  P_{\text{net}} = W_e - W_i\bigl(c_{pi} = -0.3\bigr)
+  P_{net} = W_e - W_i(c_{pi} = -0.3)
   $$
 - For **Zones A, B, C**:
   $$
-  P_{\text{net}} = W_e - W_i\bigl(c_{pi} = 0.2\bigr)
+  P_{net} = W_e - W_i(c_{pi} = 0.2)
   $$
 """
 
