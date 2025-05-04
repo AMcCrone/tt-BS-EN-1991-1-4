@@ -385,7 +385,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 x1=x1,
                 y1=height,
                 fillcolor=zone_color,
-                opacity=0.8,
+                opacity=1.0,
                 line=dict(width=0),
                 layer="below"
             )
