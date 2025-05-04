@@ -948,6 +948,30 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
             font_family="Arial"
         )
     )
+
+    fig.update_layout(
+        xaxis=dict(visible=False, showgrid=False, zeroline=False),
+        yaxis=dict(visible=False, showgrid=False, zeroline=False),
+    )
+
+    fig.update_layout(
+        # --- 2D axes off ---
+        xaxis=dict(visible=False, showgrid=False, zeroline=False),
+        yaxis=dict(visible=False, showgrid=False, zeroline=False),
+    
+        # --- 3D scene off ---
+        scene=dict(
+            xaxis=dict(visible=False, showgrid=False, zeroline=False),
+            yaxis=dict(visible=False, showgrid=False, zeroline=False),
+            zaxis=dict(visible=False, showgrid=False, zeroline=False),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+    
+        # --- margins & background ---
+        margin=dict(l=0, r=0, t=0, b=0),
+        paper_bgcolor="rgba(0,0,0,0)",
+    )
+
     return fig
 
 def create_wind_visualization_ui(session_state, results_by_direction):
