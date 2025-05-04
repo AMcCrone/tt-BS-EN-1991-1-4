@@ -554,8 +554,8 @@ consider_funnelling = st.checkbox("Consider Funnelling Effects", value=True,
                                   help="Enable to consider funnelling effects between buildings as per BS EN 1991-1-4")
 
 # Display funnelling inputs regardless of whether funnelling is enabled
-# (user might want to see results with and without funnelling)
-north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
+if consider_funnelling = True:
+    north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
 # Automatically calculate cp,e values with or without funnelling based on checkbox
 cp_results_by_elevation = calculate_cpe(consider_funnelling=consider_funnelling)
