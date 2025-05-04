@@ -177,3 +177,8 @@ $$
   $$
 """
 
+funnelling_help = """
+
+Funnelling
+
+"""
