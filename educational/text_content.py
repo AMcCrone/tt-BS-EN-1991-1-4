@@ -131,12 +131,13 @@ NOTE Use $c_{oe}(z) = 1.0$ in valleys unless funneling effects apply.
 
 """
 net_pressure_help = """
-
 Wind pressure on surfaces
 
 The wind pressure acting on the external surfaces, $w_e$, should be obtained from:
 
-$$w_e = q_p(z_e)\cdot c_{pe}$$
+$$
+w_e = q_p(z_e)\cdot c_{pe}
+$$
 
 where:
 - $q_p(z_e)$ is the peak velocity pressure
@@ -145,12 +146,34 @@ where:
 
 The wind pressure acting on the internal surfaces of a structure, $w_i$, should be obtained from:
 
-$$w_i = q_p(z_i)\cdot c_{pi}$$
+$$
+w_i = q_p(z_i)\cdot c_{pi}
+$$
 
 where:
-- $q_p(z_i)$ is the peak velocity pressure  
+- $q_p(z_i)$ is the peak velocity pressure
 - $z_i$ is the reference height for the internal pressure
-- $c_{pi}$ is the pressure coefficient for the internal pressure taken as the most onerous of 0.2 and -0.3
+- $c_{pi}$ is the pressure coefficient for the internal pressure
 
+**Selection of $c_{pi}$ for maximum envelope pressure difference:**
+- **Zone D (positive pressure):**  
+  Maximum pressure difference when $c_{pi} = -0.3$.
+- **Zones A, B, C (suction/negative pressure):**  
+  Maximum pressure difference when $c_{pi} = 0.2$.
+
+**Net Pressure Equation:**
+
+$$
+P_{\text{net}} = W_e - W_i
+$$
+
+- For **Zone D**:
+  $$
+  P_{\text{net}} = W_e - W_i\bigl(c_{pi} = -0.3\bigr)
+  $$
+- For **Zones A, B, C**:
+  $$
+  P_{\text{net}} = W_e - W_i\bigl(c_{pi} = 0.2\bigr)
+  $$
 """
 
