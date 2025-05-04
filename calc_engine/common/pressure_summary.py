@@ -240,7 +240,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     direction_factors = get_direction_factor(rotation_angle, use_direction_factor)
     
     # Create a continuous color scale for pressure
-    colorscale = pc.sequential.Turbo
+    colorscale = pc.sequential.Blues_r
     
     # Get pre-calculated pressure data
     _, global_pressure_range, zone_pressures_by_direction = calculate_pressure_data(
