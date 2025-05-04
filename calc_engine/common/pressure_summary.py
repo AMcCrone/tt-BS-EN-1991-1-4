@@ -894,7 +894,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     fig.update_layout(
         scene_camera=camera,
         hovermode='closest',
-        hoverlabel=dict(bgcolor="white", font_size=12, font_family="Sans Serif"),
+        hoverlabel=dict(bgcolor="white", font_size=12, font_family="Sans"),
         xaxis=dict(visible=False, showgrid=False, zeroline=False),
         yaxis=dict(visible=False, showgrid=False, zeroline=False),
         # Turn off all axes
