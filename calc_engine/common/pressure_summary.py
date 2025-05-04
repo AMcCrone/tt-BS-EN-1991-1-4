@@ -240,7 +240,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     direction_factors = get_direction_factor(rotation_angle, use_direction_factor)
     
     # Create a continuous color scale for pressure
-    colorscale = pc.sequential.Blues_r
+    colorscale = pc.sequential.Teal_r
     
     # Get pre-calculated pressure data
     _, global_pressure_range, zone_pressures_by_direction = calculate_pressure_data(
@@ -568,8 +568,8 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     # Create a figure
     fig = go.Figure()
     
-    # Use the built-in Blues colorscale from plotly
-    blues_colorscale = "Blues"
+    # Use the built-in Teal colorscale from plotly
+    blues_colorscale = "Teal"
     
     # Add a ground plane
     ground_extension = max(NS_dimension, EW_dimension) * 0.5
@@ -696,7 +696,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         normalized_value = abs_pressure / global_max_pressure
         normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
         
-        # Get color from the blues colorscale
+        # Get color from the Teal colorscale
         zone_color = colors.sample_colorscale(blues_colorscale, [normalized_value])[0]
         
         # Add zone face with appropriate color (single mesh with 2 triangles)
