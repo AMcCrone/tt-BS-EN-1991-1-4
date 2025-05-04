@@ -876,7 +876,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 
                 # Get color from the blues colorscale
                 import plotly.colors as pc
-                zone_color = pc.sample_colorscale(blues_colorscale, normalized_value)[0]
+                zone_color = pc.sample_colorscale(blues_colorscale, [normalized_value])[0]
                 
                 # Use the whole face for zone D
                 x = face_coords["x"]
