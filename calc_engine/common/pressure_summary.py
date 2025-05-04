@@ -563,15 +563,8 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     # Create a figure
     fig = go.Figure()
     
-    # Use Blues colorscale from plotly but modify so lowest value is white
-    blues_colorscale = [
-        [0, 'rgb(255,255,255)'],  # White for 0 kPa
-        [0.2, 'rgb(222,235,247)'],
-        [0.4, 'rgb(189,215,231)'],
-        [0.6, 'rgb(107,174,214)'],
-        [0.8, 'rgb(49,130,189)'],
-        [1, 'rgb(8,81,156)']
-    ]
+    # Use the built-in Blues colorscale from plotly
+    blues_colorscale = colors.sequential.Blues
     
     # Add a ground plane
     ground_extension = max(NS_dimension, EW_dimension) * 0.5
@@ -624,8 +617,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     elevation_plots = plot_elevation_with_pressures(session_state, results_by_direction)
     
     # Create a dummy heatmap trace for the colorbar
-    # FIXED: Move dummy heatmap completely outside the visible area and set visible=False
-    dummy_z = [[global_min_pressure, global_min_pressure], 
+    dummy_z = [[0, 0], 
                [global_max_pressure, global_max_pressure]]
     fig.add_trace(go.Heatmap(
         z=dummy_z,
@@ -804,9 +796,10 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 normalized_value = abs_pressure / global_max_pressure
                 normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
                 
-                # Get color based on normalized value
-                color_index = min(int(normalized_value * (len(blues_colorscale) - 1)), len(blues_colorscale) - 1)
-                zone_color = blues_colorscale[color_index][1]
+                # Get color from the blues colorscale
+                import plotly.express as px
+                colorscale_func = px.colors.get_colorscale(blues_colorscale)
+                zone_color = colorscale_func(normalized_value)
                 
                 # Calculate the vertices for this zone
                 if direction == "North":
@@ -882,9 +875,10 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 normalized_value = abs_pressure / global_max_pressure
                 normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
                 
-                # Get color based on normalized value
-                color_index = min(int(normalized_value * (len(blues_colorscale) - 1)), len(blues_colorscale) - 1)
-                zone_color = blues_colorscale[color_index][1]
+                # Get color from the blues colorscale
+                import plotly.express as px
+                colorscale_func = px.colors.get_colorscale(blues_colorscale)
+                zone_color = colorscale_func(normalized_value)
                 
                 # Use the whole face for zone D
                 x = face_coords["x"]
@@ -967,9 +961,8 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 zeroline=False,
                 showline=False,
                 showbackground=False,
-                showaxeslabels=False,
                 visible=False,
-                title=''  # Empty title
+                title=''
             ),
             yaxis=dict(
                 showticklabels=False,
@@ -977,9 +970,8 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 zeroline=False,
                 showline=False,
                 showbackground=False,
-                showaxeslabels=False,
                 visible=False,
-                title=''  # Empty title
+                title=''
             ),
             zaxis=dict(
                 showticklabels=False,
@@ -987,9 +979,8 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 zeroline=False,
                 showline=False,
                 showbackground=False,
-                showaxeslabels=False,
                 visible=False,
-                title=''  # Empty title
+                title=''
             ),
             aspectmode='data',
             bgcolor='rgba(0,0,0,0)'  # Transparent scene background
@@ -1004,7 +995,6 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         width=800,
         paper_bgcolor='rgba(0,0,0,0)',  # Transparent paper background
         plot_bgcolor='rgba(0,0,0,0)',   # Transparent plot background
-        annotations=[]  # Remove any default annotations
     )
     
     # Apply hover mode to closest data
@@ -1015,19 +1005,6 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
             font_size=12,
             font_family="Arial"
         )
-    )
-    
-    # Explicitly remove axes title, ticks, spikes, etc.
-    fig.update_scenes(
-        xaxis_title=None,
-        yaxis_title=None,
-        zaxis_title=None,
-        xaxis_showspikes=False,
-        yaxis_showspikes=False,
-        zaxis_showspikes=False,
-        xaxis_showticklabels=False,
-        yaxis_showticklabels=False,
-        zaxis_showticklabels=False
     )
     
     return fig
