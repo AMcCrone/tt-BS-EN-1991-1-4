@@ -179,6 +179,25 @@ $$
 
 funnelling_help = """
 
-Funnelling
+**What Is Funnelling?**
+
+Funnelling occurs when wind is channeled through a narrow passage—such as the space between two buildings—causing it to accelerate and increase in pressure.
+
+---
+
+**Impact of Funnelling**
+
+- The accelerated airflow leads to higher wind pressures on the walls and roofs of the affected structures.  
+- These increased pressures may necessitate enhanced design considerations to ensure structural safety and serviceability.
+
+---
+
+**BS EN 1991-1-4 and the UK National Annex**
+
+The Eurocode standard BS EN 1991-1-4 establishes general rules for wind actions on structures.  
+The UK National Annex (NA) supplements this by providing:
+
+- More specific guidance on wind loading in the British context.  
+- A method for adjusting (enhancing) the pressure coefficients to account for the funnelling effect in narrow passages.
 
 """
