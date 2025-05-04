@@ -169,11 +169,11 @@ $$
 
 - For **Zone D**:
   $$
-  P_{net} = W_e - W_i(c_{pi} = -0.3)
+  W_{net} = W_e - W_i(c_{pi} = -0.3)
   $$
 - For **Zones A, B, C**:
   $$
-  P_{net} = W_e - W_i(c_{pi} = 0.2)
+  W_{net} = W_e - W_i(c_{pi} = 0.2)
   $$
 """
 
