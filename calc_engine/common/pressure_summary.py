@@ -564,7 +564,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     fig = go.Figure()
     
     # Use the built-in Blues colorscale from plotly
-    blues_colorscale = colors.sequential.Blues
+    blues_colorscale = "blues"  # Using the string name of the colorscale
     
     # Add a ground plane
     ground_extension = max(NS_dimension, EW_dimension) * 0.5
@@ -797,9 +797,8 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
                 
                 # Get color from the blues colorscale
-                import plotly.express as px
-                colorscale_func = px.colors.get_colorscale(blues_colorscale)
-                zone_color = colorscale_func(normalized_value)
+                import plotly.colors as pc
+                zone_color = pc.sample_colorscale(blues_colorscale, normalized_value)[0]
                 
                 # Calculate the vertices for this zone
                 if direction == "North":
@@ -876,9 +875,8 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                 normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
                 
                 # Get color from the blues colorscale
-                import plotly.express as px
-                colorscale_func = px.colors.get_colorscale(blues_colorscale)
-                zone_color = colorscale_func(normalized_value)
+                import plotly.colors as pc
+                zone_color = pc.sample_colorscale(blues_colorscale, normalized_value)[0]
                 
                 # Use the whole face for zone D
                 x = face_coords["x"]
