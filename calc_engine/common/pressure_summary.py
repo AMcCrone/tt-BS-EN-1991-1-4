@@ -503,7 +503,8 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 showgrid=False,
                 zeroline=False,
                 showticklabels=False,
-                range=[-0.1*width, 1.1*width]
+                range=[-0.1*width, 1.1*width],
+                visible=False
             ),
             yaxis=dict(
                 showgrid=False,
@@ -511,7 +512,8 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 showticklabels=False,
                 range=[-0.1*height, 1.1*height],
                 scaleanchor="x",
-                scaleratio=1
+                scaleratio=1,
+                visible=False
             ),
             margin=dict(l=50, r=50, t=80, b=50),
             plot_bgcolor="white",
