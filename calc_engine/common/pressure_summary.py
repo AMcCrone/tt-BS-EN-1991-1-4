@@ -931,7 +931,7 @@ def create_wind_visualization_ui(session_state, results_by_direction):
     # Create toggle for pressure/suction mode
     mode = st.radio(
         "Visualization Mode:",
-        ["Suction (Zones A, B, C)", "Pressure (Zone D)"],
+        ["Suction", "Pressure"],
         horizontal=True
     )
     
