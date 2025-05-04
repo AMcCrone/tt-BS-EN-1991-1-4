@@ -939,62 +939,6 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
         hoverinfo='text'
     ))
     
-    # Add black outline around roof
-    fig.add_trace(go.Scatter3d(
-        x=[0, NS_dimension, NS_dimension, 0, 0],
-        y=[0, 0, EW_dimension, EW_dimension, 0],
-        z=[h, h, h, h, h],
-        mode='lines',
-        line=dict(color='black', width=2),
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    
-    # Set the layout with complete removal of all axes elements
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(
-                showticklabels=False,
-                showgrid=False,
-                zeroline=False,
-                showline=False,
-                showbackground=False,
-                visible=False,
-                title=''
-            ),
-            yaxis=dict(
-                showticklabels=False,
-                showgrid=False,
-                zeroline=False,
-                showline=False,
-                showbackground=False,
-                visible=False,
-                title=''
-            ),
-            zaxis=dict(
-                showticklabels=False,
-                showgrid=False,
-                zeroline=False,
-                showline=False,
-                showbackground=False,
-                visible=False,
-                title=''
-            ),
-            aspectmode='data',
-            bgcolor='rgba(0,0,0,0)'  # Transparent scene background
-        ),
-        margin=dict(l=0, r=0, b=0, t=30),
-        showlegend=False,
-        scene_camera=dict(
-            eye=dict(x=1.5, y=-1.5, z=1.2)
-        ),
-        title=f"3D Building Visualization - {mode.capitalize()} Mode",
-        height=600,
-        width=800,
-        paper_bgcolor='rgba(0,0,0,0)',  # Transparent paper background
-        plot_bgcolor='rgba(0,0,0,0)',   # Transparent plot background
-    )
-    
     # Apply hover mode to closest data
     fig.update_layout(
         hovermode='closest',
@@ -1004,22 +948,6 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
             font_family="Arial"
         )
     )
-
-    # Remove every axis element (lines, ticks, grid, background)
-    fig.update_scenes(
-        dict(
-            xaxis=dict(visible=False, showgrid=False, zeroline=False),
-            yaxis=dict(visible=False, showgrid=False, zeroline=False),
-            zaxis=dict(visible=False, showgrid=False, zeroline=False),
-            bgcolor="rgba(0,0,0,0)",      # ensure scene background is transparent
-        )
-    )
-    # Also remove any extra margins/title padding
-    fig.update_layout(
-        margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor="rgba(0,0,0,0)",    # transparent paper background
-    )
-  
     return fig
 
 def create_wind_visualization_ui(session_state, results_by_direction):
