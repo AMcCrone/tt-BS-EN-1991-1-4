@@ -544,101 +544,46 @@ st.session_state.inputs["EW_design_pressure"] = EW_design_pressure
 # Section 5: WIND ZONES
 st.markdown("---")
 st.header("Wind Zones")
+
 # Import required modules
 from visualisation.wind_zones import plot_wind_zones
-from calc_engine.common.external_pressure import calculate_cpe, display_funnelling_inputs
-# Display funnelling inputs regardless of region
+from calc_engine.common.external_pressure import calculate_cpe, display_funnelling_inputs, display_elevation_results
+
+# Add checkbox to control funnelling consideration
+consider_funnelling = st.checkbox("Consider Funnelling Effects", value=True, 
+                                  help="Enable to consider funnelling effects between buildings as per BS EN 1991-1-4")
+
+# Display funnelling inputs regardless of whether funnelling is enabled
+# (user might want to see results with and without funnelling)
 north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
-# Automatically calculate cp,e values without requiring a button click
-cp_results_by_direction = calculate_cpe()
+# Automatically calculate cp,e values with or without funnelling based on checkbox
+cp_results_by_elevation = calculate_cpe(consider_funnelling=consider_funnelling)
 
 st.subheader("External Pressure Coefficients (cp,e)")
-
-# Calculate the required values for display
-cp_results_by_elevation = calculate_cpe()  # Run the calculation function
 
 # Get building dimensions from session state
 h = st.session_state.inputs.get("z", 10.0)  # Building height
 NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
 EW_dimension = st.session_state.inputs.get("EW_dimension", 40.0)
 
-# Display results for each elevation in separate sections
-# North Elevation
-st.write("#### North Elevation")
-# Calculate values for North elevation
-north_h_d = h / NS_dimension
-north_b = EW_dimension
-north_e = min(north_b, 2*h)
-north_gap = st.session_state.inputs.get("north_gap", 10.0)
-funnelling_status = ""
-if north_gap <= north_e/4:
-    funnelling_status = "No Funnelling since **gap ≤ e/4**"
-elif north_gap >= north_e:
-    funnelling_status = "No Funnelling since **gap ≥ e**"
-else:
-    funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
-st.write(f"h/d = {north_h_d:.2f}, e = {north_e:.2f}m, gap = {north_gap:.2f}m ({funnelling_status})")
-st.dataframe(cp_results_by_elevation["North"], hide_index=True)
-
-# East Elevation
-st.write("#### East Elevation")
-# Calculate values for East elevation
-east_h_d = h / EW_dimension
-east_b = NS_dimension
-east_e = min(east_b, 2*h)
-east_gap = st.session_state.inputs.get("east_gap", 10.0)
-funnelling_status = ""
-if east_gap <= east_e/4:
-    funnelling_status = "No Funnelling since **gap ≤ e/4**"
-elif east_gap >= east_e:
-    funnelling_status = "No Funnelling since **gap ≥ e**"
-else:
-    funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
-st.write(f"h/d = {east_h_d:.2f}, e = {east_e:.2f}m, gap = {east_gap:.2f}m ({funnelling_status})")
-st.dataframe(cp_results_by_elevation["East"], hide_index=True)
-
-# South Elevation
-st.write("#### South Elevation")
-# Calculate values for South elevation
-south_h_d = h / NS_dimension
-south_b = EW_dimension
-south_e = min(south_b, 2*h)
-south_gap = st.session_state.inputs.get("south_gap", 10.0)
-funnelling_status = ""
-if south_gap <= south_e/4:
-    funnelling_status = "No Funnelling since **gap ≤ e/4**"
-elif south_gap >= south_e:
-    funnelling_status = "No Funnelling since **gap ≥ e**"
-else:
-    funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
-st.write(f"h/d = {south_h_d:.2f}, e = {south_e:.2f}m, gap = {south_gap:.2f}m ({funnelling_status})")
-st.dataframe(cp_results_by_elevation["South"], hide_index=True)
-
-# West Elevation
-st.write("#### West Elevation")
-# Calculate values for West elevation
-west_h_d = h / EW_dimension
-west_b = NS_dimension
-west_e = min(west_b, 2*h)
-west_gap = st.session_state.inputs.get("west_gap", 10.0)
-funnelling_status = ""
-if west_gap <= west_e/4:
-    funnelling_status = "No Funnelling since **gap ≤ e/4**"
-elif west_gap >= west_e:
-    funnelling_status = "No Funnelling since **gap ≥ e**"
-else:
-    funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
-st.write(f"h/d = {west_h_d:.2f}, e = {west_e:.2f}m, gap = {west_gap:.2f}m ({funnelling_status})")
-st.dataframe(cp_results_by_elevation["West"], hide_index=True)
+# Display results for each elevation using our new function
+elevations = ["North", "East", "South", "West"]
+for elevation in elevations:
+    display_elevation_results(
+        elevation=elevation,
+        cp_results=cp_results_by_elevation,
+        h=h,
+        NS_dimension=NS_dimension,
+        EW_dimension=EW_dimension
+    )
 
 # Store overall results for later use (combine all directions)
 all_results = []
-for direction, df in cp_results_by_direction.items():
+for direction, df in cp_results_by_elevation.items():
     df_with_direction = df.copy()
     df_with_direction["Wind Direction"] = direction
     all_results.append(df_with_direction)
-
 st.session_state.cp_results = pd.concat(all_results)
 
 # Display wind zone plots (using your existing function)
