@@ -1004,7 +1004,22 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
             font_family="Arial"
         )
     )
-    
+
+    # Remove every axis element (lines, ticks, grid, background)
+    fig.update_scenes(
+        dict(
+            xaxis=dict(visible=False, showgrid=False, zeroline=False),
+            yaxis=dict(visible=False, showgrid=False, zeroline=False),
+            zaxis=dict(visible=False, showgrid=False, zeroline=False),
+            bgcolor="rgba(0,0,0,0)",      # ensure scene background is transparent
+        )
+    )
+    # Also remove any extra margins/title padding
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        paper_bgcolor="rgba(0,0,0,0)",    # transparent paper background
+    )
+  
     return fig
 
 def create_wind_visualization_ui(session_state, results_by_direction):
