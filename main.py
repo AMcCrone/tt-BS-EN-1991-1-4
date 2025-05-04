@@ -552,7 +552,15 @@ from calc_engine.common.external_pressure import calculate_cpe, display_funnelli
 # Add checkbox to control funnelling consideration
 consider_funnelling = st.checkbox("Consider Funnelling Effects", value=True, 
                                   help="Enable to consider funnelling effects between buildings as per BS EN 1991-1-4")
+# Educational text on funnelling calculation
+if st.session_state.get("show_educational", False):
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
 
+    with st.expander("What Is Funnelling?", expanded=False):
+        # st.image("educational/images/h_dis_diagram.png", use_container_width=True)
+        st.markdown(f'<div class="educational-content">{text_content.funnelling_help}</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 # Display funnelling inputs regardless of whether funnelling is enabled
 if consider_funnelling == True:
     north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
