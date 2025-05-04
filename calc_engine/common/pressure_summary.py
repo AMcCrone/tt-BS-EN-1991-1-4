@@ -634,7 +634,6 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
             colorbar=dict(
                 title=colorbar_title,
                 thickness=20,
-                titleside='right',
                 outlinewidth=1,
                 outlinecolor='black',
                 x=1.05
