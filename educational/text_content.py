@@ -75,7 +75,7 @@ The displacement height $h_{dis}$ may be determined by Expression (A.15) (see Fi
 • If $x \ge 6\,h_{ave}$, then
   $h_{dis} = 0$.
 
-In the absence of more accurate information, the obstruction height may be taken as $h_{ave} = 15\text{ m}$ for terrain category IV. These rules are direction-dependent: the values of $h_{ave}$ and $x$ should be established for each 30° sector as described in 4.3.2.
+In the absence of more accurate information, the obstruction height may be taken as $h_{ave} = 15m$ for terrain category IV. These rules are direction-dependent: the values of $h_{ave}$ and $x$ should be established for each 30° sector as described in 4.3.2.
 """
 
 orography_help = """
