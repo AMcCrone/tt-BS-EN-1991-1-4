@@ -709,15 +709,14 @@ st.dataframe(summary_df, hide_index=True, height=35*len(summary_df)+38)
 # Display figures
 for direction, fig in elevation_figures.items():
     st.plotly_chart(fig)
+if st.session_state.get("show_educational", False):
+    st.header("3D Wind Visualization") 
+    # Call the create_wind_visualization_ui function
+    from calc_engine.common.pressure_summary import create_wind_visualization_ui
+    create_wind_visualization_ui(st.session_state, results_by_direction)
 
 # Toggle educational content in sidebar
 st.sidebar.title("Options")
 show_educational = st.sidebar.checkbox("Show Educational Content", 
                               value=st.session_state.show_educational)
 st.session_state.show_educational = show_educational
-
-st.header("3D Wind Visualization")
-    
-# Call the create_wind_visualization_ui function
-from calc_engine.common.pressure_summary import create_wind_visualization_ui
-create_wind_visualization_ui(st.session_state, results_by_direction)
