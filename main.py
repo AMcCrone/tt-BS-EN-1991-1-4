@@ -621,18 +621,18 @@ if st.session_state.inputs.get("region") == "United Kingdom":
         # Building rotation dropdown (only shown if directional factor is enabled)
         if use_direction_factor:
             rotation_options = {
-                "North (0°)": 0,
-                "NE (30°)": 30,
-                "E (60°)": 60, 
-                "SE (90°)": 90,
-                "S (120°)": 120,
-                "SW (150°)": 150,
-                "South (180°)": 180,
-                "SW (210°)": 210,
-                "W (240°)": 240,
-                "NW (270°)": 270,
-                "N (300°)": 300,
-                "NE (330°)": 330
+                "0°": 0,
+                "30°": 30,
+                "60°": 60, 
+                "90°": 90,
+                "120°": 120,
+                "150°": 150,
+                "180°": 180,
+                "210°": 210,
+                "240°": 240,
+                "270°": 270,
+                "300°": 300,
+                "330°": 330
             }
             
             rotation_label = st.selectbox(
