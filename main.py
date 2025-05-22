@@ -177,19 +177,13 @@ if use_map:
         # Render map with current markers
         map_data = render_map_with_markers(st.session_state.markers)
     
-    with info_col:
-        st.subheader("Map Information")
-        
+    with info_col:       
         # Show current markers
         if st.session_state.markers:
             st.write("**Current Markers:**")
             for idx, (lat, lon) in enumerate(st.session_state.markers, start=1):
                 marker_name = "Project Location" if idx == 1 else "Closest Sea Location"
                 st.write(f"**{marker_name}:** {lat:.5f}°, {lon:.5f}°")
-        else:
-            st.write("Click on the map to add markers:")
-            st.write("• First click: Project Location")
-            st.write("• Second click: Closest Sea Location")
         
         # Display current values
         st.write("**Current Values:**")
