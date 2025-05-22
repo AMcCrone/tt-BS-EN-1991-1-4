@@ -216,6 +216,9 @@ if use_map:
                 if len(st.session_state.markers) == 2:
                     d_sea = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
                     st.session_state.inputs["d_sea"] = float(d_sea)
+                    
+                st.write("Altitude = {altitude_factor}")
+                st.write("Distance to sea = {d_sea}")
                 
             except Exception as e:
                 st.error(f"Error calculating data: {str(e)}")
