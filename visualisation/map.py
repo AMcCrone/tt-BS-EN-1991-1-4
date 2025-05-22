@@ -19,6 +19,7 @@ def render_map_with_markers(
     TT_Orange = "rgb(211,69,29)"
     TT_DarkBlue = "rgb(0,48,60)"
     TT_LightBlue = "rgb(136,219,223)"
+    TT_MidBlue = "rgb(0,163,173)"
     
     # Create map
     m = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_start, tiles="Cartodb Positron")
@@ -31,7 +32,7 @@ def render_map_with_markers(
                 location=[lat, lon],
                 popup=f"Project Location: ({lat:.5f}, {lon:.5f})",
                 tooltip="Project Location",
-                icon=folium.Icon(color='orange', icon='home', prefix='fa')
+                icon=folium.Icon(color='darkorange', icon='home', prefix='fa')
             ).add_to(m)
         elif idx == 2:
             # Closest Sea Location marker (water symbol)
@@ -42,33 +43,30 @@ def render_map_with_markers(
                 icon=folium.Icon(color='darkblue', icon='ship', prefix='fa')
             ).add_to(m)
     
-    # Add dashed line connecting the two points if we have exactly 2 markers
+    # Add dashed circle centered at point 1 with radius = distance to point 2
     if len(markers) == 2:
-        # Calculate distance
+        # Calculate distance from point 1 to point 2
         distance_km = geodesic(markers[0], markers[1]).kilometers
+        # Convert distance to meters for the circle radius
+        radius_meters = distance_km * 1000
         
-        # Add the dashed line
-        folium.PolyLine(
-            locations=markers,
+        # Add the dashed circle centered at point 1
+        folium.Circle(
+            location=markers[0],  # Center at point 1 (Project Location)
+            radius=radius_meters,
             color=TT_LightBlue,
             weight=3,
             opacity=0.8,
-            dash_array='10, 5'  # Creates dashed line pattern
+            fill=False,  # No fill, just the outline
+            dashArray='10, 5'  # Creates dashed line pattern
         ).add_to(m)
         
-        # Add distance label at the midpoint
-        midpoint_lat = (markers[0][0] + markers[1][0]) / 2
-        midpoint_lon = (markers[0][1] + markers[1][1]) / 2
-        
-        folium.Marker(
-            location=[midpoint_lat, midpoint_lon],
-            popup=f"Distance to Sea: {distance_km:.2f} km",
-            tooltip=f"Distance to Sea: {distance_km:.2f} km",
-            icon=folium.DivIcon(
-                html=f'<div style="background-color: {TT_LightBlue}; color: black; padding: 5px; border-radius: 5px; font-weight: bold; font-size: 12px; white-space: nowrap;">Distance to Sea: {distance_km:.2f} km</div>',
-                icon_size=(150, 30),
-                icon_anchor=(75, 15)
-            )
+        # Add solid line connecting the two points
+        folium.PolyLine(
+            locations=markers,
+            color=TT_MidBlue,
+            weight=3,
+            opacity=0.8
         ).add_to(m)
     
     # If we have markers, adjust the map view to show them
@@ -78,8 +76,19 @@ def render_map_with_markers(
             m.location = list(markers[0])
             m.zoom_start = 10
         else:
-            # Fit bounds to show both markers
-            bounds = [[lat, lon] for lat, lon in markers]
+            # Fit bounds to show both markers and the circle
+            # Calculate bounds that include the circle
+            center_lat, center_lon = markers[0]
+            distance_km = geodesic(markers[0], markers[1]).kilometers
+            
+            # Approximate bounds (rough conversion from km to degrees)
+            lat_offset = distance_km / 111.0  # Roughly 111 km per degree latitude
+            lon_offset = distance_km / (111.0 * abs(center_lat / 90.0))  # Adjust for longitude
+            
+            bounds = [
+                [center_lat - lat_offset, center_lon - lon_offset],
+                [center_lat + lat_offset, center_lon + lon_offset]
+            ]
             m.fit_bounds(bounds, padding=(20, 20))
     
     return st_folium(m, width=width, height=height, key="map")
