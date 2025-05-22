@@ -212,12 +212,10 @@ if use_map:
                 if len(elevations) >= 1:
                     st.session_state.inputs["altitude_factor"] = float(elevations[0])
                 
-                # Calculate distance between points (this IS the distance to sea)
+                # Calculate distance between points
                 if len(st.session_state.markers) == 2:
                     d_sea = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
                     st.session_state.inputs["d_sea"] = float(d_sea)
-                
-                st.success("Calculations completed!")
                 
             except Exception as e:
                 st.error(f"Error calculating data: {str(e)}")
