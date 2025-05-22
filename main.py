@@ -15,15 +15,18 @@ from educational import text_content
 
 authenticate_user()
 
-# App version and metadata
-APP_VERSION = "1.0.0"
-LAST_UPDATED = "April 15, 2025"
 
 # Setup page configuration with a favicon
 st.set_page_config(
     page_title="Wind Load Calculator",
     page_icon="🌪️"
 )
+
+# Toggle educational content in sidebar
+st.sidebar.title("Options")
+show_educational = st.sidebar.checkbox("Show Educational Content", 
+                              value=st.session_state.show_educational)
+st.session_state.show_educational = show_educational
 
 # Initialize session state
 if 'initialized' not in st.session_state:
@@ -855,9 +858,3 @@ if st.session_state.get("show_educational", False):
     # Call the create_wind_visualization_ui function
     from calc_engine.common.pressure_summary import create_wind_visualization_ui
     create_wind_visualization_ui(st.session_state, results_by_direction)
-
-# Toggle educational content in sidebar
-st.sidebar.title("Options")
-show_educational = st.sidebar.checkbox("Show Educational Content", 
-                              value=st.session_state.show_educational)
-st.session_state.show_educational = show_educational
