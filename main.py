@@ -197,14 +197,6 @@ if use_map:
         d_sea_val = st.session_state.inputs.get("d_sea", 60.0)
         st.write(f"Altitude: {altitude_val:.1f} m")
         st.write(f"Distance to sea: {d_sea_val:.1f} km")
-        
-        # Show calculation status
-        if len(st.session_state.markers) == 2:
-            st.success("✅ Ready to calculate!")
-        elif len(st.session_state.markers) == 1:
-            st.info("📍 Add second marker for distance calculation")
-        else:
-            st.info("📍 Add markers to get started")
     
     # Handle map clicks
     if map_data and map_data.get("last_clicked"):
