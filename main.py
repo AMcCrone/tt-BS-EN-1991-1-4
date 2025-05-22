@@ -116,8 +116,21 @@ if region:
 # Divider between sections
 st.markdown("---")
 
-st.header("Elevation & Distance Tool")
+# Section 2: GEOMETRY AND TERRAIN
 
+st.header("Geometry & Terrain")
+
+if st.session_state.get("show_educational", False):
+    # open a div with your special class
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+    
+    # inside that div, render a normal Streamlit expander
+    with st.expander("How Do I Use The Map?", expanded=False):
+        # st.image("educational/images/Terrain_Cats.png", caption="Terrain Types")
+        st.markdown(f'<div class="educational-content">{text_content.map_help}</div>', unsafe_allow_html=True)
+    # close the wrapper div
+    st.markdown('</div>', unsafe_allow_html=True)
+    
 # Initialize session state with default values
 if "markers" not in st.session_state:
     st.session_state.markers = []
@@ -192,8 +205,8 @@ if use_map:
                 # Calculate elevations
                 elevations = []
                 for lat, lon in st.session_state.markers:
-                    elev = get_elevation(lat, lon)
-                    elevations.append(elev)
+                    altitude_factor = get_elevation(lat, lon)
+                    elevations.append(altitude_factor)
                 
                 # Store results using consistent variable names
                 if len(elevations) >= 1:
@@ -201,8 +214,8 @@ if use_map:
                 
                 # Calculate distance between points (this IS the distance to sea)
                 if len(st.session_state.markers) == 2:
-                    distance = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
-                    st.session_state.inputs["d_sea"] = float(distance)
+                    d_sea = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
+                    st.session_state.inputs["d_sea"] = float(d_sea)
                 
                 st.success("Calculations completed!")
                 
@@ -242,9 +255,6 @@ else:
             step=1.0
         )
         st.session_state.inputs["d_sea"] = d_sea
-
-# Section 2: GEOMETRY AND TERRAIN
-st.header("Geometry & Terrain")
 
 st.subheader("Geometry")
 
