@@ -135,7 +135,7 @@ if "d_sea" not in st.session_state.inputs:
     st.session_state.inputs["d_sea"] = 60.0
 
 # Main toggle between map and manual input
-use_map = st.checkbox("Use Interactive Map", value=True, help="Uncheck to input values manually")
+use_map = st.checkbox("Use Interactive Map", value=False, help="Uncheck to input values manually")
 
 if use_map:
     # === MAP MODE ===
