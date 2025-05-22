@@ -153,9 +153,9 @@ if use_map:
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Map controls row
-    col1, col2, col3 = st.columns([2, 1, 1])
+    col1, col2 = st.columns([1, 1])
     
-    with col2:
+    with col1:
         if st.button("Clear Markers", type="secondary"):
             st.session_state.markers = []
             # Reset to default values but don't clear inputs entirely
@@ -163,7 +163,7 @@ if use_map:
             st.session_state.inputs["d_sea"] = 60.0
             st.rerun()
     
-    with col3:
+    with col2:
         calculate_btn = st.button(
             "Calculate Geospatial Data", 
             type="primary",
