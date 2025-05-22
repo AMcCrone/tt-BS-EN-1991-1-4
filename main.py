@@ -169,7 +169,7 @@ if use_map:
             st.rerun()
         
         calculate_btn = st.button(
-            "Calculate Geospatial Data", 
+            "Calculate Data", 
             type="primary",
             disabled=len(st.session_state.markers) == 0
         )
