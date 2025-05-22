@@ -244,14 +244,6 @@ else:
             step=1.0
         )
         st.session_state.inputs["d_sea"] = d_sea
-    
-    # Display current manual values
-    st.subheader("Current Values")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Altitude Above Sea Level", f"{altitude_factor:.1f} m")
-    with col2:
-        st.metric("Distance to Sea", f"{d_sea:.2f} km")
 
 # Section 2: GEOMETRY AND TERRAIN
 st.header("Geometry & Terrain")
