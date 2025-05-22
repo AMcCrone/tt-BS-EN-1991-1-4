@@ -21,7 +21,7 @@ def render_map_with_markers(
     TT_LightBlue = "rgb(136,219,223)"
     
     # Create map
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_start)
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_start, tiles="Cartodb Positron")
     
     # Add existing markers
     for idx, (lat, lon) in enumerate(markers, start=1):
