@@ -311,23 +311,23 @@ building_fig = create_building_visualisation(
 )
 st.plotly_chart(building_fig, use_container_width=True)
 
-col1, col2 = st.columns(2)
-with col1:
-        altitude_factor = st.number_input(
-        "Altitude Above Sea Level (m)",
-        min_value=1.0,
-        max_value=500.0,
-        value=float(st.session_state.inputs.get("altitude_factor", 20.0)),
-        step=1.0
-    )
-with col2:
-        d_sea = st.number_input(
-        "Distance to Sea (km)",
-        min_value=1.0,
-        max_value=1000.0,
-        value=float(st.session_state.inputs.get("d_sea", 60.0)),
-        step=1.0
-    )
+# col1, col2 = st.columns(2)
+# with col1:
+#         altitude_factor = st.number_input(
+#         "Altitude Above Sea Level (m)",
+#         min_value=1.0,
+#         max_value=500.0,
+#         value=float(st.session_state.inputs.get("altitude_factor", 20.0)),
+#         step=1.0
+#     )
+# with col2:
+#         d_sea = st.number_input(
+#         "Distance to Sea (km)",
+#         min_value=1.0,
+#         max_value=1000.0,
+#         value=float(st.session_state.inputs.get("d_sea", 60.0)),
+#         step=1.0
+#     )
 
 def render_terrain_category():
     st.subheader("Terrain Category")
