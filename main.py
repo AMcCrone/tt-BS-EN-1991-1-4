@@ -112,6 +112,37 @@ if region:
 # Divider between sections
 st.markdown("---")
 
+st.header("Elevation & Distance to Sea Tool")
+
+    # Initialize markers list
+    if "markers" not in st.session_state:
+        st.session_state.markers = []  # will hold up to two (lat, lon) tuples
+
+    # 1) Show map and capture click
+    map_data = render_map()
+    if map_data and map_data.get("last_clicked"):
+        lat = map_data["last_clicked"]["lat"]
+        lon = map_data["last_clicked"]["lng"]
+        if len(st.session_state.markers) < 2:
+            st.session_state.markers.append((lat, lon))
+        else:
+            # Reset: treat new click as first marker
+            st.session_state.markers = [(lat, lon)]
+
+    # 2) Display elevations
+    if st.session_state.markers:
+        st.header("Elevations")
+        for idx, (lat, lon) in enumerate(st.session_state.markers, start=1):
+            elev = get_elevation(lat, lon)
+            st.write(f"Point {idx}: ({lat:.5f}, {lon:.5f}) → {elev} m above sea level")
+
+    # 3) If two markers, compute distance
+    if len(st.session_state.markers) == 2:
+        p1, p2 = st.session_state.markers
+        dist_km = compute_distance(p1, p2)
+        st.header("Distance Between Points")
+        st.write(f"{dist_km:.2f} km")
+
 # Section 2: GEOMETRY AND TERRAIN
 st.header("Geometry & Terrain")
 
