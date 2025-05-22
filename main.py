@@ -170,8 +170,41 @@ if use_map:
             disabled=len(st.session_state.markers) == 0
         )
     
-    # Render map with current markers
-    map_data = render_map_with_markers(st.session_state.markers)
+    # Create side-by-side layout: 70% map, 30% info
+    map_col, info_col = st.columns([7, 3])
+    
+    with map_col:
+        # Render map with current markers
+        map_data = render_map_with_markers(st.session_state.markers)
+    
+    with info_col:
+        st.subheader("Map Information")
+        
+        # Show current markers
+        if st.session_state.markers:
+            st.write("**Current Markers:**")
+            for idx, (lat, lon) in enumerate(st.session_state.markers, start=1):
+                marker_name = "Project Location" if idx == 1 else "Closest Sea Location"
+                st.write(f"**{marker_name}:** {lat:.5f}°, {lon:.5f}°")
+        else:
+            st.write("Click on the map to add markers:")
+            st.write("• First click: Project Location")
+            st.write("• Second click: Closest Sea Location")
+        
+        # Display current values
+        st.write("**Current Values:**")
+        altitude_val = st.session_state.inputs.get("altitude_factor", 20.0)
+        d_sea_val = st.session_state.inputs.get("d_sea", 60.0)
+        st.write(f"Altitude: {altitude_val:.1f} m")
+        st.write(f"Distance to sea: {d_sea_val:.1f} km")
+        
+        # Show calculation status
+        if len(st.session_state.markers) == 2:
+            st.success("✅ Ready to calculate!")
+        elif len(st.session_state.markers) == 1:
+            st.info("📍 Add second marker for distance calculation")
+        else:
+            st.info("📍 Add markers to get started")
     
     # Handle map clicks
     if map_data and map_data.get("last_clicked"):
@@ -192,12 +225,6 @@ if use_map:
             st.session_state.inputs["d_sea"] = 60.0
         st.rerun()
     
-    # Show current markers
-    if st.session_state.markers:
-        st.subheader("Current Markers")
-        for idx, (lat, lon) in enumerate(st.session_state.markers, start=1):
-            st.write(f"**Point {idx}:** {lat:.5f}°, {lon:.5f}°")
-    
     # Calculate and display results when button is clicked
     if calculate_btn and st.session_state.markers:
         with st.spinner("Calculating geospatial data..."):
@@ -216,9 +243,14 @@ if use_map:
                 if len(st.session_state.markers) == 2:
                     d_sea = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
                     st.session_state.inputs["d_sea"] = float(d_sea)
-                    
-                st.write("Altitude = {altitude_factor}")
-                st.write("Distance to sea = {d_sea}")
+                
+                # Display results safely
+                altitude_result = st.session_state.inputs.get("altitude_factor", 20.0)
+                d_sea_result = st.session_state.inputs.get("d_sea", 60.0)
+                
+                st.success("✅ Calculation completed!")
+                st.write(f"**Altitude:** {altitude_result:.1f} m")
+                st.write(f"**Distance to sea:** {d_sea_result:.1f} km")
                 
             except Exception as e:
                 st.error(f"Error calculating data: {str(e)}")
