@@ -116,18 +116,24 @@ if region:
 # Divider between sections
 st.markdown("---")
 
-st.header("🗺️ Elevation & Distance Tool")
+st.header("Elevation & Distance Tool")
 
-# Initialize session state
+# Initialize session state with default values
 if "markers" not in st.session_state:
     st.session_state.markers = []
 if "inputs" not in st.session_state:
-    st.session_state.inputs = {}
-if "calculated_data" not in st.session_state:
-    st.session_state.calculated_data = {}
+    st.session_state.inputs = {
+        "altitude_factor": 20.0,
+        "d_sea": 60.0
+    }
+# Ensure default values always exist
+if "altitude_factor" not in st.session_state.inputs:
+    st.session_state.inputs["altitude_factor"] = 20.0
+if "d_sea" not in st.session_state.inputs:
+    st.session_state.inputs["d_sea"] = 60.0
 
 # Main toggle between map and manual input
-use_map = st.checkbox("Use Interactive Map", value=False, help="Uncheck to input values manually")
+use_map = st.checkbox("Use Interactive Map", value=True, help="Uncheck to input values manually")
 
 if use_map:
     # === MAP MODE ===
@@ -139,7 +145,9 @@ if use_map:
     with col2:
         if st.button("Clear Markers", type="secondary"):
             st.session_state.markers = []
-            st.session_state.calculated_data = {}
+            # Reset to default values but don't clear inputs entirely
+            st.session_state.inputs["altitude_factor"] = 20.0
+            st.session_state.inputs["d_sea"] = 60.0
             st.rerun()
     
     with col3:
@@ -164,7 +172,11 @@ if use_map:
             st.session_state.markers = [(lat, lon)]
         
         # Clear previous calculations when markers change
-        st.session_state.calculated_data = {}
+        # Reset to defaults when adding new markers
+        if len(st.session_state.markers) == 1:
+            # First marker - reset to defaults
+            st.session_state.inputs["altitude_factor"] = 20.0
+            st.session_state.inputs["d_sea"] = 60.0
         st.rerun()
     
     # Show current markers
@@ -187,7 +199,7 @@ if use_map:
                 if len(elevations) >= 1:
                     st.session_state.inputs["altitude_factor"] = float(elevations[0])
                 
-                # Calculate distance between points
+                # Calculate distance between points (this IS the distance to sea)
                 if len(st.session_state.markers) == 2:
                     distance = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
                     st.session_state.inputs["d_sea"] = float(distance)
@@ -197,19 +209,15 @@ if use_map:
             except Exception as e:
                 st.error(f"Error calculating data: {str(e)}")
     
-    # Display calculated results
-    if "altitude_factor" in st.session_state.inputs or "d_sea" in st.session_state.inputs:
-        st.subheader("Results")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if "altitude_factor" in st.session_state.inputs:
-                st.metric("Altitude Above Sea Level", f"{st.session_state.inputs['altitude_factor']:.1f} m")
-        
-        with col2:
-            if "d_sea" in st.session_state.inputs:
-                st.metric("Distance to Sea", f"{st.session_state.inputs['d_sea']:.1f} km")
+    # Display current values (always available due to initialization)
+    st.subheader("Current Values")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.metric("Altitude Above Sea Level", f"{st.session_state.inputs['altitude_factor']:.1f} m")
+    
+    with col2:
+        st.metric("Distance to Sea", f"{st.session_state.inputs['d_sea']:.2f} km")
 
 else:
     # === MANUAL INPUT MODE ===
