@@ -22,18 +22,18 @@ st.set_page_config(
     page_icon="🌪️"
 )
 
-# Toggle educational content in sidebar
-st.sidebar.title("Options")
-show_educational = st.sidebar.checkbox("Show Educational Content", 
-                              value=st.session_state.show_educational)
-st.session_state.show_educational = show_educational
-
 # Initialize session state
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
     st.session_state.inputs = {}
     st.session_state.results = {}
     st.session_state.show_educational = True
+
+# Toggle educational content in sidebar
+st.sidebar.title("Options")
+show_educational = st.sidebar.checkbox("Show Educational Content", 
+                              value=st.session_state.show_educational)
+st.session_state.show_educational = show_educational
 
 # Display company logo
 st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG")
