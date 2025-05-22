@@ -221,16 +221,6 @@ if use_map:
                 
             except Exception as e:
                 st.error(f"Error calculating data: {str(e)}")
-    
-    # Display current values (always available due to initialization)
-    st.subheader("Current Values")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.metric("Altitude Above Sea Level", f"{st.session_state.inputs['altitude_factor']:.1f} m")
-    
-    with col2:
-        st.metric("Distance to Sea", f"{st.session_state.inputs['d_sea']:.2f} km")
 
 else:
     # === MANUAL INPUT MODE === 
