@@ -7,6 +7,7 @@ from auth import authenticate_user
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
 from visualisation.building_viz import create_building_visualisation
+from visualisation.map import render_map, get_elevation, compute_distance
 from educational import text_content
 
 authenticate_user()
