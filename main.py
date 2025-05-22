@@ -153,7 +153,7 @@ if use_map:
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Create side-by-side layout: 70% map, 30% info
-    map_col, info_col = st.columns([7, 3])
+    map_col, info_col = st.columns([3, 1])
     
     with map_col:
         # Render map with current markers
@@ -173,8 +173,6 @@ if use_map:
             type="primary",
             disabled=len(st.session_state.markers) == 0
         )
-        
-        st.write("---")
         
         # Show current markers
         if st.session_state.markers:
