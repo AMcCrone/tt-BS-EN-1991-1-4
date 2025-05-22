@@ -468,6 +468,7 @@ else:
 # Display the probability factor
 st.write(f"Probability factor $c_{{prob}}$: {c_prob:.3f}")
 
+altitude_factor = st.session_state.inputs.get("altitude_factor", 20.0)
 # Altitude correction - display the case and working
 if z <= 10:
     case = "z ≤ 10m"
