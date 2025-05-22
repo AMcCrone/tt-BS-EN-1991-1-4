@@ -152,32 +152,30 @@ if use_map:
         # close the wrapper div
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Map controls row
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        if st.button("Clear Markers", type="secondary"):
-            st.session_state.markers = []
-            # Reset to default values but don't clear inputs entirely
-            st.session_state.inputs["altitude_factor"] = 20.0
-            st.session_state.inputs["d_sea"] = 60.0
-            st.rerun()
-    
-    with col2:
-        calculate_btn = st.button(
-            "Calculate Geospatial Data", 
-            type="primary",
-            disabled=len(st.session_state.markers) == 0
-        )
-    
     # Create side-by-side layout: 70% map, 30% info
     map_col, info_col = st.columns([7, 3])
     
     with map_col:
         # Render map with current markers
         map_data = render_map_with_markers(st.session_state.markers)
-    
-    with info_col:       
+        
+    with info_col:
+        # Map controls
+        if st.button("Clear Markers", type="secondary"):
+            st.session_state.markers = []
+            # Reset to default values but don't clear inputs entirely
+            st.session_state.inputs["altitude_factor"] = 20.0
+            st.session_state.inputs["d_sea"] = 60.0
+            st.rerun()
+        
+        calculate_btn = st.button(
+            "Calculate Geospatial Data", 
+            type="primary",
+            disabled=len(st.session_state.markers) == 0
+        )
+        
+        st.write("---")
+        
         # Show current markers
         if st.session_state.markers:
             st.write("**Current Markers:**")
@@ -185,7 +183,7 @@ if use_map:
                 marker_name = "Project Location" if idx == 1 else "Closest Sea Location"
                 st.write(f"**{marker_name}:** {lat:.5f}°, {lon:.5f}°")
         
-        # Display current values
+        # Display current values - show calculated if available, otherwise defaults
         st.write("**Current Values:**")
         altitude_val = st.session_state.inputs.get("altitude_factor", 20.0)
         d_sea_val = st.session_state.inputs.get("d_sea", 60.0)
@@ -230,13 +228,7 @@ if use_map:
                     d_sea = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
                     st.session_state.inputs["d_sea"] = float(d_sea)
                 
-                # Display results safely
-                altitude_result = st.session_state.inputs.get("altitude_factor", 20.0)
-                d_sea_result = st.session_state.inputs.get("d_sea", 60.0)
-                
-                st.success("✅ Calculation completed!")
-                st.write(f"**Altitude:** {altitude_result:.1f} m")
-                st.write(f"**Distance to sea:** {d_sea_result:.1f} km")
+                st.rerun()
                 
             except Exception as e:
                 st.error(f"Error calculating data: {str(e)}")
