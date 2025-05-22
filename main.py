@@ -116,36 +116,149 @@ if region:
 # Divider between sections
 st.markdown("---")
 
-st.header("Elevation & Distance to Sea Tool")
+st.header("🗺️ Elevation & Distance Tool")
 
-# Initialize markers list
+# Initialize session state
 if "markers" not in st.session_state:
-    st.session_state.markers = []  # will hold up to two (lat, lon) tuples
+    st.session_state.markers = []
+if "inputs" not in st.session_state:
+    st.session_state.inputs = {}
+if "calculated_data" not in st.session_state:
+    st.session_state.calculated_data = {}
 
-# 1) Show map and capture click
-map_data = render_map()
-if map_data and map_data.get("last_clicked"):
-    lat = map_data["last_clicked"]["lat"]
-    lon = map_data["last_clicked"]["lng"]
-    if len(st.session_state.markers) < 2:
-        st.session_state.markers.append((lat, lon))
-    else:
-        # Reset: treat new click as first marker
-        st.session_state.markers = [(lat, lon)]
+# Main toggle between map and manual input
+use_map = st.checkbox("📍 Use Interactive Map", value=True, help="Uncheck to input values manually")
 
-# 2) Display elevations
-if st.session_state.markers:
-    st.header("Elevations")
-    for idx, (lat, lon) in enumerate(st.session_state.markers, start=1):
-        elev = get_elevation(lat, lon)
-        st.write(f"Point {idx}: ({lat:.5f}, {lon:.5f}) → {elev} m above sea level")
+if use_map:
+    # === MAP MODE ===
+    st.subheader("Interactive Map")
+    
+    # Instructions
+    with st.expander("ℹ️ How to use", expanded=False):
+        st.write("""
+        1. Click on the map to place markers (up to 2 points)
+        2. Red marker = Point 1 (your location), Blue marker = Point 2 (sea/reference point)
+        3. Click 'Calculate Geospatial Data' to get elevations and distance
+        4. Third click resets to a new Point 1
+        """)
+    
+    # Map controls row
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col2:
+        if st.button("🗑️ Clear Markers", type="secondary"):
+            st.session_state.markers = []
+            st.session_state.calculated_data = {}
+            st.rerun()
+    
+    with col3:
+        calculate_btn = st.button(
+            "🧮 Calculate Geospatial Data", 
+            type="primary",
+            disabled=len(st.session_state.markers) == 0
+        )
+    
+    # Render map with current markers
+    map_data = render_map_with_markers(st.session_state.markers)
+    
+    # Handle map clicks
+    if map_data and map_data.get("last_clicked"):
+        lat = map_data["last_clicked"]["lat"]
+        lon = map_data["last_clicked"]["lng"]
+        
+        if len(st.session_state.markers) < 2:
+            st.session_state.markers.append((lat, lon))
+        else:
+            # Reset: treat new click as first marker
+            st.session_state.markers = [(lat, lon)]
+        
+        # Clear previous calculations when markers change
+        st.session_state.calculated_data = {}
+        st.rerun()
+    
+    # Show current markers
+    if st.session_state.markers:
+        st.subheader("📌 Current Markers")
+        for idx, (lat, lon) in enumerate(st.session_state.markers, start=1):
+            color = "🔴" if idx == 1 else "🔵"
+            st.write(f"{color} **Point {idx}:** {lat:.5f}°, {lon:.5f}°")
+    
+    # Calculate and display results when button is clicked
+    if calculate_btn and st.session_state.markers:
+        with st.spinner("Calculating geospatial data..."):
+            try:
+                # Calculate elevations
+                elevations = []
+                for lat, lon in st.session_state.markers:
+                    elev = get_elevation(lat, lon)
+                    elevations.append(elev)
+                
+                # Calculate distance between points (this IS the distance to sea)
+                distance = None
+                if len(st.session_state.markers) == 2:
+                    distance = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
+                
+                # Store results
+                st.session_state.calculated_data = {
+                    'elevations': elevations,
+                    'distance': distance
+                }
+                
+                st.success("✅ Calculations completed!")
+                
+            except Exception as e:
+                st.error(f"❌ Error calculating data: {str(e)}")
+    
+    # Display calculated results
+    if st.session_state.calculated_data:
+        st.subheader("📊 Results")
+        
+        # Elevations
+        if 'elevations' in st.session_state.calculated_data:
+            st.write("**Elevations:**")
+            for idx, elev in enumerate(st.session_state.calculated_data['elevations'], start=1):
+                color = "🔴" if idx == 1 else "🔵"
+                st.write(f"{color} Point {idx}: **{elev} m** above sea level")
+        
+        # Distance between points (i.e., distance to sea)
+        if st.session_state.calculated_data.get('distance'):
+            st.write(f"**Distance to Sea:** {st.session_state.calculated_data['distance']:.2f} km")
 
-# 3) If two markers, compute distance
-if len(st.session_state.markers) == 2:
-    p1, p2 = st.session_state.markers
-    dist_km = compute_distance(p1, p2)
-    st.header("Distance Between Points")
-    st.write(f"{dist_km:.2f} km")
+else:
+    # === MANUAL INPUT MODE ===
+    st.subheader("Manual Input")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        altitude_factor = st.number_input(
+            "Altitude Above Sea Level (m)",
+            min_value=1.0,
+            max_value=5000.0,
+            value=float(st.session_state.inputs.get("altitude_factor", 20.0)),
+            step=1.0,
+            help="Enter the elevation in meters above sea level"
+        )
+        st.session_state.inputs["altitude_factor"] = altitude_factor
+    
+    with col2:
+        d_sea = st.number_input(
+            "Distance to Sea (km)",
+            min_value=0.1,
+            max_value=1000.0,
+            value=float(st.session_state.inputs.get("d_sea", 60.0)),
+            step=0.1,
+            help="Enter the distance to the nearest sea/ocean in kilometers"
+        )
+        st.session_state.inputs["d_sea"] = d_sea
+    
+    # Display current manual values
+    st.subheader("📊 Current Values")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Altitude", f"{altitude_factor} m", "above sea level")
+    with col2:
+        st.metric("Distance to Sea", f"{d_sea} km")
 
 # Section 2: GEOMETRY AND TERRAIN
 st.header("Geometry & Terrain")
