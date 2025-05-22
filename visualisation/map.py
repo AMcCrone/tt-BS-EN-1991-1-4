@@ -15,16 +15,60 @@ def render_map_with_markers(
     """
     Renders a Folium map in Streamlit with existing markers and returns the click event data.
     """
+    # Define colors
+    TT_Orange = "rgb(211,69,29)"
+    TT_DarkBlue = "rgb(0,48,60)"
+    TT_LightBlue = "rgb(136,219,223)"
+    
     # Create map
     m = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_start)
     
     # Add existing markers
     for idx, (lat, lon) in enumerate(markers, start=1):
+        if idx == 1:
+            # Project Location marker (building symbol)
+            folium.Marker(
+                location=[lat, lon],
+                popup=f"Project Location: ({lat:.5f}, {lon:.5f})",
+                tooltip="Project Location",
+                icon=folium.Icon(color='orange', icon='home', prefix='fa')
+            ).add_to(m)
+        elif idx == 2:
+            # Closest Sea Location marker (water symbol)
+            folium.Marker(
+                location=[lat, lon],
+                popup=f"Closest Sea Location: ({lat:.5f}, {lon:.5f})",
+                tooltip="Closest Sea Location",
+                icon=folium.Icon(color='darkblue', icon='ship', prefix='fa')
+            ).add_to(m)
+    
+    # Add dashed line connecting the two points if we have exactly 2 markers
+    if len(markers) == 2:
+        # Calculate distance
+        distance_km = geodesic(markers[0], markers[1]).kilometers
+        
+        # Add the dashed line
+        folium.PolyLine(
+            locations=markers,
+            color=TT_LightBlue,
+            weight=3,
+            opacity=0.8,
+            dash_array='10, 5'  # Creates dashed line pattern
+        ).add_to(m)
+        
+        # Add distance label at the midpoint
+        midpoint_lat = (markers[0][0] + markers[1][0]) / 2
+        midpoint_lon = (markers[0][1] + markers[1][1]) / 2
+        
         folium.Marker(
-            location=[lat, lon],
-            popup=f"Point {idx}: ({lat:.5f}, {lon:.5f})",
-            tooltip=f"Point {idx}",
-            icon=folium.Icon(color='red' if idx == 1 else 'blue', icon='info-sign')
+            location=[midpoint_lat, midpoint_lon],
+            popup=f"Distance to Sea: {distance_km:.2f} km",
+            tooltip=f"Distance to Sea: {distance_km:.2f} km",
+            icon=folium.DivIcon(
+                html=f'<div style="background-color: {TT_LightBlue}; color: black; padding: 5px; border-radius: 5px; font-weight: bold; font-size: 12px; white-space: nowrap;">Distance to Sea: {distance_km:.2f} km</div>',
+                icon_size=(150, 30),
+                icon_anchor=(75, 15)
+            )
         ).add_to(m)
     
     # If we have markers, adjust the map view to show them
