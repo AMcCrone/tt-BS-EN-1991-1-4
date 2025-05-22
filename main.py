@@ -127,7 +127,7 @@ if "calculated_data" not in st.session_state:
     st.session_state.calculated_data = {}
 
 # Main toggle between map and manual input
-use_map = st.checkbox("Use Interactive Map", value=True, help="Uncheck to input values manually")
+use_map = st.checkbox("Use Interactive Map", value=False, help="Uncheck to input values manually")
 
 if use_map:
     # === MAP MODE ===
@@ -187,7 +187,7 @@ if use_map:
                 if len(elevations) >= 1:
                     st.session_state.inputs["altitude_factor"] = float(elevations[0])
                 
-                # Calculate distance between points (this IS the distance to sea)
+                # Calculate distance between points
                 if len(st.session_state.markers) == 2:
                     distance = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
                     st.session_state.inputs["d_sea"] = float(distance)
@@ -209,7 +209,7 @@ if use_map:
         
         with col2:
             if "d_sea" in st.session_state.inputs:
-                st.metric("Distance to Sea", f"{st.session_state.inputs['d_sea']:.2f} km")
+                st.metric("Distance to Sea", f"{st.session_state.inputs['d_sea']:.1f} km")
 
 else:
     # === MANUAL INPUT MODE ===
