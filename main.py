@@ -220,9 +220,7 @@ if use_map:
         st.metric("Distance to Sea", f"{st.session_state.inputs['d_sea']:.2f} km")
 
 else:
-    # === MANUAL INPUT MODE ===
-    st.subheader("Manual Input")
-    
+    # === MANUAL INPUT MODE === 
     col1, col2 = st.columns(2)
     
     with col1:
