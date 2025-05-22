@@ -201,3 +201,12 @@ The UK National Annex (NA) supplements this by providing:
 - A method for adjusting (enhancing) the pressure coefficients to account for the funnelling effect in narrow passages.
 
 """
+
+map_help = """
+
+1. Click on the map to place markers (up to 2 points)
+2. Red marker = Point 1 (your location), Blue marker = Point 2 (sea/reference point)
+3. Click 'Calculate Geospatial Data' to get elevations and distance
+4. Third click resets to a new Point 1
+
+"""
