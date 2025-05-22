@@ -119,17 +119,6 @@ st.markdown("---")
 # Section 2: GEOMETRY AND TERRAIN
 
 st.header("Geometry & Terrain")
-
-if st.session_state.get("show_educational", False):
-    # open a div with your special class
-    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-    
-    # inside that div, render a normal Streamlit expander
-    with st.expander("How Do I Use The Map?", expanded=False):
-        # st.image("educational/images/Terrain_Cats.png", caption="Terrain Types")
-        st.markdown(f'<div class="educational-content">{text_content.map_help}</div>', unsafe_allow_html=True)
-    # close the wrapper div
-    st.markdown('</div>', unsafe_allow_html=True)
     
 # Initialize session state with default values
 if "markers" not in st.session_state:
@@ -151,6 +140,17 @@ use_map = st.checkbox("Use Interactive Map", value=True, help="Uncheck to input 
 if use_map:
     # === MAP MODE ===
     st.subheader("Interactive Map")
+
+    if st.session_state.get("show_educational", False):
+        # open a div with your special class
+        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+        
+        # inside that div, render a normal Streamlit expander
+        with st.expander("How Do I Use The Map?", expanded=False):
+            # st.image("educational/images/Terrain_Cats.png", caption="Terrain Types")
+            st.markdown(f'<div class="educational-content">{text_content.map_help}</div>', unsafe_allow_html=True)
+        # close the wrapper div
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Map controls row
     col1, col2, col3 = st.columns([2, 1, 1])
