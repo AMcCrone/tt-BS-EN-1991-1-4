@@ -211,7 +211,7 @@ map_help = """
 
 """
 
-wind_zone_help - """
+wind_zone_help = """
 
 Figure 7.5 from BS EN 1991-1-4.
 
