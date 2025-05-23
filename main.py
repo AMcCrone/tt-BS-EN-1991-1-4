@@ -743,7 +743,7 @@ if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
 
     with st.expander("How Are Wind Zones Plotted?", expanded=False):
-        st.image("educational/images/wind_zone_diagram.png", use_container_width=True)
+        st.image("educational/images/wind_zones_diagram.png", use_container_width=True)
         # st.markdown(f'<div class="educational-content">{text_content.wind_zone_help}</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
