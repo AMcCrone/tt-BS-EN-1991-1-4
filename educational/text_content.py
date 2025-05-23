@@ -205,8 +205,12 @@ The UK National Annex (NA) supplements this by providing:
 map_help = """
 
 1. Click on the map to place markers (up to 2 points)
-2. Red marker = Point 1 (your location), Blue marker = Point 2 (sea/reference point)
-3. Click 'Calculate Geospatial Data' to get elevations and distance
-4. Third click resets to a new Point 1
+2. First click (red marker) = the project location, Second click (blue marker) = the closest sea location
+3. Click 'Calculate Data' to get elevations and distance to sea
+4. Third click resets to a new Point 1 or click 'Clear Points'
+
+"""
+
+wind_zone_help - """
 
 """
