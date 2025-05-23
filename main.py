@@ -142,8 +142,6 @@ use_map = st.checkbox("Use Interactive Map", value=False, help="Uncheck to input
 
 if use_map:
     # === MAP MODE ===
-    st.subheader("Interactive Map")
-
     if st.session_state.get("show_educational", False):
         # open a div with your special class
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
