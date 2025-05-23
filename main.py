@@ -738,6 +738,16 @@ for direction, df in cp_results_by_elevation.items():
     all_results.append(df_with_direction)
 st.session_state.cp_results = pd.concat(all_results)
 
+# Educational text on wind zone plots
+if st.session_state.get("show_educational", False):
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+
+    with st.expander("How Are Wind Zones Plotted?", expanded=False):
+        st.image("educational/images/wind_zone_diagram.png", use_container_width=True)
+        # st.markdown(f'<div class="educational-content">{text_content.wind_zone_help}</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # Display wind zone plots (using your existing function)
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
 # Display North-South Elevation
