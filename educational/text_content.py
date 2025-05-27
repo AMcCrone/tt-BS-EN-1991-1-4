@@ -66,7 +66,7 @@ For buildings in terrain category IV, closely spaced buildings and other obstruc
 
 The displacement height $h_{dis}$ may be determined by Expression (A.15) (see Figure A.5). The profile of peak velocity pressure over height (see Figure 4.2) may be lifted by $h_{dis}$.
 
-• If $$x \le 2\,h_{ave}$$, then $h_{dis}$ is the lesser of
+• If $x \le 2\,h_{ave}$, then $h_{dis}$ is the lesser of
   $0.8\,h_{ave}$ or $0.6\,h$.
 
 • If $2\,h_{ave} < x < 6\,h_{ave}$, then $h_{dis}$ is the lesser of
