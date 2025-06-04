@@ -1,3 +1,11 @@
+region_help = """
+
+By selecting **United Kindom**, this app follows the methodology set out in BS EN 1991-1-4 and the UK National Annex.
+
+Otherwise, by selecting **Other European Country**, this app follow the methodology set out in only BS EN 1991-1-4.
+
+"""
+
 terrain_help = """
 
 **Terrain Categories (UK)**
