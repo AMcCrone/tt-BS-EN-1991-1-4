@@ -29,10 +29,26 @@ if 'initialized' not in st.session_state:
     st.session_state.results = {}
     st.session_state.show_educational = True
 
-# Toggle educational content in sidebar
-st.sidebar.title("Options")
-show_educational = st.sidebar.checkbox("Show Educational Content", 
-                              value=st.session_state.show_educational)
+# Sidebar with usage instructions and educational content toggle
+st.sidebar.title("Help")
+
+st.sidebar.markdown(
+    """
+    **How to Use This App:**
+    
+    - The app is laid out as one long, scrollable page.
+    - Provide all required inputs; the app will include only the information needed for the wind load calculation.
+    - Irrelevant details are automatically omitted.
+    - If you want additional explanations or examples without leaving the app, check **Show Educational Content** to enable in‐line tabs.
+    - When you need to print a clean version, uncheck **Show Educational Content** so only the calculation results and essential fields appear.
+    - To print, click the three vertical dots in the top‐right corner of your browser and select **Print**.
+    """
+)
+
+show_educational = st.sidebar.checkbox(
+    "Show Educational Content", 
+    value=st.session_state.get("show_educational", False)
+)
 st.session_state.show_educational = show_educational
 
 # Display company logo
