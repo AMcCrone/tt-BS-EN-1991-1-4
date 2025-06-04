@@ -30,7 +30,7 @@ if 'initialized' not in st.session_state:
     st.session_state.show_educational = True
 
 # Sidebar with usage instructions and educational content toggle
-st.sidebar.title("Help")
+st.sidebar.title("Help ℹ️")
 
 st.sidebar.markdown(
     """
