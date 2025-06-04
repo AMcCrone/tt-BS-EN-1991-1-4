@@ -655,12 +655,12 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
             "z": [0, 0, h, h]
         },
         "East": {
-            "x": [NS_dimension, NS_dimension, NS_dimension, NS_dimension],
+            "x": [0, 0, 0, 0],
             "y": [0, EW_dimension, EW_dimension, 0],
             "z": [0, 0, h, h]
         },
         "West": {
-            "x": [0, 0, 0, 0],
+            "x": [NS_dimension, NS_dimension, NS_dimension, NS_dimension],
             "y": [0, EW_dimension, EW_dimension, 0],
             "z": [0, 0, h, h]
         }
@@ -844,12 +844,12 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
                     y = [EW_dimension, EW_dimension, EW_dimension, EW_dimension]
                     z = [0, 0, h, h]
                 elif direction == "East":
-                    x = [NS_dimension, NS_dimension, NS_dimension, NS_dimension]
-                    y = [x_start, x_end, x_end, x_start]
-                    z = [0, 0, h, h]
-                elif direction == "West":
                     x = [0, 0, 0, 0]
                     y = [width - x_end, width - x_start, width - x_start, width - x_end]
+                    z = [0, 0, h, h]
+                elif direction == "West":
+                    x = [NS_dimension, NS_dimension, NS_dimension, NS_dimension]
+                    y = [x_start, x_end, x_end, x_start]
                     z = [0, 0, h, h]
                 
                 # Add zone face with border
