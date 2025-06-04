@@ -116,6 +116,13 @@ if location:
 if region:
     st.session_state.inputs["region"] = region
 
+if st.session_state.get("show_educational", False):
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+    with st.expander("Which Region Should I Use?", expanded=False):
+        # st.image("educational/images/Terrain_Cats.png", caption="Terrain Types")
+        st.markdown(f'<div class="educational-content">{text_content.region_help}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
 # Divider between sections
 st.markdown("---")
 
