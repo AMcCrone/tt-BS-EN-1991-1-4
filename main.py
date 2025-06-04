@@ -40,7 +40,7 @@ st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG"
 
 # Simple title and subtitle using Streamlit's built-in functions
 st.title("Wind Load Calculator")
-st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
+st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex — So simple it'll blow you away... 🥁💨")
 
 TT_Grey = "rgb(99,102,105)"
 st.markdown("""
