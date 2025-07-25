@@ -8,7 +8,7 @@ def get_direction_factor(rotation_angle, use_direction_factor=False):
     """
     Get the directional factor (c_dir) based on the building rotation angle.
     
-    Parameters:
+    Parameters:kjlkji
     -----------
     rotation_angle : int
         Building rotation angle in degrees clockwise from north
