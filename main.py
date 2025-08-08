@@ -730,9 +730,6 @@ if st.session_state.get("show_educational", False):
 if consider_funnelling == True:
     north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
-# Automatically calculate cp,e values with or without funnelling based on checkbox
-cp_results_by_elevation = calculate_cpe(consider_funnelling=consider_funnelling)
-
 st.subheader("External Pressure Coefficients (cp,e)")
 
 # Loaded area input. This will only appear when region is EU
@@ -750,6 +747,9 @@ if region != "United Kingdom":  # Show for EU region
         key="loaded_area_input"
     )
     st.session_state.inputs["loaded_area"] = loaded_area
+
+# Automatically calculate cp,e values with or without funnelling based on checkbox
+cp_results_by_elevation = calculate_cpe(consider_funnelling=consider_funnelling)
     
 # Get building dimensions from session state
 h = st.session_state.inputs.get("z", 10.0)  # Building height
