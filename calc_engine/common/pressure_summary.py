@@ -667,13 +667,14 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     }
     
     # Add direction labels (N, E, S, W) on the ground with increased offset
-    offset_factor = max(NS_dimension, EW_dimension) * 0.25  # 25% of the maximum dimension
+    offset_factor = max(NS_dimension, EW_dimension) * 0.25
     direction_labels = {
-        "North": {"pos": [NS_dimension/2, -offset_factor, 0], "text": "N"},
-        "South": {"pos": [NS_dimension/2, EW_dimension + offset_factor, 0], "text": "S"},
-        "East": {"pos": [NS_dimension + offset_factor, EW_dimension/2, 0], "text": "E"},
-        "West": {"pos": [-offset_factor, EW_dimension/2, 0], "text": "W"}
+        "North": {"pos": [EW_dimension/2, -offset_factor, 0], "text": "N"},
+        "South": {"pos": [EW_dimension/2, NS_dimension + offset_factor, 0], "text": "S"},
+        "East":  {"pos": [EW_dimension + offset_factor, NS_dimension/2, 0], "text": "E"},
+        "West":  {"pos": [-offset_factor, NS_dimension/2, 0], "text": "W"}
     }
+
     
     # Add direction labels
     for direction, label_info in direction_labels.items():
