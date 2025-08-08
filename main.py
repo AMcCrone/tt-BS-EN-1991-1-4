@@ -134,9 +134,7 @@ if st.session_state.get("show_educational", False):
     
 # Divider between sections
 st.markdown("---")
-
 # Section 2: GEOMETRY AND TERRAIN
-
 st.header("Geometry")
 # Create three equal-width columns for inputs
 col1, col2, col3 = st.columns(3)
