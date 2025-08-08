@@ -110,3 +110,75 @@ def compute_distance(coord1: tuple[float, float], coord2: tuple[float, float]) -
     Computes the great-circle distance (in kilometers) between two (lat, lon) pairs.
     """
     return geodesic(coord1, coord2).kilometers
+
+def interactive_map_ui():
+    # === MAP MODE ===
+    if st.session_state.get("show_educational", False):
+        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+        with st.expander("How Do I Use The Map?", expanded=False):
+            st.markdown(f'<div class="educational-content">{text_content.map_help}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    map_col, info_col = st.columns([3, 1])
+
+    with map_col:
+        map_data = render_map_with_markers(st.session_state.markers)
+
+    with info_col:
+        if st.button("Clear Markers", type="secondary"):
+            st.session_state.markers = []
+            st.session_state.inputs["altitude_factor"] = 20.0
+            st.session_state.inputs["d_sea"] = 60.0
+            st.rerun()
+
+        calculate_btn = st.button(
+            "Calculate Data", 
+            type="primary",
+            disabled=len(st.session_state.markers) == 0
+        )
+
+        if st.session_state.markers:
+            st.write("**Current Markers:**")
+            for idx, (lat, lon) in enumerate(st.session_state.markers, start=1):
+                marker_name = "Project Location" if idx == 1 else "Closest Sea Location"
+                st.write(f"**{marker_name}:** {lat:.5f}°, {lon:.5f}°")
+
+        altitude_val = st.session_state.inputs.get("altitude_factor", 20.0)
+        d_sea_val = st.session_state.inputs.get("d_sea", 60.0)
+        st.write("**Current Values:**")
+        st.write(f"Altitude: {altitude_val:.1f} m")
+        st.write(f"Distance to sea: {d_sea_val:.1f} km")
+
+    # Handle map clicks
+    if map_data and map_data.get("last_clicked"):
+        lat = map_data["last_clicked"]["lat"]
+        lon = map_data["last_clicked"]["lng"]
+        if len(st.session_state.markers) < 2:
+            st.session_state.markers.append((lat, lon))
+        else:
+            st.session_state.markers = [(lat, lon)]
+        if len(st.session_state.markers) == 1:
+            st.session_state.inputs["altitude_factor"] = 20.0
+            st.session_state.inputs["d_sea"] = 60.0
+        st.rerun()
+
+    # Calculate results
+    if calculate_btn and st.session_state.markers:
+        with st.spinner("Calculating geospatial data..."):
+            try:
+                elevations = []
+                for lat, lon in st.session_state.markers:
+                    altitude_factor = get_elevation(lat, lon)
+                    elevations.append(altitude_factor)
+
+                if len(elevations) >= 1:
+                    st.session_state.inputs["altitude_factor"] = float(elevations[0])
+
+                if len(st.session_state.markers) == 2:
+                    d_sea = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
+                    st.session_state.inputs["d_sea"] = float(d_sea)
+
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error calculating data: {str(e)}")
+
