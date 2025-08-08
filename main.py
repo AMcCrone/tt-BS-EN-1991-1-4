@@ -10,7 +10,7 @@ from auth import authenticate_user
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
 from visualisation.building_viz import create_building_visualisation
-from visualisation.map import render_map_with_markers, get_elevation, compute_distance
+from visualisation.map import render_map_with_markers, get_elevation, compute_distance, interactive_map_ui
 from educational import text_content
 
 authenticate_user()
@@ -184,138 +184,49 @@ st.plotly_chart(building_fig, use_container_width=True)
 
 st.markdown("---")
 st.header("Terrain")
-# Initialize session state with default values
+
+# Init session defaults
 if "markers" not in st.session_state:
     st.session_state.markers = []
 if "inputs" not in st.session_state:
-    st.session_state.inputs = {
-        "altitude_factor": 20.0,
-        "d_sea": 60.0
-    }
-# Ensure default values always exist
-if "altitude_factor" not in st.session_state.inputs:
-    st.session_state.inputs["altitude_factor"] = 20.0
-if "d_sea" not in st.session_state.inputs:
-    st.session_state.inputs["d_sea"] = 60.0
+    st.session_state.inputs = {"altitude_factor": 20.0, "d_sea": 60.0}
+st.session_state.inputs.setdefault("altitude_factor", 20.0)
+st.session_state.inputs.setdefault("d_sea", 60.0)
 
-# Main toggle between map and manual input
-use_map = st.checkbox("Use Interactive Map", value=False, help="Uncheck to input values manually")
+region = st.session_state.inputs.get("region")
 
-if use_map:
-    # === MAP MODE ===
-    if st.session_state.get("show_educational", False):
-        # open a div with your special class
-        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-        
-        # inside that div, render a normal Streamlit expander
-        with st.expander("How Do I Use The Map?", expanded=False):
-            # st.image("educational/images/Terrain_Cats.png", caption="Terrain Types")
-            st.markdown(f'<div class="educational-content">{text_content.map_help}</div>', unsafe_allow_html=True)
-        # close the wrapper div
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Create side-by-side layout: 70% map, 30% info
-    map_col, info_col = st.columns([3, 1])
-    
-    with map_col:
-        # Render map with current markers
-        map_data = render_map_with_markers(st.session_state.markers)
-        
-    with info_col:
-        # Map controls
-        if st.button("Clear Markers", type="secondary"):
-            st.session_state.markers = []
-            # Reset to default values but don't clear inputs entirely
-            st.session_state.inputs["altitude_factor"] = 20.0
-            st.session_state.inputs["d_sea"] = 60.0
-            st.rerun()
-        
-        calculate_btn = st.button(
-            "Calculate Data", 
-            type="primary",
-            disabled=len(st.session_state.markers) == 0
-        )
-        
-        # Show current markers
-        if st.session_state.markers:
-            st.write("**Current Markers:**")
-            for idx, (lat, lon) in enumerate(st.session_state.markers, start=1):
-                marker_name = "Project Location" if idx == 1 else "Closest Sea Location"
-                st.write(f"**{marker_name}:** {lat:.5f}°, {lon:.5f}°")
-        
-        # Display current values - show calculated if available, otherwise defaults
-        st.write("**Current Values:**")
-        altitude_val = st.session_state.inputs.get("altitude_factor", 20.0)
-        d_sea_val = st.session_state.inputs.get("d_sea", 60.0)
-        st.write(f"Altitude: {altitude_val:.1f} m")
-        st.write(f"Distance to sea: {d_sea_val:.1f} km")
-    
-    # Handle map clicks
-    if map_data and map_data.get("last_clicked"):
-        lat = map_data["last_clicked"]["lat"]
-        lon = map_data["last_clicked"]["lng"]
-        
-        if len(st.session_state.markers) < 2:
-            st.session_state.markers.append((lat, lon))
-        else:
-            # Reset: treat new click as first marker
-            st.session_state.markers = [(lat, lon)]
-        
-        # Clear previous calculations when markers change
-        # Reset to defaults when adding new markers
-        if len(st.session_state.markers) == 1:
-            # First marker - reset to defaults
-            st.session_state.inputs["altitude_factor"] = 20.0
-            st.session_state.inputs["d_sea"] = 60.0
-        st.rerun()
-    
-    # Calculate and display results when button is clicked
-    if calculate_btn and st.session_state.markers:
-        with st.spinner("Calculating geospatial data..."):
-            try:
-                # Calculate elevations
-                elevations = []
-                for lat, lon in st.session_state.markers:
-                    altitude_factor = get_elevation(lat, lon)
-                    elevations.append(altitude_factor)
-                
-                # Store results using consistent variable names
-                if len(elevations) >= 1:
-                    st.session_state.inputs["altitude_factor"] = float(elevations[0])
-                
-                # Calculate distance between points
-                if len(st.session_state.markers) == 2:
-                    d_sea = compute_distance(st.session_state.markers[0], st.session_state.markers[1])
-                    st.session_state.inputs["d_sea"] = float(d_sea)
-                
-                st.rerun()
-                
-            except Exception as e:
-                st.error(f"Error calculating data: {str(e)}")
-
+if region == "United Kingdom":
+    # UK: Map + distance to sea option
+    use_map = st.checkbox("Use Interactive Map", value=False, help="Uncheck to input values manually")
+    if use_map:
+        interactive_map_ui()
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            altitude_factor = st.number_input(
+                "Altitude Above Sea Level (m)",
+                min_value=1.0, max_value=500.0,
+                value=float(st.session_state.inputs.get("altitude_factor", 20.0)),
+                step=1.0
+            )
+            st.session_state.inputs["altitude_factor"] = altitude_factor
+        with col2:
+            d_sea = st.number_input(
+                "Distance to Sea (km)",
+                min_value=1.0, max_value=1000.0,
+                value=float(st.session_state.inputs.get("d_sea", 60.0)),
+                step=1.0
+            )
+            st.session_state.inputs["d_sea"] = d_sea
 else:
-    # === MANUAL INPUT MODE === 
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        altitude_factor = st.number_input(
-            "Altitude Above Sea Level (m)",
-            min_value=1.0,
-            max_value=500.0,
-            value=float(st.session_state.inputs.get("altitude_factor", 20.0)),
-            step=1.0
-        )
-        st.session_state.inputs["altitude_factor"] = altitude_factor
-    
-    with col2:
-        d_sea = st.number_input(
-            "Distance to Sea (km)",
-            min_value=1.0,
-            max_value=1000.0,
-            value=float(st.session_state.inputs.get("d_sea", 60.0)),
-            step=1.0
-        )
-        st.session_state.inputs["d_sea"] = d_sea
+    # Non-UK: only altitude
+    altitude_factor = st.number_input(
+        "Altitude Above Sea Level (m)",
+        min_value=1.0, max_value=500.0,
+        value=float(st.session_state.inputs.get("altitude_factor", 20.0)),
+        step=1.0
+    )
+    st.session_state.inputs["altitude_factor"] = altitude_factor
 
 def render_terrain_category():
     # Import correct terrain module based on region from session state
