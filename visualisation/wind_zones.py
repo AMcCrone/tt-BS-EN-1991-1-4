@@ -48,11 +48,20 @@ def plot_wind_zones(session_state):
 
 import plotly.graph_objects as go
 
+import plotly.graph_objects as go
+
 def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
     """
     Create a single elevation plot with wind zones.
-    Width labels now have small white arrows pointing to zone boundaries.
+    Width labels now have small white arrows pointing to zone boundaries,
+    with adjustable offset and standoff so text and arrows don't overlap.
     """
+    # Adjustable settings for dimension arrows
+    arrow_offset_factor = 0.1  # proportion of zone width from text to arrow start
+    arrow_standoff_px = 5      # extra pixel gap between text and arrowhead
+    arrow_head_size = 0.6      # relative arrowhead size
+    arrow_line_width = 1       # arrow line width
+
     e = min(crosswind_dim, 2 * height)
     fig = go.Figure()
 
@@ -65,7 +74,6 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
                 zone_boundaries = [(0, width)]
                 zone_names = ['A']
             else:
-                b_width = width - 2*(e/5)
                 zone_boundaries = [
                     (0, e/5),
                     (e/5, width - e/5),
@@ -90,7 +98,6 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
                 ]
                 zone_names = ['A', 'B', 'C', 'B', 'A']
     elif e >= width and e < 5*width:
-        zone_a_width = e/5
         if width <= 2*(e/5):
             zone_boundaries = [(0, width)]
             zone_names = ['A']
@@ -105,7 +112,7 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
         zone_boundaries = [(0, width)]
         zone_names = ['A']
 
-    for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
+    for (x0, x1), zone_name in zip(zone_boundaries, zone_names):
         # Draw zone rectangle
         fig.add_shape(
             type="rect",
@@ -116,7 +123,7 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
             layer="below"
         )
 
-        # Zone label
+        # Zone label (big letter)
         fig.add_annotation(
             x=(x0 + x1)/2, y=height/2,
             text=zone_name,
@@ -124,7 +131,7 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
             font=dict(size=24, color="white")
         )
 
-        # Dimension style width label with arrows
+        # Dimension-style width label with arrows
         zone_width = x1 - x0
         if zone_width > 0.05 * width:
             label_x = (x0 + x1) / 2
@@ -141,18 +148,26 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
             # Left arrow
             fig.add_annotation(
                 x=x0, y=label_y,
-                ax=label_x - 0.05 * zone_width, ay=label_y,
+                ax=label_x - arrow_offset_factor * zone_width, ay=label_y,
                 xref="x", yref="y", axref="x", ayref="y",
                 showarrow=True,
-                arrowhead=2, arrowsize=0.6, arrowwidth=1, arrowcolor="white"
+                arrowhead=2,
+                arrowsize=arrow_head_size,
+                arrowwidth=arrow_line_width,
+                arrowcolor="white",
+                standoff=arrow_standoff_px
             )
             # Right arrow
             fig.add_annotation(
                 x=x1, y=label_y,
-                ax=label_x + 0.05 * zone_width, ay=label_y,
+                ax=label_x + arrow_offset_factor * zone_width, ay=label_y,
                 xref="x", yref="y", axref="x", ayref="y",
                 showarrow=True,
-                arrowhead=2, arrowsize=0.6, arrowwidth=1, arrowcolor="white"
+                arrowhead=2,
+                arrowsize=arrow_head_size,
+                arrowwidth=arrow_line_width,
+                arrowcolor="white",
+                standoff=arrow_standoff_px
             )
 
     # Building outline
@@ -198,6 +213,7 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
     )
 
     return fig
+
 
 def integrate_with_streamlit(session_state):
     """
