@@ -735,6 +735,22 @@ cp_results_by_elevation = calculate_cpe(consider_funnelling=consider_funnelling)
 
 st.subheader("External Pressure Coefficients (cp,e)")
 
+# Loaded area input. This will only appear when region is EU
+
+region = st.session_state.inputs.get("region", "United Kingdom")
+
+if region != "United Kingdom":  # Show for EU region
+    loaded_area = st.number_input(
+        "Loaded Area (m²)",
+        min_value=0.1,
+        max_value=100.0,
+        value=10.0,
+        step=0.1,
+        help="Area over which the wind load is applied. Used for interpolating between Cpe,1 and Cpe,10 values.",
+        key="loaded_area_input"
+    )
+    st.session_state.inputs["loaded_area"] = loaded_area
+    
 # Get building dimensions from session state
 h = st.session_state.inputs.get("z", 10.0)  # Building height
 NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
