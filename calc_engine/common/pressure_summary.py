@@ -215,7 +215,11 @@ def create_pressure_summary(session_state, results_by_direction):
 def plot_elevation_with_pressures(session_state, results_by_direction):
     """
     Create plots for all four elevations showing wind zones A, B, C with constant pressure
-    values based on the building's height.
+    values based on the building's height. Each zone annotation shows:
+      - the zone suction/pressure (e.g. "-1.36 kPa")
+      - on the next line, the wind pressure taken from Zone D for the same elevation,
+        displayed with a leading '+' for non-negative values (and '-' for negative).
+    "Zone D" is never mentioned in the text — only the numeric value is shown.
     
     Parameters:
     -----------
@@ -247,7 +251,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
         session_state, results_by_direction
     )
     
-    # Unpack global pressure range
+    # Unpack global pressure range (they are already in kPa)
     global_min_suction_kpa, global_max_suction_kpa = global_pressure_range
     
     # Storage for all figures
@@ -280,8 +284,8 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
         zone_boundaries = []
         zone_names = []
         
-        # Determine zones based on relation between e and d
-        if e < width:  # Three zones: A, B, C
+        # Determine zones based on relation between e and d (width)
+        if e < width:  # Three zones: A, B, C (or variants)
             # Check if zones would overlap
             if width < 2*e:  # Zones would overlap in the middle
                 # If e/5 from both ends would overlap (very narrow building)
@@ -291,9 +295,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                     zone_names = ['A']
                 else:
                     # A-B-A pattern (simplified from A-B-B-A)
-                    # Calculate width for zone B
                     b_width = width - 2*(e/5)
-                    
                     zone_boundaries = [
                         (0, e/5),                  # Left A
                         (e/5, width - e/5),        # Middle B
@@ -309,7 +311,6 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                         (width - e/5, width)       # Right A
                     ]
                     zone_names = ['A', 'B', 'A']
-
                 else:
                     # Standard case with A, B, C, B, A
                     zone_boundaries = [
@@ -321,60 +322,65 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                     ]
                     zone_names = ['A', 'B', 'C', 'B', 'A']
         
-        elif e >= width and e < 5*width:  # Two zones: A, B
+        elif e >= width and e < 5*width:  # Two zones: A, B (or A only)
             # For e >= d but < 5d, we have A zones on each end, B in middle
             zone_a_width = e/5
-            
-            # If building is narrow compared to e, A zones might overlap
             if width <= 2*(e/5):
-                # Only zone A across entire width
                 zone_boundaries = [(0, width)]
                 zone_names = ['A']
             else:
-                # Normal case with A-B-A
                 zone_boundaries = [
                     (0, e/5),              # Left A
                     (e/5, width-e/5),      # Middle B
                     (width-e/5, width)     # Right A
                 ]
                 zone_names = ['A', 'B', 'A']
-            
         else:  # e >= 5*width, One zone: A
             zone_boundaries = [(0, width)]
             zone_names = ['A']
         
-        # Get the pre-calculated zone pressures for this direction
+        # Get the pre-calculated zone pressures for this direction (kPa values)
         direction_zone_pressures = zone_pressures_by_direction.get(direction, {})
+        
+        # Get the Zone D pressure for this direction (kPa) if available
+        # We will show this numeric value below each zone's value in the annotation.
+        zone_d_pressure_kpa = None
+        if isinstance(direction_zone_pressures, dict):
+            # Use .get safely; net_pressure_kpa is expected to be a float
+            zone_d_pressure_kpa = direction_zone_pressures.get('D', {}).get('net_pressure_kpa', None)
+            # If it's present but not a number, coerce to None
+            if zone_d_pressure_kpa is not None:
+                try:
+                    zone_d_pressure_kpa = float(zone_d_pressure_kpa)
+                except Exception:
+                    zone_d_pressure_kpa = None
         
         # For each zone, create a single colored rectangle with constant pressure
         for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
-            # Get the pressure value for this zone from pre-calculated data
+            # Get the pressure value for this zone from pre-calculated data (kPa)
             zone_data = direction_zone_pressures.get(zone_name, {'net_pressure_kpa': 0})
-            zone_pressure = zone_data.get('net_pressure_kpa', 0)
+            zone_pressure = zone_data.get('net_pressure_kpa', 0.0)
+            try:
+                zone_pressure = float(zone_pressure)
+            except Exception:
+                zone_pressure = 0.0
             
-            # Normalize the pressure value for color mapping
+            # Normalize the pressure value for color mapping (kPa domain)
             if global_max_suction_kpa == global_min_suction_kpa:
                 normalized_value = 0.5  # Default to middle of colorscale if no range
             else:
                 normalized_value = (zone_pressure - global_min_suction_kpa) / (global_max_suction_kpa - global_min_suction_kpa)
-            normalized_value = max(0, min(1, normalized_value))  # Clamp between 0 and 1
+            normalized_value = max(0.0, min(1.0, normalized_value))  # Clamp between 0 and 1
             
-            # 1) Make sure we pass a list of sample points
+            # Sample color from colorscale
             sample_list = [normalized_value]
-            
-            # 2) Try to sample
             sampled = pc.sample_colorscale(colorscale, sample_list)
-            
-            # 3) If successful, grab the first color; otherwise pick a fallback
             if sampled:
                 zone_color = sampled[0]
             else:
-                # if colorscale is a sequence of [t, color] pairs, pick end stops
                 if isinstance(colorscale, (list, tuple)) and len(colorscale):
-                    # take the last defined color
                     zone_color = colorscale[-1][1]
                 else:
-                    # fallback to a hard-coded neutral grey
                     zone_color = "rgb(200,200,200)"
             
             # Add colored rectangle for the zone
@@ -392,7 +398,6 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             
             # Add colorbar to figure (only once)
             if i == 0:
-                # Create a dummy heatmap just for the colorbar
                 dummy_z = [[global_min_suction_kpa, global_min_suction_kpa], 
                            [global_max_suction_kpa, global_max_suction_kpa]]
                 fig.add_trace(go.Heatmap(
@@ -411,11 +416,31 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                     visible=False
                 ))
             
-            # Add zone label with pressure value
+            # Build label text with zone value (suction/pressure) and Zone D pressure line
+            # Format: "Zone A\n-1.36 kPa\n+1.08 kPa" (using <br> for plotly)
+            # For Zone D pressure: prefix '+' when non-negative, otherwise show negative sign.
+            label_lines = []
+            # First line: Zone name
+            label_lines.append(f"Zone {zone_name}")
+            # Second line: the zone's numeric value (will show negative sign if negative)
+            label_lines.append(f"{zone_pressure:.2f} kPa")
+            # Third line: the Zone D pressure numeric value if available
+            if zone_d_pressure_kpa is not None:
+                # Use explicit '+' for non-negative values, keep '-' for negative values
+                if zone_d_pressure_kpa >= 0:
+                    d_text = f"+{zone_d_pressure_kpa:.2f} kPa"
+                else:
+                    d_text = f"{zone_d_pressure_kpa:.2f} kPa"
+                label_lines.append(d_text)
+            
+            # Join lines with HTML line breaks for plotly annotation
+            label_text = "<br>".join(label_lines)
+            
+            # Add annotation for the zone
             fig.add_annotation(
                 x=(x0 + x1)/2,
                 y=height/2,
-                text=f"Zone {zone_name}<br>{zone_pressure:.2f} kPa",
+                text=label_text,
                 showarrow=False,
                 font=dict(size=16, color="white"),
                 bgcolor="rgba(0,0,0,0.3)",
@@ -439,6 +464,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
         )
         
         # Add zone boundary lines
+        # note: boundaries[0] is leftmost start; we want subsequent boundaries as vertical splits
         for x_boundary in [boundary[0] for boundary in zone_boundaries[1:]]:
             fig.add_shape(
                 type="line",
@@ -495,7 +521,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             font=dict(size=12, color="black")
         )
         
-        # Add title
+        # Add title and layout tweaks
         fig.update_layout(
             title=f"{title}",
             showlegend=False,
@@ -522,6 +548,7 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
         figures[direction] = fig
     
     return figures
+
 
 def create_3d_wind_visualization(session_state, results_by_direction, mode="suction"):
     """
