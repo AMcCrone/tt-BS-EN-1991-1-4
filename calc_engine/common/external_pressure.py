@@ -386,7 +386,7 @@ def calculate_cpe(consider_funnelling=True):
                         cp_D_1 = zone_D_cpe1[i] + factor * (zone_D_cpe1[i+1] - zone_D_cpe1[i])
                         break
             
-            # Now interpolate between Cpe,1 and Cpe,10 based on loaded area
+            # Now interpolate between Cpe,1 and Cpe,10 based on loaded area using log₁₀
             if loaded_area <= 1.0:
                 # Use Cpe,1 values
                 cp_A = cp_A_1
@@ -400,14 +400,13 @@ def calculate_cpe(consider_funnelling=True):
                 cp_C = cp_C_10
                 cp_D = cp_D_10
             else:
-                # Linear interpolation between Cpe,1 and Cpe,10
-                # Area factor: 0 at 1m², 1 at 10m²
-                area_factor = (loaded_area - 1.0) / (10.0 - 1.0)
+                # Logarithmic interpolation: Cpe = Cpe,1 - (Cpe,1 - Cpe,10) × log₁₀(A)
+                log_factor = np.log10(loaded_area)
                 
-                cp_A = cp_A_1 + area_factor * (cp_A_10 - cp_A_1)
-                cp_B = cp_B_1 + area_factor * (cp_B_10 - cp_B_1)
-                cp_C = cp_C_1 + area_factor * (cp_C_10 - cp_C_1)
-                cp_D = cp_D_1 + area_factor * (cp_D_10 - cp_D_1)
+                cp_A = cp_A_1 - (cp_A_1 - cp_A_10) * log_factor
+                cp_B = cp_B_1 - (cp_B_1 - cp_B_10) * log_factor
+                cp_C = cp_C_1 - (cp_C_1 - cp_C_10) * log_factor
+                cp_D = cp_D_1 - (cp_D_1 - cp_D_10) * log_factor
         
         # Store original values before funnelling adjustment
         base_cp_A = cp_A
@@ -481,9 +480,10 @@ def calculate_cpe(consider_funnelling=True):
                 cp_C = cp_C_with_funnel
         
         # Create result entries for this elevation
-        funnelling_note_A = f" (+{funnelling_increase_pct_A:.1f}% funnelling)" if has_funnelling and funnelling_increase_pct_A > 0 else ""
-        funnelling_note_B = f" (+{funnelling_increase_pct_B:.1f}% funnelling)" if has_funnelling and funnelling_increase_pct_B > 0 else ""
-        funnelling_note_C = f" (+{funnelling_increase_pct_C:.1f}% funnelling)" if has_funnelling and funnelling_increase_pct_C > 0 else ""
+        # Show funnelling note whenever funnelling is applied, regardless of percentage
+        funnelling_note_A = f" (+{funnelling_increase_pct_A:.1f}% funnelling)" if has_funnelling else ""
+        funnelling_note_B = f" (+{funnelling_increase_pct_B:.1f}% funnelling)" if has_funnelling else ""
+        funnelling_note_C = f" (+{funnelling_increase_pct_C:.1f}% funnelling)" if has_funnelling else ""
         
         # Add area note for EU calculations
         area_note = f" (Area: {loaded_area:.1f}m²)" if region != "United Kingdom" else ""
