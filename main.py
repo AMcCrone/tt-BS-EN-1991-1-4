@@ -32,19 +32,6 @@ if 'initialized' not in st.session_state:
 # Sidebar with usage instructions and educational content toggle
 st.sidebar.title("Help ℹ️")
 
-st.sidebar.markdown(
-    """
-    **How to Use This App:**
-    
-    - The app is laid out as one long, scrollable page.
-    - Provide all required inputs; the app will include only the information needed for the wind load calculation.
-    - Irrelevant details are automatically omitted.
-    - If you want additional explanations or examples without leaving the app, check **Show Educational Content** to enable in‐line tabs.
-    - When you need to print a clean version, uncheck **Show Educational Content** so only the calculation results and essential fields appear.
-    - To print, click the three vertical dots in the top‐right corner of your browser and select **Print**.
-    """
-)
-
 show_educational = st.sidebar.checkbox(
     "Show Educational Content", 
     value=st.session_state.get("show_educational", False)
@@ -104,7 +91,7 @@ st.markdown("""
 if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
     with st.expander("How to Use This App?", expanded=False):
-        st.markdownf'<div class="educational-content">{text_content.how_to}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="educational-content">{text_content.how_to}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Section 1: Project Information
