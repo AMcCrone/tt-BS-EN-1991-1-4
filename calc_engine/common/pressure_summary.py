@@ -65,7 +65,7 @@ def get_direction_factor(rotation_angle, use_direction_factor=False):
 def calculate_pressure_data(session_state, results_by_direction):
     """
     Calculate pressure data for all zones and directions.
-
+ 
     Only zones that are actually present in the elevation (based on the
     same d/e logic used for plotting) will be added to summary_data.
     zone_pressures_by_direction keeps all computed zones (A-D) for plotting.
