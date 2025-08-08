@@ -137,7 +137,7 @@ st.markdown("---")
 
 # Section 2: GEOMETRY AND TERRAIN
 
-st.header("Geometry)
+st.header("Geometry")
 
 # Create three equal-width columns for inputs
 col1, col2, col3 = st.columns(3)
@@ -185,7 +185,7 @@ building_fig = create_building_visualisation(
 )
 st.plotly_chart(building_fig, use_container_width=True)
 
-st.header("Terrain)
+st.header("Terrain")
 st.markdown("---")
 
 # Initialize session state with default values
