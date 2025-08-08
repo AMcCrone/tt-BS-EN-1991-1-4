@@ -101,6 +101,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+if st.session_state.get("show_educational", False):
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+    with st.expander("How to Use This App?", expanded=False):
+        st.markdown(f'<div class="educational-content">{text_content.how_to}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # Section 1: Project Information
 st.header("Project Information")
 col1, col2 = st.columns(2)
