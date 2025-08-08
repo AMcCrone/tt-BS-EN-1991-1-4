@@ -57,7 +57,7 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
     with adjustable offset and standoff so text and arrows don't overlap.
     """
     # Adjustable settings for dimension arrows
-    arrow_offset_factor = 0.25  # proportion of zone width from text to arrow start
+    arrow_offset_factor = 0.15  # proportion of zone width from text to arrow start
     arrow_standoff_px = 0      # extra pixel gap between zone boundary and arrowhead
     arrow_head_size = 0.6      # relative arrowhead size
     arrow_line_width = 1       # arrow line width
