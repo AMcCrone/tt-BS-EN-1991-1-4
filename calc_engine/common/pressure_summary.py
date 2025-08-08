@@ -66,11 +66,13 @@ def calculate_pressure_data(session_state, results_by_direction):
     """
     Calculate pressure data for all zones and directions.
 
-    Summary rows include only zones that are present on that elevation
-    (using the same d/e rules as plotting). In addition, Zone D is
-    always included in the summary for an elevation if a Zone D value
-    exists for that direction (i.e. if Zone D was in the cp_df).
-    
+    - Summary rows include only zones that are present on that elevation (using
+      the d/e rules used for plotting), but each zone appears only once per
+      elevation (no duplicate A/B/A entries).
+    - Zone D is always included in the summary for an elevation if a Zone D
+      value was computed for that direction (i.e., if Zone D was present in cp_df).
+    - zone_pressures_by_direction still stores computed A-D values for plotting.
+
     Returns:
         (summary_data, global_pressure_range, zone_pressures_by_direction)
     """
@@ -98,7 +100,11 @@ def calculate_pressure_data(session_state, results_by_direction):
     global_min_pressure = float("inf")
 
     def zones_for_elevation(width, height, crosswind_dim):
-        """Return list of zone names that appear on the elevation (A/B/C pattern)."""
+        """
+        Determine zone names present on an elevation using the same rules as plotting.
+        This function may return repeated zone names to reflect left/middle/right areas,
+        e.g. ['A','B','C','B','A'] — uniqueness will be enforced later for the summary.
+        """
         e = min(crosswind_dim, 2 * height)
         zone_names = []
 
@@ -154,7 +160,7 @@ def calculate_pressure_data(session_state, results_by_direction):
             # External pressure
             we = adjusted_qp * cp_e
 
-            # Choose cp,i used
+            # Choose cp,i used (same logic as before)
             cp_i_used = cp_i_positive if cp_e < 0 else cp_i_negative
 
             # Internal pressure and net
@@ -185,22 +191,27 @@ def calculate_pressure_data(session_state, results_by_direction):
                 'Wi_kPa': wi_kpa
             }
 
-        # 2) Determine which zones are present on this elevation
-        present_zone_names = zones_for_elevation(width, h, crosswind_dim)
+        # 2) Determine which zones are present on this elevation (may contain repeats)
+        present_zone_sequence = zones_for_elevation(width, h, crosswind_dim)
 
-        # Ensure Zone D is included in summary_rows for this direction if we computed it
-        if 'D' in zone_pressures_by_direction[direction] and 'D' not in present_zone_names:
-            present_zone_names.append('D')
+        # 3) Convert sequence to an ordered unique list (preserve first occurrence order)
+        unique_present_zones = []
+        for zn in present_zone_sequence:
+            if zn not in unique_present_zones:
+                unique_present_zones.append(zn)
 
-        # 3) Build summary rows only for zones we want to show (present_zone_names),
-        #    but only if we actually computed that zone's pressure above.
-        for zone in present_zone_names:
+        # Ensure Zone D is included in summary rows for this direction if we computed it
+        if 'D' in zone_pressures_by_direction[direction] and 'D' not in unique_present_zones:
+            unique_present_zones.append('D')
+
+        # 4) Build summary rows only for zones in unique_present_zones and only if
+        #    that zone was actually computed in the first pass.
+        for zone in unique_present_zones:
             zdata = zone_pressures_by_direction[direction].get(zone)
             if not zdata:
-                # If zone wasn't present in cp_df (no computation), skip
+                # If zone wasn't present in cp_df (no computation), skip it
                 continue
 
-            # Pull values prepared above
             we_kpa = zdata.get('We_kPa', 0.0)
             wi_kpa = zdata.get('Wi_kPa', 0.0)
             net_kpa = zdata.get('net_pressure_kpa', 0.0)
