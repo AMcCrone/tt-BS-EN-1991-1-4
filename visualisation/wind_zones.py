@@ -46,240 +46,157 @@ def plot_wind_zones(session_state):
     
     return NS_elevation_fig, EW_elevation_fig
 
+import plotly.graph_objects as go
+
 def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
     """
     Create a single elevation plot with wind zones.
-    
-    Parameters:
-    -----------
-    width : float
-        Width of elevation (d)
-    height : float
-        Height of elevation (h)
-    crosswind_dim : float
-        Crosswind dimension (b)
-    zone_colors : dict
-        Dictionary of colors for each zone
-    title : str
-        Plot title
-    
-    Returns:
-    --------
-    plotly.graph_objects.Figure
-        Figure with the elevation and wind zones
+    Width labels now have small white arrows pointing to zone boundaries.
     """
-    # Calculate parameter e according to Eurocode
     e = min(crosswind_dim, 2 * height)
-    
-    # Create figure
     fig = go.Figure()
-    
-    # Initialize zone boundaries and names
+
     zone_boundaries = []
     zone_names = []
-    
-    # Determine zones based on relation between e and d
-    if e < width:  # Three zones: A, B, C
-        # Check if zones would overlap
-        if width < 2*e:  # Zones would overlap in the middle
-            # If e/5 from both ends would overlap (very narrow building)
+
+    if e < width:
+        if width < 2*e:
             if width <= 2*(e/5):
-                # Single zone A for the whole width
                 zone_boundaries = [(0, width)]
                 zone_names = ['A']
             else:
-                # A-B-A pattern (simplified from A-B-B-A)
-                # Calculate width for zone B
                 b_width = width - 2*(e/5)
-                
                 zone_boundaries = [
-                    (0, e/5),                  # Left A
-                    (e/5, width - e/5),        # Middle B
-                    (width - e/5, width)       # Right A
+                    (0, e/5),
+                    (e/5, width - e/5),
+                    (width - e/5, width)
                 ]
                 zone_names = ['A', 'B', 'A']
         else:
-            if width - 2*e <= 0:  # If C zone would have zero or negative width
-                # Use A-B-A pattern instead
+            if width - 2*e <= 0:
                 zone_boundaries = [
-                    (0, e/5),                  # Left A
-                    (e/5, width - e/5),        # Middle B
-                    (width - e/5, width)       # Right A
+                    (0, e/5),
+                    (e/5, width - e/5),
+                    (width - e/5, width)
                 ]
                 zone_names = ['A', 'B', 'A']
             else:
-                # Standard case with A, B, C, B, A
                 zone_boundaries = [
-                    (0, e/5),                      # Left A
-                    (e/5, e),                      # Left B
-                    (e, width - e),                # Middle C
-                    (width - e, width - e/5),      # Right B
-                    (width - e/5, width)           # Right A
+                    (0, e/5),
+                    (e/5, e),
+                    (e, width - e),
+                    (width - e, width - e/5),
+                    (width - e/5, width)
                 ]
                 zone_names = ['A', 'B', 'C', 'B', 'A']
-    
-    elif e >= width and e < 5*width:  # Two zones: A, B
-        # For e >= d but < 5d, we have A zones on each end, B in middle
+    elif e >= width and e < 5*width:
         zone_a_width = e/5
-        
-        # If building is narrow compared to e, A zones might overlap
         if width <= 2*(e/5):
-            # Only zone A across entire width
             zone_boundaries = [(0, width)]
             zone_names = ['A']
         else:
-            # Normal case with A-B-A
             zone_boundaries = [
-                (0, e/5),              # Left A
-                (e/5, width-e/5),      # Middle B
-                (width-e/5, width)     # Right A
+                (0, e/5),
+                (e/5, width-e/5),
+                (width-e/5, width)
             ]
             zone_names = ['A', 'B', 'A']
-        
-    else:  # e >= 5*width, One zone: A
+    else:
         zone_boundaries = [(0, width)]
         zone_names = ['A']
-    
-    # Draw the zones
+
     for i, ((x0, x1), zone_name) in enumerate(zip(zone_boundaries, zone_names)):
         # Draw zone rectangle
         fig.add_shape(
             type="rect",
-            x0=x0,
-            y0=0,
-            x1=x1,
-            y1=height,
+            x0=x0, y0=0, x1=x1, y1=height,
             line=dict(width=1, color="black"),
             fillcolor=zone_colors[zone_name],
             opacity=0.7,
             layer="below"
         )
-        
-        # Add zone label
-        zone_width = x1 - x0
+
+        # Zone label
         fig.add_annotation(
-            x=(x0 + x1)/2,
-            y=height/2,
+            x=(x0 + x1)/2, y=height/2,
             text=zone_name,
             showarrow=False,
             font=dict(size=24, color="white")
         )
-        
-        # Add zone width as dimension with small arrows (only if zone is wide enough)
+
+        # Dimension style width label with arrows
+        zone_width = x1 - x0
         if zone_width > 0.05 * width:
-            dimension_y = height/4  # Keep at original position (25% of height)
-            arrow_length = min(zone_width * 0.05, width * 0.01)  # Smaller arrow length
-            
-            # Left arrow pointing to zone boundary
+            label_x = (x0 + x1) / 2
+            label_y = height / 4
+
+            # Text (no box)
             fig.add_annotation(
-                x=x0,
-                y=dimension_y,
-                ax=x0 + arrow_length,
-                ay=dimension_y,
-                arrowhead=2,
-                arrowsize=0.5,  # Much smaller arrowhead
-                arrowwidth=1,
-                arrowcolor="white",
-                showarrow=True,
-                text=""
-            )
-            
-            # Right arrow pointing to zone boundary
-            fig.add_annotation(
-                x=x1,
-                y=dimension_y,
-                ax=x1 - arrow_length,
-                ay=dimension_y,
-                arrowhead=2,
-                arrowsize=0.5,  # Much smaller arrowhead
-                arrowwidth=1,
-                arrowcolor="white",
-                showarrow=True,
-                text=""
-            )
-            
-            # Dimension text (no box)
-            fig.add_annotation(
-                x=(x0 + x1)/2,
-                y=dimension_y,
+                x=label_x, y=label_y,
                 text=f"{zone_width:.2f}",
                 showarrow=False,
                 font=dict(size=12, color="white")
             )
-    
-    # Add building outline
+
+            # Left arrow
+            fig.add_annotation(
+                x=x0, y=label_y,
+                ax=label_x - 0.05 * zone_width, ay=label_y,
+                xref="x", yref="y", axref="x", ayref="y",
+                showarrow=True,
+                arrowhead=2, arrowsize=0.6, arrowwidth=1, arrowcolor="white"
+            )
+            # Right arrow
+            fig.add_annotation(
+                x=x1, y=label_y,
+                ax=label_x + 0.05 * zone_width, ay=label_y,
+                xref="x", yref="y", axref="x", ayref="y",
+                showarrow=True,
+                arrowhead=2, arrowsize=0.6, arrowwidth=1, arrowcolor="white"
+            )
+
+    # Building outline
     fig.add_shape(
         type="rect",
-        x0=0,
-        y0=0,
-        x1=width,
-        y1=height,
+        x0=0, y0=0, x1=width, y1=height,
         line=dict(width=2, color="black"),
-        fillcolor=None,
-        opacity=1,
-        layer="above"
+        fillcolor=None, opacity=1, layer="above"
     )
-    
-    # Add ground line
+    # Ground line
     fig.add_shape(
         type="line",
-        x0=-0.1*width,
-        y0=0,
-        x1=1.1*width,
-        y1=0,
+        x0=-0.1*width, y0=0, x1=1.1*width, y1=0,
         line=dict(width=3, color="black"),
         layer="above"
     )
-    
-    # Add e and d dimensions as annotations
+    # e, d, h labels
     fig.add_annotation(
-        x=width/2,
-        y=-0.05*height,
-        text=f"d = {width:.2f}",
-        showarrow=False,
-        font=dict(size=12)
+        x=width/2, y=-0.05*height,
+        text=f"d = {width:.2f}", showarrow=False, font=dict(size=12)
     )
-    
     fig.add_annotation(
-        x=-0.05*width,
-        y=height/2,
-        text=f"h = {height:.2f}",
-        showarrow=False,
-        font=dict(size=12),
+        x=-0.05*width, y=height/2,
+        text=f"h = {height:.2f}", showarrow=False, font=dict(size=12),
         textangle=-90
     )
-    
     fig.add_annotation(
-        x=width/2,
-        y=1.05*height,
+        x=width/2, y=1.05*height,
         text=f"e = {e:.2f} ({'<' if e < width else '≥'} d)",
-        showarrow=False,
-        font=dict(size=12, color="black")
+        showarrow=False, font=dict(size=12, color="black")
     )
-    
-    # Update layout
+
     fig.update_layout(
         title=title,
         showlegend=False,
-        xaxis=dict(
-            showgrid=False,
-            zeroline=False,
-            showticklabels=False,
-            range=[-0.1*width, 1.1*width]
-        ),
-        yaxis=dict(
-            showgrid=False,
-            zeroline=False,
-            showticklabels=False,
-            range=[-0.1*height, 1.1*height],
-            scaleanchor="x",
-            scaleratio=1
-        ),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
+                   range=[-0.1*width, 1.1*width]),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
+                   range=[-0.1*height, 1.1*height], scaleanchor="x", scaleratio=1),
         margin=dict(l=50, r=50, t=80, b=50),
         plot_bgcolor="white",
         height=400
     )
-    
+
     return fig
 
 def integrate_with_streamlit(session_state):
