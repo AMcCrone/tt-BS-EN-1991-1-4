@@ -1,3 +1,17 @@
+how_to = """
+    
+    **How to Use This App:**
+    
+    - The app is laid out as one long, scrollable page.
+    - Provide all required inputs; the app will include only the information needed for the wind load calculation.
+    - Irrelevant details are automatically omitted.
+    - If you want additional explanations or examples without leaving the app, check **Show Educational Content** to enable in‐line tabs.
+    - When you need to print a clean version, uncheck **Show Educational Content** so only the calculation results and essential fields appear.
+    - To print, click the three vertical dots in the top‐right corner of your browser and select **Print**.
+    
+    """
+
+
 region_help = """
 
 By selecting **United Kindom**, this app follows the methodology set out in BS EN 1991-1-4 and the UK National Annex.
