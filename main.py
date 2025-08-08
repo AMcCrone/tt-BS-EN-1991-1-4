@@ -533,60 +533,6 @@ def peak_pressure_section():
         )
 peak_pressure_section()
 
-# --- Section 5: Wind Pressure Profile ---
-# st.markdown("---")
-# st.markdown('<div class="pagebreak"></div>', unsafe_allow_html=True)
-# st.write("## Wind Pressure Profile")
-
-# # Educational text on Wind Pressure Profile
-# if st.session_state.get("show_educational", False):
-#     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-    
-#     with st.expander("What Should The Wind Pressure Profile Look Like?", expanded=False):
-#         st.image("educational/images/Velocity_Profile.png", use_container_width=True)
-#         st.markdown(f'<div class="educational-content">{text_content.velocity_profile_help}</div>', unsafe_allow_html=True)
-#     st.markdown('</div>', unsafe_allow_html=True)
-
-# # Import the pressure profile functions
-# from calc_engine.common.shape_velocity_profile import (
-#     get_profile_case, 
-#     create_wind_pressure_plot, 
-#     create_pressure_table, 
-#     calculate_design_pressure
-# )
-
-# # Get the peak velocity pressure from previous calculations
-# qp_value = st.session_state.inputs.get("qp_value", 0.0)
-
-# # Get building height from session state
-# h = st.session_state.inputs.get("z", 10.0)
-# NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
-# EW_dimension = st.session_state.inputs.get("EW_dimension", 15.0)
-
-# # Create and display plots for both directions
-# NS_fig, NS_profile_case = create_wind_pressure_plot(h, NS_dimension, qp_value, "NS")
-# st.plotly_chart(NS_fig, use_container_width=True)
-
-# EW_fig, EW_profile_case = create_wind_pressure_plot(h, EW_dimension, qp_value, "EW")
-# st.plotly_chart(EW_fig, use_container_width=True)
-
-# # Display tables and design pressures for both directions
-# st.subheader("Wind Pressure Values at Key Heights")
-
-# # NS Direction
-# st.write("#### North-South Direction")
-# NS_df = create_pressure_table(h, NS_dimension, qp_value)
-# st.dataframe(NS_df, hide_index=True)
-# NS_design_pressure = calculate_design_pressure(h, NS_dimension, qp_value)
-# st.session_state.inputs["NS_design_pressure"] = NS_design_pressure
-
-# # EW Direction
-# st.write("#### East-West Direction")
-# EW_df = create_pressure_table(h, EW_dimension, qp_value)
-# st.dataframe(EW_df, hide_index=True)
-# EW_design_pressure = calculate_design_pressure(h, EW_dimension, qp_value)
-# st.session_state.inputs["EW_design_pressure"] = EW_design_pressure
-
 # Section 5: WIND ZONES
 st.markdown("---")
 st.header("Wind Zones")
