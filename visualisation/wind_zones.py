@@ -165,60 +165,46 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
             font=dict(size=24, color="white")
         )
         
-        # Add zone width as dimension with arrows (only if zone is wide enough)
+        # Add zone width as dimension with small arrows (only if zone is wide enough)
         if zone_width > 0.05 * width:
-            dimension_y = height * 0.8  # Position dimensions at 80% of height
-            arrow_length = min(zone_width * 0.1, width * 0.02)  # Adaptive arrow length
+            dimension_y = height/4  # Keep at original position (25% of height)
+            arrow_length = min(zone_width * 0.05, width * 0.01)  # Smaller arrow length
             
-            # Left arrow
+            # Left arrow pointing to zone boundary
             fig.add_annotation(
                 x=x0,
                 y=dimension_y,
                 ax=x0 + arrow_length,
                 ay=dimension_y,
                 arrowhead=2,
-                arrowsize=1.5,
-                arrowwidth=2,
+                arrowsize=0.5,  # Much smaller arrowhead
+                arrowwidth=1,
                 arrowcolor="white",
                 showarrow=True,
                 text=""
             )
             
-            # Right arrow
+            # Right arrow pointing to zone boundary
             fig.add_annotation(
                 x=x1,
                 y=dimension_y,
                 ax=x1 - arrow_length,
                 ay=dimension_y,
                 arrowhead=2,
-                arrowsize=1.5,
-                arrowwidth=2,
+                arrowsize=0.5,  # Much smaller arrowhead
+                arrowwidth=1,
                 arrowcolor="white",
                 showarrow=True,
                 text=""
             )
             
-            # Dimension line
-            fig.add_shape(
-                type="line",
-                x0=x0,
-                y0=dimension_y,
-                x1=x1,
-                y1=dimension_y,
-                line=dict(width=1, color="white"),
-                layer="above"
-            )
-            
-            # Dimension text
+            # Dimension text (no box)
             fig.add_annotation(
                 x=(x0 + x1)/2,
-                y=dimension_y + height * 0.03,  # Slightly above the dimension line
+                y=dimension_y,
                 text=f"{zone_width:.2f}",
                 showarrow=False,
-                font=dict(size=10, color="white"),
-                bgcolor="rgba(0,0,0,0.3)",
-                bordercolor="white",
-                borderwidth=1
+                font=dict(size=12, color="white")
             )
     
     # Add building outline
