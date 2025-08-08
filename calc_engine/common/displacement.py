@@ -1,36 +1,48 @@
 import streamlit as st
 
 def calculate_displacement_height(st):
-    """Calculate displacement height based on user inputs.
-    
-    Args:
-        st: Streamlit object
-        
-    Returns:
-        float: The calculated displacement height
     """
-    use_standard = st.checkbox("Use standard $h_{{dis}}$ = 15m", 
-                              help="In the absence of more accurate information, the obstruction height may be taken as h_ave = 15m for terrain category IV")
-    
-    if use_standard:
-        h_dis = 15.0
+    Calculate displacement height based on user inputs.
+
+    - h_ave defaults to 15 m.
+    - Uses h_ave to compute h_dis with the same piecewise rules.
+    - Returns only h_dis (as before).
+    """
+    col1, col2 = st.columns(2)
+    with col1:
+        x = st.number_input(
+            "Distance to other buildings (m)",
+            min_value=0.0,
+            value=float(st.session_state.inputs.get("x", 10.0)),
+            step=1.0,
+            format="%.1f"
+        )
+    with col2:
+        h_ave = st.number_input(
+            "Average obstruction height h_ave (m)",
+            min_value=0.1,
+            value=float(st.session_state.inputs.get("h_ave", 15.0)),
+            step=0.1,
+            format="%.1f"
+        )
+
+    # Save inputs for reuse elsewhere
+    st.session_state.inputs["x"] = float(x)
+    st.session_state.inputs["h_ave"] = float(h_ave)
+
+    # Reference height
+    z = float(st.session_state.inputs.get("z", 30.0))
+
+    # Calculate h_dis from h_ave
+    if x <= 2.0 * h_ave:
+        h_dis = min(0.8 * h_ave, 0.6 * z)
+    elif x < 6.0 * h_ave:
+        h_dis = min(1.2 * h_ave - 0.2 * x, 0.6 * z)
     else:
-        col1, col2 = st.columns(2)
-        with col1:
-            x = st.number_input("Distance to other buildings (m)", value=10.0, min_value=0.0)
-        with col2:
-            h_ave = st.number_input("Average height h_ave (m)", value=5.0, min_value=0.1)
-        
-        h = st.session_state.inputs.get("z", 30.0)
-        
-        if x <= 2 * h_ave:
-            h_dis = min(0.8 * h_ave, 0.6 * h)
-        elif x < 6 * h_ave:
-            h_dis = min(1.2 * h_ave - 0.2 * x, 0.6 * h)
-        else:
-            h_dis = 0
-    
-    return h_dis
+        h_dis = 0.0
+
+    return float(h_dis)
+
 
 def display_displacement_results(st, h_dis):
     """Display displacement height calculation results.
