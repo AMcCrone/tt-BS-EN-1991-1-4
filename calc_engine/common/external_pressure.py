@@ -256,15 +256,24 @@ def calculate_cpe(consider_funnelling=True):
     Calculate external pressure coefficients (cp,e) for building elevations (N, E, S, W)
     considering funnelling effects for all wind directions if enabled
     
+    For UK: Uses single Cpe values
+    For EU: Interpolates between Cpe,10 and Cpe,1 based on loaded area
+    
     Parameters:
     - consider_funnelling: Boolean to enable/disable funnelling effects
     
     Returns:
     - Dictionary of DataFrames of cp,e values for different elevations
     """
+    import numpy as np
+    
     h = st.session_state.inputs.get("z", 10.0)  # Building height
     NS_dimension = st.session_state.inputs.get("NS_dimension", 20.0)
     EW_dimension = st.session_state.inputs.get("EW_dimension", 40.0)
+    region = st.session_state.inputs.get("region", "United Kingdom")
+    
+    # Get loaded area for EU calculations
+    loaded_area = st.session_state.inputs.get("loaded_area", 10.0) if region != "United Kingdom" else 10.0
     
     # Create results dictionary for each elevation
     elevations = ["North", "South", "East", "West"]
@@ -283,37 +292,122 @@ def calculate_cpe(consider_funnelling=True):
         # Calculate h/d ratio
         h_d_ratio = h / d
         
-        # Interpolate cp,e values based on h/d ratio
-        # Values from BS EN 1991-1-4 Table 7.1
-        h_d_points = [0.25, 1.0, 5.0]
-        
-        # Base values for each zone at different h/d ratios
-        zone_A_values = [-1.2, -1.2, -1.2]
-        zone_B_values = [-0.8, -0.8, -0.8]
-        zone_C_values = [-0.5, -0.5, -0.5]
-        zone_D_values = [0.7, 0.8, 0.8]  # Updated for h/d <= 0.25, D = 0.7
-        
-        # Linear interpolation for h/d ratio
-        if h_d_ratio <= 0.25:
-            cp_A = zone_A_values[0]
-            cp_B = zone_B_values[0]
-            cp_C = zone_C_values[0]
-            cp_D = zone_D_values[0]  # 0.7 when h/d <= 0.25
-        elif h_d_ratio >= 5.0:
-            cp_A = zone_A_values[2]
-            cp_B = zone_B_values[2]
-            cp_C = zone_C_values[2]
-            cp_D = zone_D_values[2]
+        # Define coefficient values based on region
+        if region == "United Kingdom":
+            # UK values - single Cpe values (original logic)
+            h_d_points = [0.25, 1.0, 5.0]
+            zone_A_values = [-1.2, -1.2, -1.2]
+            zone_B_values = [-0.8, -0.8, -0.8]
+            zone_C_values = [-0.5, -0.5, -0.5]
+            zone_D_values = [0.7, 0.8, 0.8]
         else:
-            # Interpolate between known points
-            for i in range(len(h_d_points)-1):
-                if h_d_points[i] <= h_d_ratio <= h_d_points[i+1]:
-                    factor = (h_d_ratio - h_d_points[i]) / (h_d_points[i+1] - h_d_points[i])
-                    cp_A = zone_A_values[i] + factor * (zone_A_values[i+1] - zone_A_values[i])
-                    cp_B = zone_B_values[i] + factor * (zone_B_values[i+1] - zone_B_values[i])
-                    cp_C = zone_C_values[i] + factor * (zone_C_values[i+1] - zone_C_values[i])
-                    cp_D = zone_D_values[i] + factor * (zone_D_values[i+1] - zone_D_values[i])
-                    break
+            # EU values - separate Cpe,10 and Cpe,1 values from your table
+            h_d_points = [0.25, 1.0, 5.0]
+            
+            # Cpe,10 values (for areas >= 10m²)
+            zone_A_cpe10 = [-1.2, -1.2, -1.2]
+            zone_B_cpe10 = [-0.8, -0.8, -0.8]
+            zone_C_cpe10 = [-0.5, -0.5, -0.5]
+            zone_D_cpe10 = [0.7, 0.8, 0.8]
+            
+            # Cpe,1 values (for areas <= 1m²)
+            zone_A_cpe1 = [-1.4, -1.4, -1.4]
+            zone_B_cpe1 = [-1.1, -1.1, -1.1]
+            zone_C_cpe1 = [-0.5, -0.5, -0.5]  # Same as Cpe,10 for zone C
+            zone_D_cpe1 = [1.0, 1.0, 1.0]
+        
+        # Calculate base coefficients based on h/d ratio
+        if region == "United Kingdom":
+            # UK calculation (original logic)
+            if h_d_ratio <= 0.25:
+                cp_A = zone_A_values[0]
+                cp_B = zone_B_values[0]
+                cp_C = zone_C_values[0]
+                cp_D = zone_D_values[0]
+            elif h_d_ratio >= 5.0:
+                cp_A = zone_A_values[2]
+                cp_B = zone_B_values[2]
+                cp_C = zone_C_values[2]
+                cp_D = zone_D_values[2]
+            else:
+                # Interpolate between known points
+                for i in range(len(h_d_points)-1):
+                    if h_d_points[i] <= h_d_ratio <= h_d_points[i+1]:
+                        factor = (h_d_ratio - h_d_points[i]) / (h_d_points[i+1] - h_d_points[i])
+                        cp_A = zone_A_values[i] + factor * (zone_A_values[i+1] - zone_A_values[i])
+                        cp_B = zone_B_values[i] + factor * (zone_B_values[i+1] - zone_B_values[i])
+                        cp_C = zone_C_values[i] + factor * (zone_C_values[i+1] - zone_C_values[i])
+                        cp_D = zone_D_values[i] + factor * (zone_D_values[i+1] - zone_D_values[i])
+                        break
+        else:
+            # EU calculation - interpolate based on h/d ratio first, then on loaded area
+            
+            # First interpolate Cpe,10 values based on h/d ratio
+            if h_d_ratio <= 0.25:
+                cp_A_10 = zone_A_cpe10[0]
+                cp_B_10 = zone_B_cpe10[0]
+                cp_C_10 = zone_C_cpe10[0]
+                cp_D_10 = zone_D_cpe10[0]
+            elif h_d_ratio >= 5.0:
+                cp_A_10 = zone_A_cpe10[2]
+                cp_B_10 = zone_B_cpe10[2]
+                cp_C_10 = zone_C_cpe10[2]
+                cp_D_10 = zone_D_cpe10[2]
+            else:
+                # Interpolate between known points for Cpe,10
+                for i in range(len(h_d_points)-1):
+                    if h_d_points[i] <= h_d_ratio <= h_d_points[i+1]:
+                        factor = (h_d_ratio - h_d_points[i]) / (h_d_points[i+1] - h_d_points[i])
+                        cp_A_10 = zone_A_cpe10[i] + factor * (zone_A_cpe10[i+1] - zone_A_cpe10[i])
+                        cp_B_10 = zone_B_cpe10[i] + factor * (zone_B_cpe10[i+1] - zone_B_cpe10[i])
+                        cp_C_10 = zone_C_cpe10[i] + factor * (zone_C_cpe10[i+1] - zone_C_cpe10[i])
+                        cp_D_10 = zone_D_cpe10[i] + factor * (zone_D_cpe10[i+1] - zone_D_cpe10[i])
+                        break
+            
+            # Then interpolate Cpe,1 values based on h/d ratio
+            if h_d_ratio <= 0.25:
+                cp_A_1 = zone_A_cpe1[0]
+                cp_B_1 = zone_B_cpe1[0]
+                cp_C_1 = zone_C_cpe1[0]
+                cp_D_1 = zone_D_cpe1[0]
+            elif h_d_ratio >= 5.0:
+                cp_A_1 = zone_A_cpe1[2]
+                cp_B_1 = zone_B_cpe1[2]
+                cp_C_1 = zone_C_cpe1[2]
+                cp_D_1 = zone_D_cpe1[2]
+            else:
+                # Interpolate between known points for Cpe,1
+                for i in range(len(h_d_points)-1):
+                    if h_d_points[i] <= h_d_ratio <= h_d_points[i+1]:
+                        factor = (h_d_ratio - h_d_points[i]) / (h_d_points[i+1] - h_d_points[i])
+                        cp_A_1 = zone_A_cpe1[i] + factor * (zone_A_cpe1[i+1] - zone_A_cpe1[i])
+                        cp_B_1 = zone_B_cpe1[i] + factor * (zone_B_cpe1[i+1] - zone_B_cpe1[i])
+                        cp_C_1 = zone_C_cpe1[i] + factor * (zone_C_cpe1[i+1] - zone_C_cpe1[i])
+                        cp_D_1 = zone_D_cpe1[i] + factor * (zone_D_cpe1[i+1] - zone_D_cpe1[i])
+                        break
+            
+            # Now interpolate between Cpe,1 and Cpe,10 based on loaded area
+            if loaded_area <= 1.0:
+                # Use Cpe,1 values
+                cp_A = cp_A_1
+                cp_B = cp_B_1
+                cp_C = cp_C_1
+                cp_D = cp_D_1
+            elif loaded_area >= 10.0:
+                # Use Cpe,10 values
+                cp_A = cp_A_10
+                cp_B = cp_B_10
+                cp_C = cp_C_10
+                cp_D = cp_D_10
+            else:
+                # Linear interpolation between Cpe,1 and Cpe,10
+                # Area factor: 0 at 1m², 1 at 10m²
+                area_factor = (loaded_area - 1.0) / (10.0 - 1.0)
+                
+                cp_A = cp_A_1 + area_factor * (cp_A_10 - cp_A_1)
+                cp_B = cp_B_1 + area_factor * (cp_B_10 - cp_B_1)
+                cp_C = cp_C_1 + area_factor * (cp_C_10 - cp_C_1)
+                cp_D = cp_D_1 + area_factor * (cp_D_10 - cp_D_1)
         
         # Store original values before funnelling adjustment
         base_cp_A = cp_A
@@ -350,8 +444,6 @@ def calculate_cpe(consider_funnelling=True):
             
             if gap <= e/2:
                 # Interpolate between e/4 and e/2 (increasing effect)
-                # At e/4: original values
-                # At e/2: maximum funnelling values
                 factor = (gap - e/4) / (e/4)  # 0 at e/4, 1 at e/2
                 
                 # Calculate with funnelling
@@ -359,7 +451,7 @@ def calculate_cpe(consider_funnelling=True):
                 cp_B_with_funnel = base_cp_B + factor * (max_funnel_cp_B - base_cp_B)
                 cp_C_with_funnel = base_cp_C + factor * (max_funnel_cp_C - base_cp_C)
                 
-                # Calculate percentage increase (negative values, so using absolute difference)
+                # Calculate percentage increase
                 funnelling_increase_pct_A = (abs(cp_A_with_funnel) - abs(base_cp_A)) / abs(base_cp_A) * 100
                 funnelling_increase_pct_B = (abs(cp_B_with_funnel) - abs(base_cp_B)) / abs(base_cp_B) * 100
                 funnelling_increase_pct_C = (abs(cp_C_with_funnel) - abs(base_cp_C)) / abs(base_cp_C) * 100
@@ -371,8 +463,6 @@ def calculate_cpe(consider_funnelling=True):
                 
             else:
                 # Interpolate between e/2 and e (decreasing effect)
-                # At e/2: maximum funnelling values
-                # At e: original values
                 factor = (e - gap) / (e/2)  # 1 at e/2, 0 at e
                 
                 # Calculate with funnelling
@@ -380,7 +470,7 @@ def calculate_cpe(consider_funnelling=True):
                 cp_B_with_funnel = base_cp_B + factor * (max_funnel_cp_B - base_cp_B)
                 cp_C_with_funnel = base_cp_C + factor * (max_funnel_cp_C - base_cp_C)
                 
-                # Calculate percentage increase (negative values, so using absolute difference)
+                # Calculate percentage increase
                 funnelling_increase_pct_A = (abs(cp_A_with_funnel) - abs(base_cp_A)) / abs(base_cp_A) * 100
                 funnelling_increase_pct_B = (abs(cp_B_with_funnel) - abs(base_cp_B)) / abs(base_cp_B) * 100
                 funnelling_increase_pct_C = (abs(cp_C_with_funnel) - abs(base_cp_C)) / abs(base_cp_C) * 100
@@ -395,11 +485,14 @@ def calculate_cpe(consider_funnelling=True):
         funnelling_note_B = f" (+{funnelling_increase_pct_B:.1f}% funnelling)" if has_funnelling and funnelling_increase_pct_B > 0 else ""
         funnelling_note_C = f" (+{funnelling_increase_pct_C:.1f}% funnelling)" if has_funnelling and funnelling_increase_pct_C > 0 else ""
         
+        # Add area note for EU calculations
+        area_note = f" (Area: {loaded_area:.1f}m²)" if region != "United Kingdom" else ""
+        
         elevation_results = [
-            {"Zone": "A", "cp,e": cp_A, "Description": f"Side Suction (Edge){funnelling_note_A}"},
-            {"Zone": "B", "cp,e": cp_B, "Description": f"Side Suction{funnelling_note_B}"},
-            {"Zone": "C", "cp,e": cp_C, "Description": f"Side Suction (Center){funnelling_note_C}"},
-            {"Zone": "D", "cp,e": cp_D, "Description": "Windward Face"}
+            {"Zone": "A", "cp,e": cp_A, "Description": f"Side Suction (Edge){funnelling_note_A}{area_note}"},
+            {"Zone": "B", "cp,e": cp_B, "Description": f"Side Suction{funnelling_note_B}{area_note}"},
+            {"Zone": "C", "cp,e": cp_C, "Description": f"Side Suction (Center){funnelling_note_C}{area_note}"},
+            {"Zone": "D", "cp,e": cp_D, "Description": f"Windward Face{area_note}"}
         ]
         
         # Store results for this elevation in the dictionary
