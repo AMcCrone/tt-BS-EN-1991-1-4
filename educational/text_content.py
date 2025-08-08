@@ -1,6 +1,4 @@
 how_to = """
-    
-**How to Use This App:**
 
 - The app is laid out as one long, scrollable page.
 - Provide all required inputs; the app will include only the information needed for the wind load calculation.
