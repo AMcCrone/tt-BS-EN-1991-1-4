@@ -8,7 +8,7 @@ def get_direction_factor(rotation_angle, use_direction_factor=False):
     """
     Get the directional factor (c_dir) based on the building rotation angle.
     
-    Parameters:kjlkji
+    Parameters:
     -----------
     rotation_angle : int
         Building rotation angle in degrees clockwise from north
@@ -674,8 +674,8 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     direction_labels = {
         "North": {"pos": [center_x, -offset_factor, 0], "text": "N"},
         "South": {"pos": [center_x, EW_dimension + offset_factor, 0], "text": "S"},
-        "East":  {"pos": [NS_dimension + offset_factor, center_y, 0], "text": "E"},
-        "West":  {"pos": [-offset_factor, center_y, 0], "text": "W"}
+        "East":  {"pos": [-offset_factor, center_y, 0], "text": "E"},
+        "West":  {"pos": [NS_dimension + offset_factor, center_y, 0], "text": "W"}
     }
 
     # Add direction labels
