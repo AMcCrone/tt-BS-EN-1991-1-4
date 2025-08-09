@@ -233,7 +233,7 @@ map_help = """
 
 inset_zone_help = """
 
-### Inset Storey Zone Rules (PD 6688-1-4 §3.3.2)
+**Inset Storey Zone Rules (PD 6688-1-4 §3.3.2)**
 
 When calculating external pressure coefficients for walls of **inset storeys**:
 
