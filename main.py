@@ -704,7 +704,7 @@ else:
     st.session_state.inputs["building_rotation"] = 0
     st.write("Wind directional factors are only available for UK region.")
 
-# Results Summary section (your existing code)
+# Results Summary section
 st.markdown("---")
 st.markdown('<div class="pagebreak"></div>', unsafe_allow_html=True)
 st.header("Net Pressures")
@@ -732,3 +732,7 @@ if st.session_state.get("show_educational", False):
     # Call the create_wind_visualization_ui function
     from calc_engine.common.pressure_summary import create_wind_visualization_ui
     create_wind_visualization_ui(st.session_state, results_by_direction)
+
+# Results Summary section
+st.markdown("---")
+st.header("Conclusion")
