@@ -568,7 +568,7 @@ if add_inset:
             "North offset (m)",
             min_value=0.0,
             max_value=1000.0,
-            value=float(st.session_state.inputs.get("north_offset", 5.0)),
+            value=float(st.session_state.inputs.get("north_offset", 0.0)),
             step=0.1,
             key="ui_north_offset"
         )
@@ -579,7 +579,7 @@ if add_inset:
             "South offset (m)",
             min_value=0.0,
             max_value=1000.0,
-            value=float(st.session_state.inputs.get("south_offset", 0.0)),
+            value=float(st.session_state.inputs.get("south_offset", 4.0)),
             step=0.1,
             key="ui_south_offset"
         )
@@ -590,7 +590,7 @@ if add_inset:
             "East offset (m)",
             min_value=0.0,
             max_value=1000.0,
-            value=float(st.session_state.inputs.get("east_offset", 5.0)),
+            value=float(st.session_state.inputs.get("east_offset", 0.0)),
             step=0.1,
             key="ui_east_offset"
         )
@@ -601,7 +601,7 @@ if add_inset:
             "West offset (m)",
             min_value=0.0,
             max_value=1000.0,
-            value=float(st.session_state.inputs.get("west_offset", 0.0)),
+            value=float(st.session_state.inputs.get("west_offset", 4.0)),
             step=0.1,
             key="ui_west_offset"
         )
@@ -614,7 +614,7 @@ if add_inset:
             "Inset height H1 (m)",
             min_value=0.0,
             max_value=500.0,
-            value=float(st.session_state.inputs.get("inset_height", 4.0)),
+            value=float(st.session_state.inputs.get("inset_height", 10.0)),
             step=0.1,
             key="ui_inset_height"
         )
