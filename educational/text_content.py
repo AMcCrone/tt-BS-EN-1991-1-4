@@ -231,6 +231,29 @@ map_help = """
 
 """
 
+inset_zone_help = """
+
+### Inset Storey Zone Rules (PD 6688-1-4 §3.3.2)
+
+When calculating external pressure coefficients for walls of **inset storeys**:
+
+1. **Inset distance ≥ 0.2·e₁ (from upwind edge of lower storey)**  
+   - Use standard façade zones **A–C** based on the proportions of the **upper storey only**.  
+   - The reference height *zₑ* is the actual height of the top of the inset wall above ground.  
+   - No **Zone E** is present.
+
+2. **Inset distance < 0.2·e₁ or Flush with lower storey**  
+   - Apply the same A–C zoning as above for the upper storey.  
+   - **Additionally**, include **Zone E** at the top of the **lower storey**.  
+     - Zone E has a fixed external pressure coefficient: **Cₚₑ = –2.0** (suction).  
+     - The reference height for Zone E is the top of the lower storey.  
+     - Use the **greater suction** (more negative) value between Zone E and Zone A.
+
+**Note:** *e₁* is the scaling length for the upper storey, as defined in the standard.
+
+
+"""
+
 wind_zone_help = """
 
 Figure 7.5 from BS EN 1991-1-4.
