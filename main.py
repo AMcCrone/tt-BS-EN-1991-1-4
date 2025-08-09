@@ -537,80 +537,110 @@ peak_pressure_section()
 st.markdown("---")
 st.write("### Inset geometry (upper storey)")
 
-# Offsets and inset height: use 3 columns for offsets and a separate one for height
-c1, c2, c3, c4 = st.columns([1,1,1,1])
+# Checkbox to opt into adding an inset zone
+add_inset = st.checkbox(
+    "Add inset zone (upper storey)",
+    value=bool(st.session_state.inputs.get("inset_enabled", True)),
+    key="ui_add_inset",
+    help="Enable to add an upper-storey inset zone; uncheck to visualise the base building only."
+)
+# persist the checkbox state
+st.session_state.inputs["inset_enabled"] = bool(add_inset)
 
-with c1:
-    north_offset = st.number_input(
-        "North offset (m)",
-        min_value=0.0,
-        max_value=1000.0,
-        value=float(st.session_state.inputs.get("north_offset", 0.0)),
-        step=0.1,
-        key="ui_north_offset"
-    )
-    st.session_state.inputs["north_offset"] = float(north_offset)
+# If inset is enabled show the offset inputs and height controls (three columns + height)
+if add_inset:
+    c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
 
-with c2:
-    south_offset = st.number_input(
-        "South offset (m)",
-        min_value=0.0,
-        max_value=1000.0,
-        value=float(st.session_state.inputs.get("south_offset", 5.0)),
-        step=0.1,
-        key="ui_south_offset"
-    )
-    st.session_state.inputs["south_offset"] = float(south_offset)
+    with c1:
+        north_offset = st.number_input(
+            "North offset (m)",
+            min_value=0.0,
+            max_value=1000.0,
+            value=float(st.session_state.inputs.get("north_offset", 0.0)),
+            step=0.1,
+            key="ui_north_offset"
+        )
+        st.session_state.inputs["north_offset"] = float(north_offset)
 
-with c3:
-    east_offset = st.number_input(
-        "East offset (m)",
-        min_value=0.0,
-        max_value=1000.0,
-        value=float(st.session_state.inputs.get("east_offset", 5.0)),
-        step=0.1,
-        key="ui_east_offset"
-    )
-    st.session_state.inputs["east_offset"] = float(east_offset)
+    with c2:
+        south_offset = st.number_input(
+            "South offset (m)",
+            min_value=0.0,
+            max_value=1000.0,
+            value=float(st.session_state.inputs.get("south_offset", 0.0)),
+            step=0.1,
+            key="ui_south_offset"
+        )
+        st.session_state.inputs["south_offset"] = float(south_offset)
 
-with c4:
-    west_offset = st.number_input(
-        "West offset (m)",
-        min_value=0.0,
-        max_value=1000.0,
-        value=float(st.session_state.inputs.get("west_offset", 0.0)),
-        step=0.1,
-        key="ui_west_offset"
-    )
-    st.session_state.inputs["west_offset"] = float(west_offset)
+    with c3:
+        east_offset = st.number_input(
+            "East offset (m)",
+            min_value=0.0,
+            max_value=1000.0,
+            value=float(st.session_state.inputs.get("east_offset", 0.0)),
+            step=0.1,
+            key="ui_east_offset"
+        )
+        st.session_state.inputs["east_offset"] = float(east_offset)
 
-# Inset (upper storey) vertical height
-inset_col1, inset_col2 = st.columns([1,2])
-with inset_col1:
-    inset_height = st.number_input(
-        "Inset height H1 (m)",
-        min_value=0.0,
-        max_value=500.0,
-        value=float(st.session_state.inputs.get("inset_height", 4.0)),
-        step=0.1,
-        key="ui_inset_height"
-    )
-    st.session_state.inputs["inset_height"] = float(inset_height)
+    with c4:
+        west_offset = st.number_input(
+            "West offset (m)",
+            min_value=0.0,
+            max_value=1000.0,
+            value=float(st.session_state.inputs.get("west_offset", 0.0)),
+            step=0.1,
+            key="ui_west_offset"
+        )
+        st.session_state.inputs["west_offset"] = float(west_offset)
 
+    # Inset (upper storey) vertical height
+    inset_col1, inset_col2 = st.columns([1, 2])
+    with inset_col1:
+        inset_height = st.number_input(
+            "Inset height H1 (m)",
+            min_value=0.0,
+            max_value=500.0,
+            value=float(st.session_state.inputs.get("inset_height", 0.0)),
+            step=0.1,
+            key="ui_inset_height"
+        )
+        st.session_state.inputs["inset_height"] = float(inset_height)
+
+    # Use the stored values (the inset is enabled)
+    call_inset_height = float(st.session_state.inputs.get("inset_height", 0.0))
+    call_north_offset = float(st.session_state.inputs.get("north_offset", 0.0))
+    call_south_offset = float(st.session_state.inputs.get("south_offset", 0.0))
+    call_east_offset  = float(st.session_state.inputs.get("east_offset", 0.0))
+    call_west_offset  = float(st.session_state.inputs.get("west_offset", 0.0))
+
+else:
+    # Inset disabled — do not overwrite stored values, but call the visualiser with zeroed inset parameters
+    st.info("Inset zone disabled — showing base building only.")
+    call_inset_height = 0.0
+    call_north_offset = 0.0
+    call_south_offset = 0.0
+    call_east_offset  = 0.0
+    call_west_offset  = 0.0
+
+# Call the visualiser (works with H1=0 / zero offsets to show base roof only)
 results, fig = detect_zone_E_and_visualise(
     st.session_state,
-    inset_height=st.session_state.inputs["inset_height"],
-    north_offset=st.session_state.inputs["north_offset"],
-    south_offset=st.session_state.inputs["south_offset"],
-    east_offset=st.session_state.inputs["east_offset"],
-    west_offset=st.session_state.inputs["west_offset"],
+    inset_height=call_inset_height,
+    north_offset=call_north_offset,
+    south_offset=call_south_offset,
+    east_offset=call_east_offset,
+    west_offset=call_west_offset,
 )
 
+# store + display
 st.session_state["inset_results"] = results
 st.session_state["inset_fig"] = fig
 
 st.plotly_chart(fig, use_container_width=True)
 st.table(pd.DataFrame(results).T)
+
     
 
 # Section 5: WIND ZONES
