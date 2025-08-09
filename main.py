@@ -535,14 +535,13 @@ def peak_pressure_section():
 peak_pressure_section()
 
 st.markdown("---")
-st.write("### Inset Storey)")
+st.write("### Inset Storey")
 
 # Checkbox to opt into adding an inset zone
 add_inset = st.checkbox(
     "Add inset zone (upper storey)",
-    value=bool(st.session_state.inputs.get("inset_enabled", True)),
+    value=bool(st.session_state.inputs.get("inset_enabled", False)),
     key="ui_add_inset",
-    help="Enable to add an upper-storey inset zone; uncheck to hide inset inputs and visualisation."
 )
 # persist the checkbox state
 st.session_state.inputs["inset_enabled"] = bool(add_inset)
@@ -556,7 +555,7 @@ if add_inset:
             "North offset (m)",
             min_value=0.0,
             max_value=1000.0,
-            value=float(st.session_state.inputs.get("north_offset", 0.0)),
+            value=float(st.session_state.inputs.get("north_offset", 5.0)),
             step=0.1,
             key="ui_north_offset"
         )
@@ -578,7 +577,7 @@ if add_inset:
             "East offset (m)",
             min_value=0.0,
             max_value=1000.0,
-            value=float(st.session_state.inputs.get("east_offset", 0.0)),
+            value=float(st.session_state.inputs.get("east_offset", 5.0)),
             step=0.1,
             key="ui_east_offset"
         )
@@ -602,7 +601,7 @@ if add_inset:
             "Inset height H1 (m)",
             min_value=0.0,
             max_value=500.0,
-            value=float(st.session_state.inputs.get("inset_height", 0.0)),
+            value=float(st.session_state.inputs.get("inset_height", 4.0)),
             step=0.1,
             key="ui_inset_height"
         )
@@ -611,8 +610,8 @@ if add_inset:
     # Call the visualiser with the stored values
     call_inset_height = float(st.session_state.inputs.get("inset_height", 4.0))
     call_north_offset = float(st.session_state.inputs.get("north_offset", 5.0))
-    call_south_offset = float(st.session_state.inputs.get("south_offset", 5.0))
-    call_east_offset  = float(st.session_state.inputs.get("east_offset", 0.0))
+    call_south_offset = float(st.session_state.inputs.get("south_offset", 0.0))
+    call_east_offset  = float(st.session_state.inputs.get("east_offset", 5.0))
     call_west_offset  = float(st.session_state.inputs.get("west_offset", 0.0))
 
     results, fig = detect_zone_E_and_visualise(
@@ -635,17 +634,7 @@ else:
     # Inset disabled: do NOT show inputs or visualisation.
     # Preserve previously-entered numeric values in session_state.inputs, but do not call the visualiser.
     st.session_state["inset_results"] = None
-    st.session_state["inset_fig"] = None
-
-    # Friendly message in place of the inputs / 3D view
-    st.markdown(
-        """
-        ### No inset storeys configured
-        The inset zone (upper storey) is currently disabled.  
-        Check **Add inset zone (upper storey)** to add an upper-storey inset and display its visualisation and results.
-        """,
-        unsafe_allow_html=True
-    )    
+    st.session_state["inset_fig"] = None   
 
 # Section 5: WIND ZONES
 st.markdown("---")
