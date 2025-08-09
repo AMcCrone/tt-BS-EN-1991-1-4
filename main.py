@@ -535,20 +535,20 @@ def peak_pressure_section():
 peak_pressure_section()
 
 st.markdown("---")
-st.write("### Inset geometry (upper storey)")
+st.write("### Inset Storey)")
 
 # Checkbox to opt into adding an inset zone
 add_inset = st.checkbox(
     "Add inset zone (upper storey)",
     value=bool(st.session_state.inputs.get("inset_enabled", True)),
     key="ui_add_inset",
-    help="Enable to add an upper-storey inset zone; uncheck to visualise the base building only."
+    help="Enable to add an upper-storey inset zone; uncheck to hide inset inputs and visualisation."
 )
 # persist the checkbox state
 st.session_state.inputs["inset_enabled"] = bool(add_inset)
 
-# If inset is enabled show the offset inputs and height controls (three columns + height)
 if add_inset:
+    # Show inputs when inset is enabled
     c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
 
     with c1:
@@ -608,40 +608,44 @@ if add_inset:
         )
         st.session_state.inputs["inset_height"] = float(inset_height)
 
-    # Use the stored values (the inset is enabled)
-    call_inset_height = float(st.session_state.inputs.get("inset_height", 0.0))
-    call_north_offset = float(st.session_state.inputs.get("north_offset", 0.0))
-    call_south_offset = float(st.session_state.inputs.get("south_offset", 0.0))
+    # Call the visualiser with the stored values
+    call_inset_height = float(st.session_state.inputs.get("inset_height", 4.0))
+    call_north_offset = float(st.session_state.inputs.get("north_offset", 5.0))
+    call_south_offset = float(st.session_state.inputs.get("south_offset", 5.0))
     call_east_offset  = float(st.session_state.inputs.get("east_offset", 0.0))
     call_west_offset  = float(st.session_state.inputs.get("west_offset", 0.0))
 
+    results, fig = detect_zone_E_and_visualise(
+        st.session_state,
+        inset_height=call_inset_height,
+        north_offset=call_north_offset,
+        south_offset=call_south_offset,
+        east_offset=call_east_offset,
+        west_offset=call_west_offset,
+    )
+
+    # store + display
+    st.session_state["inset_results"] = results
+    st.session_state["inset_fig"] = fig
+
+    st.plotly_chart(fig, use_container_width=True)
+    st.table(pd.DataFrame(results).T)
+
 else:
-    # Inset disabled — do not overwrite stored values, but call the visualiser with zeroed inset parameters
-    st.info("Inset zone disabled — showing base building only.")
-    call_inset_height = 0.0
-    call_north_offset = 0.0
-    call_south_offset = 0.0
-    call_east_offset  = 0.0
-    call_west_offset  = 0.0
+    # Inset disabled: do NOT show inputs or visualisation.
+    # Preserve previously-entered numeric values in session_state.inputs, but do not call the visualiser.
+    st.session_state["inset_results"] = None
+    st.session_state["inset_fig"] = None
 
-# Call the visualiser (works with H1=0 / zero offsets to show base roof only)
-results, fig = detect_zone_E_and_visualise(
-    st.session_state,
-    inset_height=call_inset_height,
-    north_offset=call_north_offset,
-    south_offset=call_south_offset,
-    east_offset=call_east_offset,
-    west_offset=call_west_offset,
-)
-
-# store + display
-st.session_state["inset_results"] = results
-st.session_state["inset_fig"] = fig
-
-st.plotly_chart(fig, use_container_width=True)
-st.table(pd.DataFrame(results).T)
-
-    
+    # Friendly message in place of the inputs / 3D view
+    st.markdown(
+        """
+        ### No inset storeys configured
+        The inset zone (upper storey) is currently disabled.  
+        Check **Add inset zone (upper storey)** to add an upper-storey inset and display its visualisation and results.
+        """,
+        unsafe_allow_html=True
+    )    
 
 # Section 5: WIND ZONES
 st.markdown("---")
