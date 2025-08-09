@@ -280,6 +280,16 @@ def detect_zone_E_and_visualise(session_state,
                     i=[0, 0], j=[1, 2], k=[2, 3],
                     color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
                 ))
+                # Add perimeter lines
+                fig.add_trace(go.Scatter3d(
+                    x=[cx0, cx1, cx1, cx0, cx0],
+                    y=[cy0, cy0, cy0, cy0, cy0],
+                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                    mode='lines',
+                    line=dict(color='black', width=2),
+                    showlegend=False,
+                    hoverinfo='none'
+                ))
             else:  # South
                 # South face - rectangle faces south (y = cy1, constant y)
                 fig.add_trace(go.Mesh3d(
@@ -288,6 +298,16 @@ def detect_zone_E_and_visualise(session_state,
                     z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
                     i=[0, 0], j=[1, 2], k=[2, 3],
                     color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
+                ))
+                # Add perimeter lines
+                fig.add_trace(go.Scatter3d(
+                    x=[cx0, cx1, cx1, cx0, cx0],
+                    y=[cy1, cy1, cy1, cy1, cy1],
+                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                    mode='lines',
+                    line=dict(color='black', width=2),
+                    showlegend=False,
+                    hoverinfo='none'
                 ))
         
         else:  # East or West elevation
@@ -300,6 +320,16 @@ def detect_zone_E_and_visualise(session_state,
                     i=[0, 0], j=[1, 2], k=[2, 3],
                     color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
                 ))
+                # Add perimeter lines
+                fig.add_trace(go.Scatter3d(
+                    x=[cx1, cx1, cx1, cx1, cx1],
+                    y=[cy0, cy1, cy1, cy0, cy0],
+                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                    mode='lines',
+                    line=dict(color='black', width=2),
+                    showlegend=False,
+                    hoverinfo='none'
+                ))
             else:  # West
                 # West face - rectangle faces west (x = cx0, constant x)
                 fig.add_trace(go.Mesh3d(
@@ -309,6 +339,40 @@ def detect_zone_E_and_visualise(session_state,
                     i=[0, 0], j=[1, 2], k=[2, 3],
                     color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
                 ))
+                # Add perimeter lines
+                fig.add_trace(go.Scatter3d(
+                    x=[cx0, cx0, cx0, cx0, cx0],
+                    y=[cy0, cy1, cy1, cy0, cy0],
+                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                    mode='lines',
+                    line=dict(color='black', width=2),
+                    showlegend=False,
+                    hoverinfo='none'
+                ))
+    
+        # Add direction labels (N, E, S, W) on the ground with increased offset
+        offset_factor = max(NS_dimension, EW_dimension) * 0.35  # push labels further out
+        center_x = NS_dimension / 2
+        center_y = EW_dimension / 2
+        
+        direction_labels = {
+            "North": {"pos": [center_x, -offset_factor, 0], "text": "N"},
+            "South": {"pos": [center_x, EW_dimension + offset_factor, 0], "text": "S"},
+            "East":  {"pos": [-offset_factor, center_y, 0], "text": "E"},
+            "West":  {"pos": [NS_dimension + offset_factor, center_y, 0], "text": "W"}
+        }
+        
+        # Add direction labels
+        for direction, label_info in direction_labels.items():
+            fig.add_trace(go.Scatter3d(
+                x=[label_info["pos"][0]],
+                y=[label_info["pos"][1]],
+                z=[label_info["pos"][2]],
+                text=[label_info["text"]],
+                mode='text',
+                textfont=dict(size=24, color='black'),
+                showlegend=False
+            ))
 
     # Summary annotation text
     summary_lines = []
