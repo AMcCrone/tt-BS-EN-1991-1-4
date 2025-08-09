@@ -556,7 +556,7 @@ with c2:
         "South offset (m)",
         min_value=0.0,
         max_value=1000.0,
-        value=float(st.session_state.inputs.get("south_offset", 0.0)),
+        value=float(st.session_state.inputs.get("south_offset", 5.0)),
         step=0.1,
         key="ui_south_offset"
     )
@@ -567,7 +567,7 @@ with c3:
         "East offset (m)",
         min_value=0.0,
         max_value=1000.0,
-        value=float(st.session_state.inputs.get("east_offset", 0.0)),
+        value=float(st.session_state.inputs.get("east_offset", 5.0)),
         step=0.1,
         key="ui_east_offset"
     )
@@ -591,7 +591,7 @@ with inset_col1:
         "Inset height H1 (m)",
         min_value=0.0,
         max_value=500.0,
-        value=float(st.session_state.inputs.get("inset_height", 2.0)),
+        value=float(st.session_state.inputs.get("inset_height", 4.0)),
         step=0.1,
         key="ui_inset_height"
     )
