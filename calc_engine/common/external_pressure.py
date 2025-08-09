@@ -13,7 +13,6 @@ TT_LightGrey = "rgb(229,229,229)"  # Lighter grey for the donut building
 
 def display_funnelling_inputs():
     """Display inputs for funnelling effect calculations"""
-    st.subheader("Building Proximity (Funnelling)")
     
     col1, col2, col3, col4 = st.columns(4)
     
