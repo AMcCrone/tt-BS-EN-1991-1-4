@@ -433,4 +433,14 @@ def detect_zone_E_and_visualise(session_state,
         height=520
     )
 
+    # --- Combined Zone E flag for easy downstream checks ---
+    # For North/South elevations: True if either east_zone_E or west_zone_E is True
+    results["North"]["zone_E"] = bool(results["North"].get("east_zone_E", False) or results["North"].get("west_zone_E", False))
+    results["South"]["zone_E"] = bool(results["South"].get("east_zone_E", False) or results["South"].get("west_zone_E", False))
+
+    # For East/West elevations: True if either north_zone_E or south_zone_E is True
+    results["East"]["zone_E"] = bool(results["East"].get("north_zone_E", False) or results["East"].get("south_zone_E", False))
+    results["West"]["zone_E"] = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
+
+
     return results, fig
