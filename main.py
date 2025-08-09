@@ -534,8 +534,11 @@ def peak_pressure_section():
         )
 peak_pressure_section()
 
+# Section 5: WIND ZONES
 st.markdown("---")
-st.write("### Inset Storey")
+st.header("Wind Zones")
+
+st.write("#### Inset Storey")
 
 # Checkbox to opt into adding an inset zone
 add_inset = st.checkbox(
@@ -636,10 +639,8 @@ else:
     st.session_state["inset_results"] = None
     st.session_state["inset_fig"] = None   
 
-# Section 5: WIND ZONES
 st.markdown("---")
-st.header("Wind Zones")
-
+st.write("#### Funnelling")
 # Import required modules
 from visualisation.wind_zones import plot_wind_zones
 from calc_engine.common.external_pressure import calculate_cpe, display_funnelling_inputs, display_elevation_results
@@ -660,6 +661,7 @@ if st.session_state.get("show_educational", False):
 if consider_funnelling == True:
     north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
+st.markdown("---")
 st.subheader("External Pressure Coefficients (cp,e)")
 
 # Loaded area input. This will only appear when region is EU
