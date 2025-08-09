@@ -8,12 +8,10 @@ def detect_zone_E_and_visualise(session_state,
                                 west_offset):
     """
     Determine whether Zone E applies for each elevation edge and return a Plotly 3D
-    visualisation. Changes in this version:
-      - East/West handling and labels swapped so plan clockwise is N, W, S, E
-      - If an offset is zero then the corresponding elevation cannot have Zone E
-      - Roof is flush with inset top (no gap)
-      - Increased label offset (scales with building size)
-      - No title, no legend/summary annotation
+    visualisation. Fixes:
+      - use clockwise vertex ordering for quads (no self-overlap)
+      - show inset height in z (upper box has height = inset_height)
+      - zone E rectangles are vertical: height = e1/3 from roof plane, width = e1/5
     Returns:
       - results: dict of per-direction metrics and booleans
       - fig: plotly.graph_objects.Figure
@@ -29,7 +27,7 @@ def detect_zone_E_and_visualise(session_state,
     EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))
     base_z = float(session_state.inputs.get("z", 10.0))  # roof plane z
 
-    # Sanitize offsets and H1 — treat None as 0.0 (no forced defaults)
+    # Sanitize offsets and H1 — NO forced defaults (treat None as 0.0)
     north_offset = max(0.0, float(north_offset or 0.0))
     south_offset = max(0.0, float(south_offset or 0.0))
     east_offset  = max(0.0, float(east_offset  or 0.0))
@@ -49,7 +47,6 @@ def detect_zone_E_and_visualise(session_state,
     results = {
         "North": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False, "west_zone_E": False},
         "South": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False, "west_zone_E": False},
-        # NOTE: East/West are intentionally swapped here so that plan clockwise reads N, W, S, E
         "East":  {"B1": None, "H1": H1, "e1": None, "north_zone_E": False, "south_zone_E": False},
         "West":  {"B1": None, "H1": H1, "e1": None, "north_zone_E": False, "south_zone_E": False},
     }
@@ -75,22 +72,20 @@ def detect_zone_E_and_visualise(session_state,
     results["South"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
 
     # East edge check on North elevation: east_offset < 0.2*e1 (east corner of north edge)
-    # New rule: if east_offset == 0 => cannot have zone E on east side
-    if e1_NS > 0 and east_offset > 0 and east_offset < 0.2 * e1_NS:
+    if e1_NS > 0 and east_offset < 0.2 * e1_NS:
         results["North"]["east_zone_E"] = True
         rect_w = e1_NS / 5.0   # width along x (east-west)
         rect_h = e1_NS / 3.0   # vertical height
         x1 = upper_x1
         x0 = x1 - rect_w
         y0 = upper_y0
-        # depth into plan along +y (southwards)
         y1 = upper_y0 + min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "North-east"))
 
     # West edge check on North elevation
-    if e1_NS > 0 and west_offset > 0 and west_offset < 0.2 * e1_NS:
+    if e1_NS > 0 and west_offset < 0.2 * e1_NS:
         results["North"]["west_zone_E"] = True
         rect_w = e1_NS / 5.0
         rect_h = e1_NS / 3.0
@@ -103,7 +98,7 @@ def detect_zone_E_and_visualise(session_state,
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "North-west"))
 
     # South elevation checks
-    if e1_NS > 0 and east_offset > 0 and east_offset < 0.2 * e1_NS:
+    if e1_NS > 0 and east_offset < 0.2 * e1_NS:
         results["South"]["east_zone_E"] = True
         rect_w = e1_NS / 5.0
         rect_h = e1_NS / 3.0
@@ -115,7 +110,7 @@ def detect_zone_E_and_visualise(session_state,
         if clamped:
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-east"))
 
-    if e1_NS > 0 and west_offset > 0 and west_offset < 0.2 * e1_NS:
+    if e1_NS > 0 and west_offset < 0.2 * e1_NS:
         results["South"]["west_zone_E"] = True
         rect_w = e1_NS / 5.0
         rect_h = e1_NS / 3.0
@@ -130,53 +125,51 @@ def detect_zone_E_and_visualise(session_state,
     # ---- East/West elevations: B1 = NS - (north + south) ----
     B1_EW = max(0.0, NS_dimension - (north_offset + south_offset))
     e1_EW = min(B1_EW, 2.0 * H1)
-    # Swap the stored labels so plan clockwise reads N, W, S, E
-    results["West"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
     results["East"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
+    results["West"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
 
-    # NOTE: the appended labels below intentionally use "West-*" where earlier code used "East-*"
-    # East elevation north edge -> becomes West-north in plan ordering
-    if e1_EW > 0 and north_offset > 0 and north_offset < 0.2 * e1_EW:
-        results["West"]["north_zone_E"] = True
-        rect_w = e1_EW / 5.0   # along x (NS)
-        rect_h = e1_EW / 3.0   # vertical
-        x1 = upper_x1
-        x0 = x1 - min(upper_width_x, rect_w)
-        y0 = upper_y0
-        y1 = y0 + min(upper_width_y, rect_h)
-        clamped = clamp_rect(x0, x1, y0, y1)
-        if clamped:
-            zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "West-north"))
-
-    # East elevation south edge -> becomes West-south
-    if e1_EW > 0 and south_offset > 0 and south_offset < 0.2 * e1_EW:
-        results["West"]["south_zone_E"] = True
-        rect_w = e1_EW / 5.0
-        rect_h = e1_EW / 3.0
-        x1 = upper_x1
-        x0 = x1 - min(upper_width_x, rect_w)
-        y1 = upper_y1
-        y0 = y1 - min(upper_width_y, rect_h)
-        clamped = clamp_rect(x0, x1, y0, y1)
-        if clamped:
-            zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "West-south"))
-
-    # West elevation north edge -> becomes East-north
-    if e1_EW > 0 and north_offset > 0 and north_offset < 0.2 * e1_EW:
+    # East elevation north edge
+    if e1_EW > 0 and north_offset < 0.2 * e1_EW:
         results["East"]["north_zone_E"] = True
         rect_w = e1_EW / 5.0
         rect_h = e1_EW / 3.0
-        x0 = upper_x0
-        x1 = x0 + min(upper_width_x, rect_w)
+        x1 = upper_x1
+        x0 = x1 - min(upper_width_x, rect_w)
         y0 = upper_y0
         y1 = y0 + min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "East-north"))
 
-    # West elevation south edge -> becomes East-south
-    if e1_EW > 0 and south_offset > 0 and south_offset < 0.2 * e1_EW:
+    # East elevation south edge
+    if e1_EW > 0 and south_offset < 0.2 * e1_EW:
         results["East"]["south_zone_E"] = True
+        rect_w = e1_EW / 5.0
+        rect_h = e1_EW / 3.0
+        x1 = upper_x1
+        x0 = x1 - min(upper_width_x, rect_w)
+        y1 = upper_y1
+        y0 = y1 - min(upper_width_y, rect_h)
+        clamped = clamp_rect(x0, x1, y0, y1)
+        if clamped:
+            zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "East-south"))
+
+    # West elevation north edge
+    if e1_EW > 0 and north_offset < 0.2 * e1_EW:
+        results["West"]["north_zone_E"] = True
+        rect_w = e1_EW / 5.0
+        rect_h = e1_EW / 3.0
+        x0 = upper_x0
+        x1 = x0 + min(upper_width_x, rect_w)
+        y0 = upper_y0
+        y1 = y0 + min(upper_width_y, rect_h)
+        clamped = clamp_rect(x0, x1, y0, y1)
+        if clamped:
+            zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "West-north"))
+
+    # West elevation south edge
+    if e1_EW > 0 and south_offset < 0.2 * e1_EW:
+        results["West"]["south_zone_E"] = True
         rect_w = e1_EW / 5.0
         rect_h = e1_EW / 3.0
         x0 = upper_x0
@@ -185,7 +178,7 @@ def detect_zone_E_and_visualise(session_state,
         y0 = y1 - min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
-            zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "East-south"))
+            zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "West-south"))
 
     # ---- Build 3D visual ----
     fig = go.Figure()
@@ -360,7 +353,6 @@ def detect_zone_E_and_visualise(session_state,
                 ))
 
         else:  # East or West elevation
-            # Note: label text 'East' now corresponds to the face positioned at x = cx1
             if "East" in label:
                 fig.add_trace(go.Mesh3d(
                     x=[cx1, cx1, cx1, cx1],
@@ -396,26 +388,25 @@ def detect_zone_E_and_visualise(session_state,
 
     # Add direction labels (N, E, S, W) in line with inset zone base.
     # Increase label offset distance (scales with building size)
-    label_margin = max(1.0, max(NS_dimension, EW_dimension) * 0.06)  # larger offset
+    label_margin = max(1.0, max(NS_dimension, EW_dimension) * 0.06)  # larger offset than before
     center_x = NS_dimension / 2
     center_y = EW_dimension / 2
 
     if upper_width_x > 0 and upper_width_y > 0:
         lx_center = (upper_x0 + upper_x1) / 2
         ly_center = (upper_y0 + upper_y1) / 2
-        # NOTE: East/West swapped so their positions match the plan ordering N, W, S, E
         label_positions = {
             "North": {"pos": [lx_center, upper_y0 - label_margin, top_z], "text": "N"},
-            "West":  {"pos": [upper_x0 - label_margin, ly_center, top_z], "text": "W"},
             "South": {"pos": [lx_center, upper_y1 + label_margin, top_z], "text": "S"},
             "East":  {"pos": [upper_x1 + label_margin, ly_center, top_z], "text": "E"},
+            "West":  {"pos": [upper_x0 - label_margin, ly_center, top_z], "text": "W"},
         }
     else:
         label_positions = {
             "North": {"pos": [center_x, 0.0 - label_margin, top_z], "text": "N"},
-            "West":  {"pos": [0.0 - label_margin, center_y, top_z], "text": "W"},
             "South": {"pos": [center_x, EW_dimension + label_margin, top_z], "text": "S"},
-            "East":  {"pos": [NS_dimension + label_margin, center_y, top_z], "text": "E"},
+            "East":  {"pos": [0.0 - label_margin, center_y, top_z], "text": "E"},
+            "West":  {"pos": [NS_dimension + label_margin, center_y, top_z], "text": "W"},
         }
 
     for label_info in label_positions.values():
@@ -430,7 +421,7 @@ def detect_zone_E_and_visualise(session_state,
             hoverinfo='none'
         ))
 
-    # Layout: remove title, summary annotation and legend
+    # Layout: remove title and summary annotation; no legend
     fig.update_layout(
         scene=dict(
             xaxis=dict(visible=False, showgrid=False, showticklabels=False, zeroline=False),
