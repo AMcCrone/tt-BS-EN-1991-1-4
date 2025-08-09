@@ -597,26 +597,8 @@ with inset_col1:
     )
     st.session_state.inputs["inset_height"] = float(inset_height)
 
-# Optional: a button to (re)run the check explicitly
-if st.button("Check for Zone E / Update visual"):
-    # Call the detect/visualise function from your calc engine
-    results, fig = create_3d_inset_visualization(
-        st.session_state,
-        inset_height=st.session_state.inputs["inset_height"],
-        north_offset=st.session_state.inputs["north_offset"],
-        south_offset=st.session_state.inputs["south_offset"],
-        east_offset=st.session_state.inputs["east_offset"],
-        west_offset=st.session_state.inputs["west_offset"]
-    )
-
-    # Store outputs in session state for later use
-    st.session_state["inset_results"] = results
-    st.session_state["inset_fig"] = fig
-
-    # Show the figure and table
-    st.plotly_chart(fig, use_container_width=True)
-    st.write("Inset-zone check results (per wind direction):")
-    st.table(pd.DataFrame(results).T)
+fig = create_3d_inset_visualization(st.session_state, results_by_direction)
+st.plotly_chart(fig, use_container_width=True)
     
 
 # Section 5: WIND ZONES
