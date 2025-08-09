@@ -20,18 +20,19 @@ def detect_zone_E_and_visualise(session_state,
     TT_TopPlane = "rgb(223,224,225)"
     TT_Upper = "rgb(136,219,223)"
     TT_Orange = "rgb(211,69,29)"
+    TT_Roof = "lightgrey"
 
     # Read base plan dims + base roof height from session_state
     NS_dimension = float(session_state.inputs.get("NS_dimension", 20.0))
     EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))
     base_z = float(session_state.inputs.get("z", 10.0))  # roof plane z
 
-    # Sanitize offsets and H1
-    north_offset = max(0.0, float(north_offset or 0.0))
-    south_offset = max(0.0, float(south_offset or 0.0))
-    east_offset  = max(0.0, float(east_offset  or 0.0))
-    west_offset  = max(0.0, float(west_offset  or 0.0))
-    H1 = max(0.0, float(inset_height or 0.0))
+    # Sanitize offsets and H1 — defaults changed to 5m offsets and 4m inset height
+    north_offset = max(0.0, float(north_offset or 5.0))
+    south_offset = max(0.0, float(south_offset or 5.0))
+    east_offset  = max(0.0, float(east_offset  or 5.0))
+    west_offset  = max(0.0, float(west_offset  or 5.0))
+    H1 = max(0.0, float(inset_height if inset_height is not None else 4.0))
 
     # Upper-storey footprint in plan coordinates (x: 0 -> NS, y: 0 -> EW)
     upper_x0 = west_offset
@@ -79,9 +80,8 @@ def detect_zone_E_and_visualise(session_state,
         x1 = upper_x1
         x0 = x1 - rect_w
         y0 = upper_y0
-        y1 = y0 + rect_w * (rect_h * 0 + 1)  # just use rect_h for z; keep plan depth = rect_h for clarity
-        # For north/south edges we want depth into plan along +y (southwards) of rect_d = e1/3
-        y1 = upper_y0 + min(upper_width_y, rect_h)  # depth into plan limited by footprint
+        # depth into plan along +y (southwards)
+        y1 = upper_y0 + min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "North-east"))
@@ -115,6 +115,8 @@ def detect_zone_E_and_visualise(session_state,
     if e1_NS > 0 and west_offset < 0.2 * e1_NS:
         results["South"]["west_zone_E"] = True
         rect_w = e1_NS / 5.0
+        rect_h = e1_ns = e1_NS / 3.0 if False else e1_NS / 3.0  # just to keep parity, but compute normally
+        # compute properly:
         rect_h = e1_NS / 3.0
         x0 = upper_x0
         x1 = x0 + rect_w
@@ -196,6 +198,17 @@ def detect_zone_E_and_visualise(session_state,
         color=TT_TopPlane, opacity=1.0, hoverinfo="none", showlegend=False
     ))
 
+    # Add perimeter line for base top plane
+    fig.add_trace(go.Scatter3d(
+        x=[0.0, NS_dimension, NS_dimension, 0.0, 0.0],
+        y=[0.0, 0.0, EW_dimension, EW_dimension, 0.0],
+        z=[top_z]*5,
+        mode='lines',
+        line=dict(color='black', width=2),
+        hoverinfo='none',
+        showlegend=False
+    ))
+
     # Draw upper inset box as a proper 3D box (if it has positive footprint and H1>0)
     if upper_width_x > 0 and upper_width_y > 0 and H1 > 0:
         ux0, ux1, uy0, uy1 = upper_x0, upper_x1, upper_y0, upper_y1
@@ -204,10 +217,8 @@ def detect_zone_E_and_visualise(session_state,
 
         # define 8 vertices in clockwise order for each face to avoid self-overlap:
         # bottom face (clockwise): (ux0,uy0),(ux1,uy0),(ux1,uy1),(ux0,uy1)
-        # top face same order but z=tz
-        # We'll draw 6 faces as quads (two triangles each) using separate Mesh3d traces
-        # Bottom face (optional - sits on roof plane, draw slightly above to be visible)
         pad = 1e-6
+        # Bottom face (slightly above roof plane so it is visible)
         fig.add_trace(go.Mesh3d(
             x=[ux0, ux1, ux1, ux0],
             y=[uy0, uy0, uy1, uy1],
@@ -223,8 +234,7 @@ def detect_zone_E_and_visualise(session_state,
             i=[0,0], j=[1,2], k=[2,3],
             color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
         ))
-        # Four vertical faces (west, east, north, south) - drawn with correct vertex order
-        # West face (x = ux0) - vertices clockwise when viewed from outside
+        # Four vertical faces (west, east, north, south)
         fig.add_trace(go.Mesh3d(
             x=[ux0, ux0, ux0, ux0],
             y=[uy0, uy1, uy1, uy0],
@@ -232,7 +242,6 @@ def detect_zone_E_and_visualise(session_state,
             i=[0,0], j=[1,2], k=[2,3],
             color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
         ))
-        # East face (x = ux1)
         fig.add_trace(go.Mesh3d(
             x=[ux1, ux1, ux1, ux1],
             y=[uy0, uy1, uy1, uy0],
@@ -240,7 +249,6 @@ def detect_zone_E_and_visualise(session_state,
             i=[0,0], j=[1,2], k=[2,3],
             color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
         ))
-        # North face (y = uy0)
         fig.add_trace(go.Mesh3d(
             x=[ux0, ux1, ux1, ux0],
             y=[uy0, uy0, uy0, uy0],
@@ -248,7 +256,6 @@ def detect_zone_E_and_visualise(session_state,
             i=[0,0], j=[1,2], k=[2,3],
             color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
         ))
-        # South face (y = uy1)
         fig.add_trace(go.Mesh3d(
             x=[ux0, ux1, ux1, ux0],
             y=[uy1, uy1, uy1, uy1],
@@ -257,30 +264,78 @@ def detect_zone_E_and_visualise(session_state,
             color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
         ))
 
+        # Add perimeter lines for inset base & top & vertical edges
+        # bottom rectangle
+        fig.add_trace(go.Scatter3d(
+            x=[ux0, ux1, ux1, ux0, ux0],
+            y=[uy0, uy0, uy1, uy1, uy0],
+            z=[bz + pad]*5,
+            mode='lines',
+            line=dict(color='black', width=2),
+            hoverinfo='none',
+            showlegend=False
+        ))
+        # top rectangle
+        fig.add_trace(go.Scatter3d(
+            x=[ux0, ux1, ux1, ux0, ux0],
+            y=[uy0, uy0, uy1, uy1, uy0],
+            z=[tz]*5,
+            mode='lines',
+            line=dict(color='black', width=2),
+            hoverinfo='none',
+            showlegend=False
+        ))
+        # vertical edges
+        vert_x = [ux0, ux1, ux1, ux0]
+        vert_y = [uy0, uy0, uy1, uy1]
+        for vx, vy in zip(vert_x, vert_y):
+            fig.add_trace(go.Scatter3d(
+                x=[vx, vx],
+                y=[vy, vy],
+                z=[bz + pad, tz],
+                mode='lines',
+                line=dict(color='black', width=2),
+                hoverinfo='none',
+                showlegend=False
+            ))
+
+        # Add a light grey roof slightly above the inset top (roof plane)
+        roof_thickness = max(0.05, H1 * 0.01)  # small offset above inset
+        roof_z = tz + roof_thickness
+        fig.add_trace(go.Mesh3d(
+            x=[ux0, ux1, ux1, ux0],
+            y=[uy0, uy0, uy1, uy1],
+            z=[roof_z, roof_z, roof_z, roof_z],
+            i=[0, 0], j=[1, 2], k=[2, 3],
+            color=TT_Roof, opacity=1.0, hoverinfo="none", showlegend=False
+        ))
+        # also outline the roof
+        fig.add_trace(go.Scatter3d(
+            x=[ux0, ux1, ux1, ux0, ux0],
+            y=[uy0, uy0, uy1, uy1, uy0],
+            z=[roof_z]*5,
+            mode='lines',
+            line=dict(color='black', width=1),
+            hoverinfo='none',
+            showlegend=False
+        ))
+
     # Draw each Zone E as a simple vertical rectangle (4 vertices)
     for (cx0, cx1, cy0, cy1, rect_h, label) in zoneE_rects:
         bottom_z = top_z
         top_z_rect = top_z + rect_h
-        
-        # Create a single vertical rectangle face
-        # For a rectangular area in plan (cx0,cy0) to (cx1,cy1), we need to determine
-        # which edge this Zone E is on and create the appropriate vertical face
-        
-        # Determine which edge this rectangle is on based on its position
-        # and create the appropriate vertical face
-        
+
         if "North" in label or "South" in label:
-            # For North/South elevations, the rectangle should face outward
             if "North" in label:
                 # North face - rectangle faces north (y = cy0, constant y)
                 fig.add_trace(go.Mesh3d(
                     x=[cx0, cx1, cx1, cx0],
-                    y=[cy0, cy0, cy0, cy0],  # constant y (north face)
+                    y=[cy0, cy0, cy0, cy0],
                     z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
                     i=[0, 0], j=[1, 2], k=[2, 3],
                     color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
                 ))
-                # Add perimeter lines
+                # perimeter
                 fig.add_trace(go.Scatter3d(
                     x=[cx0, cx1, cx1, cx0, cx0],
                     y=[cy0, cy0, cy0, cy0, cy0],
@@ -291,15 +346,13 @@ def detect_zone_E_and_visualise(session_state,
                     hoverinfo='none'
                 ))
             else:  # South
-                # South face - rectangle faces south (y = cy1, constant y)
                 fig.add_trace(go.Mesh3d(
                     x=[cx0, cx1, cx1, cx0],
-                    y=[cy1, cy1, cy1, cy1],  # constant y (south face)
+                    y=[cy1, cy1, cy1, cy1],
                     z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
                     i=[0, 0], j=[1, 2], k=[2, 3],
                     color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
                 ))
-                # Add perimeter lines
                 fig.add_trace(go.Scatter3d(
                     x=[cx0, cx1, cx1, cx0, cx0],
                     y=[cy1, cy1, cy1, cy1, cy1],
@@ -309,18 +362,17 @@ def detect_zone_E_and_visualise(session_state,
                     showlegend=False,
                     hoverinfo='none'
                 ))
-        
+
         else:  # East or West elevation
             if "East" in label:
                 # East face - rectangle faces east (x = cx1, constant x)
                 fig.add_trace(go.Mesh3d(
-                    x=[cx1, cx1, cx1, cx1],  # constant x (east face)
+                    x=[cx1, cx1, cx1, cx1],
                     y=[cy0, cy1, cy1, cy0],
                     z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
                     i=[0, 0], j=[1, 2], k=[2, 3],
                     color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
                 ))
-                # Add perimeter lines
                 fig.add_trace(go.Scatter3d(
                     x=[cx1, cx1, cx1, cx1, cx1],
                     y=[cy0, cy1, cy1, cy0, cy0],
@@ -331,15 +383,13 @@ def detect_zone_E_and_visualise(session_state,
                     hoverinfo='none'
                 ))
             else:  # West
-                # West face - rectangle faces west (x = cx0, constant x)
                 fig.add_trace(go.Mesh3d(
-                    x=[cx0, cx0, cx0, cx0],  # constant x (west face)
+                    x=[cx0, cx0, cx0, cx0],
                     y=[cy0, cy1, cy1, cy0],
                     z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
                     i=[0, 0], j=[1, 2], k=[2, 3],
                     color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
                 ))
-                # Add perimeter lines
                 fig.add_trace(go.Scatter3d(
                     x=[cx0, cx0, cx0, cx0, cx0],
                     y=[cy0, cy1, cy1, cy0, cy0],
@@ -349,32 +399,45 @@ def detect_zone_E_and_visualise(session_state,
                     showlegend=False,
                     hoverinfo='none'
                 ))
-    
-        # Add direction labels (N, E, S, W) on the ground with increased offset
-        offset_factor = max(NS_dimension, EW_dimension) * 0.35  # push labels further out
-        center_x = NS_dimension / 2
-        center_y = EW_dimension / 2
-        
-        direction_labels = {
-            "North": {"pos": [center_x, -offset_factor, 0], "text": "N"},
-            "South": {"pos": [center_x, EW_dimension + offset_factor, 0], "text": "S"},
-            "East":  {"pos": [-offset_factor, center_y, 0], "text": "E"},
-            "West":  {"pos": [NS_dimension + offset_factor, center_y, 0], "text": "W"}
-        }
-        
-        # Add direction labels
-        for direction, label_info in direction_labels.items():
-            fig.add_trace(go.Scatter3d(
-                x=[label_info["pos"][0]],
-                y=[label_info["pos"][1]],
-                z=[label_info["pos"][2]],
-                text=[label_info["text"]],
-                mode='text',
-                textfont=dict(size=24, color='black'),
-                showlegend=False
-            ))
 
-    # Summary annotation text
+    # Add direction labels (N, E, S, W) in line with inset zone base.
+    # If no inset, place them at midpoints of building edges.
+    label_margin = 0.5  # small outward offset from inset base
+    center_x = NS_dimension / 2
+    center_y = EW_dimension / 2
+
+    if upper_width_x > 0 and upper_width_y > 0:
+        # Place labels aligned with inset footprint
+        lx_center = (upper_x0 + upper_x1) / 2
+        ly_center = (upper_y0 + upper_y1) / 2
+        label_positions = {
+            "North": {"pos": [lx_center, upper_y0 - label_margin, top_z], "text": "N"},
+            "South": {"pos": [lx_center, upper_y1 + label_margin, top_z], "text": "S"},
+            "East":  {"pos": [upper_x1 + label_margin, ly_center, top_z], "text": "E"},
+            "West":  {"pos": [upper_x0 - label_margin, ly_center, top_z], "text": "W"},
+        }
+    else:
+        # fallback to building midpoints
+        label_positions = {
+            "North": {"pos": [center_x, 0.0 - label_margin, top_z], "text": "N"},
+            "South": {"pos": [center_x, EW_dimension + label_margin, top_z], "text": "S"},
+            "East":  {"pos": [0.0 - label_margin, center_y, top_z], "text": "E"},
+            "West":  {"pos": [NS_dimension + label_margin, center_y, top_z], "text": "W"},
+        }
+
+    for label_info in label_positions.values():
+        fig.add_trace(go.Scatter3d(
+            x=[label_info["pos"][0]],
+            y=[label_info["pos"][1]],
+            z=[label_info["pos"][2]],
+            text=[label_info["text"]],
+            mode='text',
+            textfont=dict(size=20, color='black'),
+            showlegend=False,
+            hoverinfo='none'
+        ))
+
+    # Summary annotation text (kept as-is; only title/legend removed per request)
     summary_lines = []
     for direction in ["North", "South", "East", "West"]:
         info = results[direction]
@@ -392,9 +455,8 @@ def detect_zone_E_and_visualise(session_state,
             zaxis=dict(visible=False, showgrid=False, showticklabels=False, zeroline=False),
             aspectmode='data'
         ),
-        margin=dict(l=2, r=2, t=90, b=2),
+        margin=dict(l=2, r=2, t=20, b=2),
         showlegend=False,
-        title=dict(text="Inset geometry check — Zone E vertical patches (orange) if present", x=0.5),
         annotations=[dict(
             x=0.5, y=0.98, xref="paper", yref="paper",
             text=summary_text, showarrow=False,
@@ -406,4 +468,3 @@ def detect_zone_E_and_visualise(session_state,
     )
 
     return results, fig
-
