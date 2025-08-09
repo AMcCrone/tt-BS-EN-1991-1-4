@@ -8,14 +8,14 @@ def detect_zone_E_and_visualise(session_state,
                                 west_offset):
     """
     Determine whether Zone E applies for each elevation edge and return a Plotly 3D
-    visualisation. Fixes:
-      - use clockwise vertex ordering for quads (no self-overlap)
-      - show inset height in z (upper box has height = inset_height)
-      - zone E rectangles are vertical: height = e1/3 from roof plane, width = e1/5
-      - corrected coordinate system: x = North-South, y = East-West
-    Returns:
-      - results: dict of per-direction metrics and booleans
-      - fig: plotly.graph_objects.Figure
+    visualisation.
+    Coordinate convention:
+      x-axis = North -> South (0..NS_dimension)
+      y-axis = West -> East  (0..EW_dimension)
+    Changes:
+      - Zone E disabled on an elevation if that elevation's offset == 0
+      - results flags set only when the rectangle actually fits (after clamping)
+      - removed outline/perimeter for ground/top plane
     """
     # Colours
     TT_TopPlane = "rgb(223,224,225)"
@@ -37,7 +37,7 @@ def detect_zone_E_and_visualise(session_state,
 
     # Upper-storey footprint in plan coordinates
     # x-axis (North-South): x=0 is North, x=NS_dimension is South
-    # y-axis (East-West): y=0 is West, y=EW_dimension is East
+    # y-axis (East-West):  y=0 is West,  y=EW_dimension is East
     upper_x0 = north_offset  # North edge
     upper_x1 = max(north_offset, NS_dimension - south_offset)  # South edge
     upper_y0 = west_offset   # West edge
@@ -73,9 +73,8 @@ def detect_zone_E_and_visualise(session_state,
     results["North"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
     results["South"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
 
-    # North elevation - East edge check
-    if e1_NS > 0 and east_offset < 0.2 * e1_NS:
-        results["North"]["east_zone_E"] = True
+    # North elevation - East edge check (only if north_offset > 0)
+    if e1_NS > 0 and east_offset < 0.2 * e1_NS and north_offset > 0:
         rect_w = e1_NS / 5.0   # width along y (east-west)
         rect_h = e1_NS / 3.0   # vertical height
         y1 = upper_y1  # East edge
@@ -84,11 +83,11 @@ def detect_zone_E_and_visualise(session_state,
         x1 = upper_x0 + min(upper_width_x, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
+            results["North"]["east_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "North-east"))
 
-    # North elevation - West edge check
-    if e1_NS > 0 and west_offset < 0.2 * e1_NS:
-        results["North"]["west_zone_E"] = True
+    # North elevation - West edge check (only if north_offset > 0)
+    if e1_NS > 0 and west_offset < 0.2 * e1_NS and north_offset > 0:
         rect_w = e1_NS / 5.0
         rect_h = e1_NS / 3.0
         y0 = upper_y0  # West edge
@@ -97,11 +96,11 @@ def detect_zone_E_and_visualise(session_state,
         x1 = upper_x0 + min(upper_width_x, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
+            results["North"]["west_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "North-west"))
 
-    # South elevation - East edge check
-    if e1_NS > 0 and east_offset < 0.2 * e1_NS:
-        results["South"]["east_zone_E"] = True
+    # South elevation - East edge check (only if south_offset > 0)
+    if e1_NS > 0 and east_offset < 0.2 * e1_NS and south_offset > 0:
         rect_w = e1_NS / 5.0
         rect_h = e1_NS / 3.0
         y1 = upper_y1  # East edge
@@ -110,11 +109,11 @@ def detect_zone_E_and_visualise(session_state,
         x0 = upper_x1 - min(upper_width_x, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
+            results["South"]["east_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-east"))
 
-    # South elevation - West edge check
-    if e1_NS > 0 and west_offset < 0.2 * e1_NS:
-        results["South"]["west_zone_E"] = True
+    # South elevation - West edge check (only if south_offset > 0)
+    if e1_NS > 0 and west_offset < 0.2 * e1_NS and south_offset > 0:
         rect_w = e1_NS / 5.0
         rect_h = e1_NS / 3.0
         y0 = upper_y0  # West edge
@@ -123,6 +122,7 @@ def detect_zone_E_and_visualise(session_state,
         x0 = upper_x1 - min(upper_width_x, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
+            results["South"]["west_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-west"))
 
     # ---- For East/West elevations: B1 = NS dimension - (north + south offsets) ----
@@ -131,9 +131,8 @@ def detect_zone_E_and_visualise(session_state,
     results["East"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
     results["West"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
 
-    # East elevation - North edge check
-    if e1_EW > 0 and north_offset < 0.2 * e1_EW:
-        results["East"]["north_zone_E"] = True
+    # East elevation - North edge check (only if east_offset > 0)
+    if e1_EW > 0 and north_offset < 0.2 * e1_EW and east_offset > 0:
         rect_w = e1_EW / 5.0   # width along x (north-south)
         rect_h = e1_EW / 3.0   # vertical height
         x0 = upper_x0  # North edge
@@ -142,11 +141,11 @@ def detect_zone_E_and_visualise(session_state,
         y0 = upper_y1 - min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
+            results["East"]["north_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "East-north"))
 
-    # East elevation - South edge check
-    if e1_EW > 0 and south_offset < 0.2 * e1_EW:
-        results["East"]["south_zone_E"] = True
+    # East elevation - South edge check (only if east_offset > 0)
+    if e1_EW > 0 and south_offset < 0.2 * e1_EW and east_offset > 0:
         rect_w = e1_EW / 5.0
         rect_h = e1_EW / 3.0
         x1 = upper_x1  # South edge
@@ -155,11 +154,11 @@ def detect_zone_E_and_visualise(session_state,
         y0 = upper_y1 - min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
+            results["East"]["south_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "East-south"))
 
-    # West elevation - North edge check
-    if e1_EW > 0 and north_offset < 0.2 * e1_EW:
-        results["West"]["north_zone_E"] = True
+    # West elevation - North edge check (only if west_offset > 0)
+    if e1_EW > 0 and north_offset < 0.2 * e1_EW and west_offset > 0:
         rect_w = e1_EW / 5.0
         rect_h = e1_EW / 3.0
         x0 = upper_x0  # North edge
@@ -168,11 +167,11 @@ def detect_zone_E_and_visualise(session_state,
         y1 = upper_y0 + min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
+            results["West"]["north_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "West-north"))
 
-    # West elevation - South edge check
-    if e1_EW > 0 and south_offset < 0.2 * e1_EW:
-        results["West"]["south_zone_E"] = True
+    # West elevation - South edge check (only if west_offset > 0)
+    if e1_EW > 0 and south_offset < 0.2 * e1_EW and west_offset > 0:
         rect_w = e1_EW / 5.0
         rect_h = e1_EW / 3.0
         x1 = upper_x1  # South edge
@@ -181,6 +180,7 @@ def detect_zone_E_and_visualise(session_state,
         y1 = upper_y0 + min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
+            results["West"]["south_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "West-south"))
 
     # ---- Build 3D visual ----
@@ -196,16 +196,7 @@ def detect_zone_E_and_visualise(session_state,
         color=TT_TopPlane, opacity=1.0, hoverinfo="none", showlegend=False
     ))
 
-    # Add perimeter line for base top plane
-    fig.add_trace(go.Scatter3d(
-        x=[0.0, NS_dimension, NS_dimension, 0.0, 0.0],
-        y=[0.0, 0.0, EW_dimension, EW_dimension, 0.0],
-        z=[top_z]*5,
-        mode='lines',
-        line=dict(color='black', width=2),
-        hoverinfo='none',
-        showlegend=False
-    ))
+    # NOTE: removed the perimeter/outline trace for the base/top plane as requested
 
     # Draw upper inset box as a proper 3D box (if it has positive footprint and H1>0)
     if upper_width_x > 0 and upper_width_y > 0 and H1 > 0:
