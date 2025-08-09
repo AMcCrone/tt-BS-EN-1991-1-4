@@ -257,19 +257,58 @@ def detect_zone_E_and_visualise(session_state,
             color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
         ))
 
-    # Draw each Zone E vertical rectangle (quads from z=top_z to z=top_z + rect_h)
+    # Draw each Zone E as a simple vertical rectangle (4 vertices)
     for (cx0, cx1, cy0, cy1, rect_h, label) in zoneE_rects:
         bottom_z = top_z
         top_z_rect = top_z + rect_h
-        # draw top and vertical face (we'll draw as a vertical box of small thickness)
-        # Using a quad for the vertical face (with four vertices: bottom-left, bottom-right, top-right, top-left)
-        fig.add_trace(go.Mesh3d(
-            x=[cx0, cx1, cx1, cx0],
-            y=[cy0, cy0, cy1, cy1],
-            z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
-            i=[0,0], j=[1,2], k=[2,3],
-            color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
-        ))
+        
+        # Create a single vertical rectangle face
+        # For a rectangular area in plan (cx0,cy0) to (cx1,cy1), we need to determine
+        # which edge this Zone E is on and create the appropriate vertical face
+        
+        # Determine which edge this rectangle is on based on its position
+        # and create the appropriate vertical face
+        
+        if "North" in label or "South" in label:
+            # For North/South elevations, the rectangle should face outward
+            if "North" in label:
+                # North face - rectangle faces north (y = cy0, constant y)
+                fig.add_trace(go.Mesh3d(
+                    x=[cx0, cx1, cx1, cx0],
+                    y=[cy0, cy0, cy0, cy0],  # constant y (north face)
+                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                    i=[0, 0], j=[1, 2], k=[2, 3],
+                    color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
+                ))
+            else:  # South
+                # South face - rectangle faces south (y = cy1, constant y)
+                fig.add_trace(go.Mesh3d(
+                    x=[cx0, cx1, cx1, cx0],
+                    y=[cy1, cy1, cy1, cy1],  # constant y (south face)
+                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                    i=[0, 0], j=[1, 2], k=[2, 3],
+                    color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
+                ))
+        
+        else:  # East or West elevation
+            if "East" in label:
+                # East face - rectangle faces east (x = cx1, constant x)
+                fig.add_trace(go.Mesh3d(
+                    x=[cx1, cx1, cx1, cx1],  # constant x (east face)
+                    y=[cy0, cy1, cy1, cy0],
+                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                    i=[0, 0], j=[1, 2], k=[2, 3],
+                    color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
+                ))
+            else:  # West
+                # West face - rectangle faces west (x = cx0, constant x)
+                fig.add_trace(go.Mesh3d(
+                    x=[cx0, cx0, cx0, cx0],  # constant x (west face)
+                    y=[cy0, cy1, cy1, cy0],
+                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                    i=[0, 0], j=[1, 2], k=[2, 3],
+                    color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
+                ))
 
     # Summary annotation text
     summary_lines = []
