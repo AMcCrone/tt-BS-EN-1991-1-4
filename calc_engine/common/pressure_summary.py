@@ -67,14 +67,8 @@ def calculate_pressure_data(session_state, results_by_direction):
     Calculate pressure data for all zones and directions.
 
     - Summary rows include only zones that are present on that elevation (using
-      the d/e rules used for plotting), but each zone appears only once per
-      elevation (no duplicate A/B/A entries).
-    - Zone D is always included in the summary for an elevation if a Zone D
-      value was computed for that direction (i.e., if Zone D was present in cp_df).
-    - zone_pressures_by_direction still stores computed A-D values for plotting.
-
-    Returns:
-        (summary_data, global_pressure_range, zone_pressures_by_direction)
+      the d/e rules used for plotting), and Zone E is included only for the elevations
+      where detect_zone_E indicated zone_E present. The cp,e for zone E is always -2.0.
     """
     # Extract dimensions and peak velocity pressure
     h = session_state.inputs.get("z", 10.0)  # Building height
@@ -100,14 +94,9 @@ def calculate_pressure_data(session_state, results_by_direction):
     global_min_pressure = float("inf")
 
     def zones_for_elevation(width, height, crosswind_dim):
-        """
-        Determine zone names present on an elevation using the same rules as plotting.
-        This function may return repeated zone names to reflect left/middle/right areas,
-        e.g. ['A','B','C','B','A'] — uniqueness will be enforced later for the summary.
-        """
+        # ... same as your existing function ...
         e = min(crosswind_dim, 2 * height)
         zone_names = []
-
         if e < width:
             if width < 2 * e:
                 if width <= 2 * (e / 5):
@@ -126,15 +115,11 @@ def calculate_pressure_data(session_state, results_by_direction):
                 zone_names = ['A', 'B', 'A']
         else:
             zone_names = ['A']
-
         return zone_names
 
     # Process each direction (elevation)
     for direction, cp_df in results_by_direction.items():
-        # Get directional factor for this direction
         c_dir = direction_factors.get(direction, 1.0)
-
-        # Apply directional factor to qp
         adjusted_qp = qp_value * c_dir
 
         # Choose width and crosswind dimension depending on direction
@@ -145,50 +130,60 @@ def calculate_pressure_data(session_state, results_by_direction):
             width = EW_dimension
             crosswind_dim = NS_dimension
 
-        # Initialize storage for this direction
         zone_pressures_by_direction[direction] = {}
 
         # 1) First pass: compute/store pressures for any A-D rows present in cp_df
         for _, row in cp_df.iterrows():
             zone = row.get('Zone')
             if zone not in ['A', 'B', 'C', 'D']:
-                continue  # skip E or unknown zones for storage/computation
-
-            cp_e = row.get('cp,e', 0.0)
-            cp_e = round(cp_e, 2)
-
-            # External pressure
+                continue  # skip unknown zones here
+            cp_e = round(row.get('cp,e', 0.0), 2)
             we = adjusted_qp * cp_e
-
-            # Choose cp,i used (same logic as before)
             cp_i_used = cp_i_positive if cp_e < 0 else cp_i_negative
-
-            # Internal pressure and net
             wi = adjusted_qp * cp_i_used
             net_pressure = we - wi
 
-            # Update global extremes
             if net_pressure > global_max_pressure:
                 global_max_pressure = net_pressure
             if net_pressure < global_min_pressure:
                 global_min_pressure = net_pressure
 
-            # Round cp_i used for reporting
-            cp_i_used_rounded = round(cp_i_used, 2)
-
-            # Convert to kPa for display/storage
-            we_kpa = round(we / 1000, 2)
-            wi_kpa = round(wi / 1000, 2)
-            net_kpa = round(net_pressure / 1000, 2)
-
-            # Store computed values for plotting & later summary
             zone_pressures_by_direction[direction][zone] = {
                 'net_pressure': net_pressure,
-                'net_pressure_kpa': net_kpa,
+                'net_pressure_kpa': round(net_pressure / 1000, 2),
                 'cp_e': cp_e,
-                'cp_i_used': cp_i_used_rounded,
-                'We_kPa': we_kpa,
-                'Wi_kPa': wi_kpa
+                'cp_i_used': round(cp_i_used, 2),
+                'We_kPa': round(we / 1000, 2),
+                'Wi_kPa': round(wi / 1000, 2)
+            }
+
+        # ----- Include Zone E if detect reports it for this elevation -----
+        detect_res = session_state.get("inset_results", None)
+        zone_e_present = False
+        if isinstance(detect_res, dict) and detect_res.get(direction):
+            dr = detect_res[direction]
+            zone_e_present = bool(dr.get("zone_E", False) or
+                                  dr.get("east_zone_E", False) or dr.get("west_zone_E", False) or
+                                  dr.get("north_zone_E", False) or dr.get("south_zone_E", False))
+        if zone_e_present and 'E' not in zone_pressures_by_direction[direction]:
+            cp_e = -2.0
+            we = adjusted_qp * cp_e
+            cp_i_used = cp_i_positive if cp_e < 0 else cp_i_negative
+            wi = adjusted_qp * cp_i_used
+            net_pressure = we - wi
+
+            if net_pressure > global_max_pressure:
+                global_max_pressure = net_pressure
+            if net_pressure < global_min_pressure:
+                global_min_pressure = net_pressure
+
+            zone_pressures_by_direction[direction]['E'] = {
+                'net_pressure': net_pressure,
+                'net_pressure_kpa': round(net_pressure / 1000, 2),
+                'cp_e': cp_e,
+                'cp_i_used': round(cp_i_used, 2),
+                'We_kPa': round(we / 1000, 2),
+                'Wi_kPa': round(wi / 1000, 2)
             }
 
         # 2) Determine which zones are present on this elevation (may contain repeats)
@@ -200,16 +195,19 @@ def calculate_pressure_data(session_state, results_by_direction):
             if zn not in unique_present_zones:
                 unique_present_zones.append(zn)
 
-        # Ensure Zone D is included in summary rows for this direction if we computed it
+        # Ensure Zone D is included if computed
         if 'D' in zone_pressures_by_direction[direction] and 'D' not in unique_present_zones:
             unique_present_zones.append('D')
 
+        # Append E only if computed/present for this elevation
+        if 'E' in zone_pressures_by_direction[direction] and 'E' not in unique_present_zones:
+            unique_present_zones.append('E')
+
         # 4) Build summary rows only for zones in unique_present_zones and only if
-        #    that zone was actually computed in the first pass.
+        #    that zone was actually computed in the first pass (or added above)
         for zone in unique_present_zones:
             zdata = zone_pressures_by_direction[direction].get(zone)
             if not zdata:
-                # If zone wasn't present in cp_df (no computation), skip it
                 continue
 
             we_kpa = zdata.get('We_kPa', 0.0)
@@ -217,7 +215,6 @@ def calculate_pressure_data(session_state, results_by_direction):
             net_kpa = zdata.get('net_pressure_kpa', 0.0)
             cp_e = zdata.get('cp_e', 0.0)
             cp_i_used = zdata.get('cp_i_used', 0.0)
-
             action_type = "Pressure" if net_kpa > 0 else "Suction"
 
             summary_data.append({
@@ -232,21 +229,14 @@ def calculate_pressure_data(session_state, results_by_direction):
                 "Action": action_type
             })
 
-    # Fallbacks for global min/max if nothing was computed
+    # Fallbacks and range handling (unchanged)
     if global_max_pressure == float("-inf") and global_min_pressure == float("inf"):
         global_max_pressure = 0.0
         global_min_pressure = 0.0
-
-    # Ensure some range to avoid division by zero
     if global_max_pressure == global_min_pressure:
         global_max_pressure = global_min_pressure + 1.0
 
-    # Convert global pressure range from N/m² to kPa
-    global_pressure_range = (
-        global_min_pressure / 1000,  # Min pressure (kPa)
-        global_max_pressure / 1000   # Max pressure (kPa)
-    )
-
+    global_pressure_range = (global_min_pressure / 1000, global_max_pressure / 1000)
     return summary_data, global_pressure_range, zone_pressures_by_direction
 
 
