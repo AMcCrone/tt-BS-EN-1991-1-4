@@ -600,7 +600,7 @@ with inset_col1:
 # Optional: a button to (re)run the check explicitly
 if st.button("Check for Zone E / Update visual"):
     # Call the detect/visualise function from your calc engine
-    results, fig = detect_zone_E_and_visualise(
+    results, fig = create_3d_inset_visualization(
         st.session_state,
         inset_height=st.session_state.inputs["inset_height"],
         north_offset=st.session_state.inputs["north_offset"],
