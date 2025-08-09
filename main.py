@@ -9,7 +9,7 @@ from geopy.distance import geodesic
 from auth import authenticate_user
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
-# from calc_engine.common.inset_zone import create_3d_inset_visualization
+# from calc_engine.common.inset_zone import detect_zone_E_and_visualise
 from visualisation.building_viz import create_building_visualisation
 from visualisation.map import render_map_with_markers, get_elevation, compute_distance, interactive_map_ui
 from educational import text_content
@@ -597,8 +597,20 @@ with inset_col1:
     )
     st.session_state.inputs["inset_height"] = float(inset_height)
 
-# fig = create_3d_inset_visualization(st.session_state, results_by_direction)
-# st.plotly_chart(fig, use_container_width=True)
+results, fig = detect_zone_E_and_visualise(
+    st.session_state,
+    inset_height=st.session_state.inputs["inset_height"],
+    north_offset=st.session_state.inputs["north_offset"],
+    south_offset=st.session_state.inputs["south_offset"],
+    east_offset=st.session_state.inputs["east_offset"],
+    west_offset=st.session_state.inputs["west_offset"],
+)
+
+st.session_state["inset_results"] = results
+st.session_state["inset_fig"] = fig
+
+st.plotly_chart(fig, use_container_width=True)
+st.table(pd.DataFrame(results).T)
     
 
 # Section 5: WIND ZONES
