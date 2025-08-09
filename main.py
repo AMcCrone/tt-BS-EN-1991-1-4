@@ -544,11 +544,21 @@ st.write("#### Inset Storey")
 add_inset = st.checkbox(
     "Add inset zone (upper storey)",
     value=bool(st.session_state.inputs.get("inset_enabled", False)),
-    key="ui_add_inset",
+    key="ui_add_inset", help="Enable to consider additional wind suction effects from inset zones as per PD 6688-1-4"
 )
 # persist the checkbox state
 st.session_state.inputs["inset_enabled"] = bool(add_inset)
 
+# Educational text on inset zone calculation
+if st.session_state.get("show_educational", False):
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+
+    with st.expander("What Are Inset Zones?", expanded=False):
+        # st.image("educational/images/h_dis_diagram.png", use_container_width=True)
+        st.markdown(f'<div class="educational-content">{text_content.inset_zone_help}</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    
 if add_inset:
     # Show inputs when inset is enabled
     c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
