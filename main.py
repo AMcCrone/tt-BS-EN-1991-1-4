@@ -852,7 +852,6 @@ if st.session_state.get("show_educational", False):
 st.markdown("---")
 st.header("Conclusion")
 
-Example Streamlit usage:
 paragraphs = generate_pressure_summary_paragraphs(st.session_state, results_by_direction)
 for p in paragraphs:
     st.markdown(p)
