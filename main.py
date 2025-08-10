@@ -657,8 +657,14 @@ from visualisation.wind_zones import plot_wind_zones
 from calc_engine.common.external_pressure import calculate_cpe, display_funnelling_inputs, display_elevation_results
 
 # Add checkbox to control funnelling consideration
-consider_funnelling = st.checkbox("Consider Funnelling Effects", value=True, 
-                                  help="Enable to consider funnelling effects between buildings as per BS EN 1991-1-4")
+consider_funnelling = st.checkbox(
+    "Consider Funnelling Effects",
+    value=bool(st.session_state.inputs.get("consider_funnelling", True)),
+    help="Enable to consider funnelling effects between buildings as per BS EN 1991-1-4"
+)
+
+# persist the checkbox state
+st.session_state.inputs["consider_funnelling"] = bool(consider_funnelling)
 # Educational text on funnelling calculation
 if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
