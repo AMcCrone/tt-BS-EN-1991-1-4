@@ -1032,92 +1032,79 @@ def create_wind_visualization_ui(session_state, results_by_direction):
 
 def generate_pressure_summary_paragraphs(session_state, results_by_direction) -> List[str]:
     """
-    Returns a list of 4 paragraphs (strings) summarising:
-      1) maximum wind pressure and elevation(s)
-      2) maximum suction and elevation(s)
-      3) whether funnelling was considered
-      4) whether an inset zone was considered, presence of Zone E and where
-      5) final design value (largest absolute) with zone and elevations
-
-    Relies on calculate_pressure_data(session_state, results_by_direction).
+    Generate human-readable summary paragraphs from the pressure results.
+    Returns a list of paragraphs (strings).
     """
-    # 1) get calculated data
     summary_data, _, zone_pressures_by_direction = calculate_pressure_data(session_state, results_by_direction)
     summary_df = pd.DataFrame(summary_data)
 
-    # Prepare paragraph outputs
     paragraphs: List[str] = []
 
-    # ---------- Handle empty data ----------
+    # Empty-data fallback
     if summary_df.empty:
-        paragraphs.append("No pressure/suction results available to summarise.")
-        # still check funnelling / inset flags for informative paragraphs
-        # funnelling paragraph:
-        consider_funnelling = session_state.inputs.get("consider_funnelling", False) \
-                             if hasattr(session_state, "inputs") else session_state.get("consider_funnelling", False)
-        paragraphs.append(
-            f"Funnelling considered: {'Yes' if consider_funnelling else 'No'}."
-        )
-        inset_enabled = session_state.inputs.get("inset_enabled", False) \
-                        if hasattr(session_state, "inputs") else session_state.get("inset_enabled", False)
-        paragraphs.append(
-            f"Inset zone enabled: {'Yes' if inset_enabled else 'No'}. No zone E data available."
-        )
-        paragraphs.append("No design value can be selected because no results are present.")
+        paragraphs.append("No pressure/suction results are available to summarise.")
+        # still include stateful flags
+        consider_funnelling = (session_state.inputs.get("consider_funnelling")
+                               if hasattr(session_state, "inputs") else session_state.get("consider_funnelling", False))
+        paragraphs.append("Funnelling has been considered." if consider_funnelling else "Funnelling has not been considered.")
+        inset_enabled = (bool(session_state.inputs.get("inset_enabled", False))
+                         if hasattr(session_state, "inputs") else bool(session_state.get("inset_enabled", False)))
+        paragraphs.append("Inset zone has been considered." if inset_enabled else "Inset zone has not been considered.")
+        paragraphs.append("No design value can be recommended because no results are present.")
         return paragraphs
 
-    # ---------- Max positive pressure ----------
+    all_elevations = set(summary_df["Direction"].unique())
+
+    # -------- Maximum positive wind pressure (pressure is always zone D) --------
     pos_df = summary_df[summary_df["Net (kPa)"] > 0]
     if not pos_df.empty:
         max_pos_val = pos_df["Net (kPa)"].max()
         max_pos_rows = pos_df[pos_df["Net (kPa)"] == max_pos_val]
-        # collect unique (Direction, Zone)
-        locations = sorted(set(tuple(x) for x in max_pos_rows[["Direction", "Zone"]].values.tolist()))
-        loc_text = ", ".join([f"{zone} on {direction}" for direction, zone in [(d,z) for d,z in locations]])
-        paragraphs.append(
-            f"Maximum positive wind pressure: {max_pos_val:.2f} kPa — present at {loc_text}."
-        )
+        pos_dirs = set(max_pos_rows["Direction"].unique())
+        if pos_dirs == all_elevations:
+            elevation_text = "all elevations"
+        else:
+            elevation_text = ", ".join(sorted(pos_dirs))
+        # Pressure is always zone D (per your rule) so don't report zone
+        paragraphs.append(f"Maximum wind pressure: {max_pos_val:.2f} kPa — present on {elevation_text}.")
     else:
-        paragraphs.append("No positive wind pressure (net pressure > 0) was found in the results.")
+        paragraphs.append("No positive wind pressure (net > 0) was found in the results.")
 
-    # ---------- Max suction (most negative) ----------
+    # -------- Maximum wind suction (most negative) --------
     neg_df = summary_df[summary_df["Net (kPa)"] < 0]
     if not neg_df.empty:
         min_neg_val = neg_df["Net (kPa)"].min()  # most negative
         min_neg_rows = neg_df[neg_df["Net (kPa)"] == min_neg_val]
-        locations_neg = sorted(set(tuple(x) for x in min_neg_rows[["Direction", "Zone"]].values.tolist()))
-        loc_text_neg = ", ".join([f"{zone} on {direction}" for direction, zone in [(d,z) for d,z in locations_neg]])
-        paragraphs.append(
-            f"Maximum suction (most negative net): {min_neg_val:.2f} kPa — present at {loc_text_neg}."
-        )
+        neg_dirs = set(min_neg_rows["Direction"].unique())
+        neg_zones = sorted(set(min_neg_rows["Zone"].unique()))
+        if neg_dirs == all_elevations:
+            elevation_text_neg = "all elevations"
+        else:
+            elevation_text_neg = ", ".join(sorted(neg_dirs))
+
+        # Describe zones: if single zone mention it, otherwise list
+        zones_text = neg_zones[0] if len(neg_zones) == 1 else ", ".join(neg_zones)
+        paragraphs.append(f"Maximum wind suction: {min_neg_val:.2f} kPa — {zones_text} on {elevation_text_neg}.")
     else:
-        paragraphs.append("No suction (net negative pressures) was found in the results.")
+        paragraphs.append("No wind suction (net negative pressures) was found in the results.")
 
-    # ---------- Funnelling paragraph ----------
-    # check session state flags robustly
-    consider_funnelling = None
-    if hasattr(session_state, "inputs"):
-        consider_funnelling = session_state.inputs.get("consider_funnelling", None)
-    if consider_funnelling is None:
-        consider_funnelling = session_state.get("consider_funnelling", False)
-    paragraphs.append(
-        f"Funnelling considered: {'Yes' if bool(consider_funnelling) else 'No'}. "
-        "This reflects whether funnelling effects between buildings were enabled in the model."
-    )
-
-    # ---------- Inset / Zone E paragraph ----------
-    inset_enabled = None
-    if hasattr(session_state, "inputs"):
-        inset_enabled = bool(session_state.inputs.get("inset_enabled", False))
+    # -------- Funnelling (friendly phrasing) --------
+    consider_funnelling = (session_state.inputs.get("consider_funnelling")
+                           if hasattr(session_state, "inputs") else session_state.get("consider_funnelling", False))
+    if bool(consider_funnelling):
+        paragraphs.append("Funnelling has been considered.")
     else:
-        inset_enabled = bool(session_state.get("inset_enabled", False))
+        paragraphs.append("Funnelling has not been considered.")
 
-    # Find Zone E occurrences in zone_pressures_by_direction
+    # -------- Inset zone and Zone E presence --------
+    inset_enabled = (bool(session_state.inputs.get("inset_enabled", False))
+                     if hasattr(session_state, "inputs") else bool(session_state.get("inset_enabled", False)))
+
+    # Collect Zone E entries (direction + value)
     zone_e_entries = []
     for direction, zd in zone_pressures_by_direction.items():
         e = zd.get("E")
         if e is not None:
-            # net_pressure_kpa stored rounded
             zone_e_entries.append({
                 "Direction": direction,
                 "Net (kPa)": e.get("net_pressure_kpa"),
@@ -1125,34 +1112,51 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
             })
 
     if zone_e_entries:
-        # build listing (direction -> value (kPa) and cp,e)
         entries_txt = "; ".join([f"{ent['Direction']} = {ent['Net (kPa)']:.2f} kPa (cp,e={ent['cp,e']})"
                                  for ent in zone_e_entries])
-        paragraphs.append(
-            f"Inset zone enabled: {'Yes' if inset_enabled else 'No'}. "
-            f"Zone E is present on the following elevation(s): {entries_txt}."
-        )
+        if inset_enabled:
+            inset_phrase = "Inset zone has been considered."
+        else:
+            inset_phrase = "Inset zone has not been considered."
+        paragraphs.append(f"{inset_phrase} Zone E is present on the following elevation(s): {entries_txt}.")
     else:
-        paragraphs.append(
-            f"Inset zone enabled: {'Yes' if inset_enabled else 'No'}. Zone E was not present on any elevation."
-        )
+        if inset_enabled:
+            paragraphs.append("Inset zone has been considered. Zone E was not present on any elevation.")
+        else:
+            paragraphs.append("Inset zone has not been considered. Zone E was not present on any elevation.")
 
-    # ---------- Final design value paragraph ----------
-    # design value = maximum absolute net pressure across all rows
+    # -------- Final design recommendation --------
+    # design value = maximum absolute net pressure across all rows (kPa)
     summary_df["abs_Net"] = summary_df["Net (kPa)"].abs()
     max_abs_val = summary_df["abs_Net"].max()
     max_abs_rows = summary_df[summary_df["abs_Net"] == max_abs_val]
 
-    # Collect unique zone/direction combos (may be multiple ties)
-    combos = sorted(set(tuple(x) for x in max_abs_rows[["Direction", "Zone", "Net (kPa)"]].values.tolist()))
-    combo_texts = []
-    for direction, zone, net in combos:
-        kind = "pressure" if net > 0 else "suction" if net < 0 else "zero"
-        combo_texts.append(f"{zone} on {direction} ({net:.2f} kPa, {kind})")
-    combo_text = "; ".join(combo_texts)
+    # Determine whether driver is pressure or suction (use Net (kPa) sign)
+    # If there are multiple driver rows, try to present concisely
+    unique_dirs = set(max_abs_rows["Direction"].unique())
+    unique_zones = set(max_abs_rows["Zone"].unique())
+    # determine phrase for elevations
+    if unique_dirs == all_elevations:
+        elev_phrase = "all elevations"
+    else:
+        elev_phrase = ", ".join(sorted(unique_dirs))
+    # determine zone phrase
+    if len(unique_zones) == 1:
+        zone_phrase = next(iter(unique_zones))
+    else:
+        zone_phrase = ", ".join(sorted(unique_zones))
+
+    # Determine whether driver is pressure or suction for wording
+    # If some rows are positive and some negative (unlikely), report generically as "wind suction/pressure"
+    signs = set(max_abs_rows["Net (kPa)"].apply(lambda x: "pressure" if x > 0 else ("suction" if x < 0 else "zero")))
+    if len(signs) == 1:
+        driver_kind = next(iter(signs))
+    else:
+        driver_kind = "wind suction/pressure"
 
     paragraphs.append(
-        f"Design value (largest absolute net) to be used: {max_abs_val:.2f} kPa — coming from {combo_text}."
+        f'TT recommend a design value of "{max_abs_val:.2f} kPa" to be adopted for the building. '
+        f'This is driven by {driver_kind} from Zone {zone_phrase} on {elev_phrase}.'
     )
 
     return paragraphs
