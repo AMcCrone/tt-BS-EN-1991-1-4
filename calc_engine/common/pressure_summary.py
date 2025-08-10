@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 import plotly.colors as pc
+from typing import List, Tuple
 
 def get_direction_factor(rotation_angle, use_direction_factor=False):
     """
