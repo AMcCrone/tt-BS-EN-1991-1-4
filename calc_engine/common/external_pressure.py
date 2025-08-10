@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
-from typing import List, Tuple
 
 # Define colors
 TT_Orange = "rgb(211,69,29)"
