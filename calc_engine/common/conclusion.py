@@ -1,7 +1,6 @@
 import pandas as pd
 import streamlit as st
 from typing import List, Tuple
-from pressure_summary import calculate_pressure_data
 
 def generate_pressure_summary_paragraphs(session_state, results_by_direction) -> List[str]:
     """
