@@ -659,7 +659,7 @@ from calc_engine.common.external_pressure import calculate_cpe, display_funnelli
 # Add checkbox to control funnelling consideration
 consider_funnelling = st.checkbox(
     "Consider Funnelling Effects",
-    value=bool(st.session_state.inputs.get("consider_funnelling", True)),
+    value=bool(st.session_state.inputs.get("consider_funnelling", False)),
     help="Enable to consider funnelling effects between buildings as per BS EN 1991-1-4"
 )
 
