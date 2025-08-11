@@ -3,7 +3,7 @@ import requests
 import streamlit as st
 from streamlit_folium import st_folium
 from geopy.distance import geodesic
-
+from educational import text_content
 
 
 def render_map_with_markers(
