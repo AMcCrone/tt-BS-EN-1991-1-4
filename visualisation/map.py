@@ -1,7 +1,9 @@
 import folium
 import requests
+import streamlit as st
 from streamlit_folium import st_folium
 from geopy.distance import geodesic
+
 
 
 def render_map_with_markers(
