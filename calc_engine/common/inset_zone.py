@@ -16,6 +16,8 @@ def detect_zone_E_and_visualise(session_state,
       - Zone E disabled on an elevation if that elevation's offset == 0
       - results flags set only when the rectangle actually fits (after clamping)
       - removed outline/perimeter for ground/top plane
+      - fixed axis ordering for the base/top plane so inset geometry uses the
+        same coordinate convention as the rest of the function
     """
     # Colours
     TT_TopPlane = "rgb(223,224,225)"
@@ -188,9 +190,10 @@ def detect_zone_E_and_visualise(session_state,
 
     # Draw top plane of base building (flat quad) with clockwise ordering:
     top_z = base_z
+    # FIXED: use x = 0..NS_dimension and y = 0..EW_dimension (was swapped previously)
     fig.add_trace(go.Mesh3d(
-        x=[0.0, EW_dimension, EW_dimension, 0.0],
-        y=[0.0, 0.0, NS_dimension, NS_dimension],
+        x=[0.0, 0.0, NS_dimension, NS_dimension],
+        y=[0.0, EW_dimension, EW_dimension, 0.0],
         z=[top_z, top_z, top_z, top_z],
         i=[0, 0], j=[1, 2], k=[2, 3],
         color=TT_TopPlane, opacity=1.0, hoverinfo="none", showlegend=False
