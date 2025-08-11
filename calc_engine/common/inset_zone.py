@@ -10,10 +10,10 @@ def detect_zone_E_and_visualise(session_state,
     Determine whether Zone E applies for each elevation edge and return a Plotly 3D
     visualisation.
 
-    NOTE: Kept the ORIGINAL ground/top plane ordering (as you requested).
-    Axis convention used here (to match the ground plane):
+    NOTE: Keeps the ORIGINAL ground/top plane ordering:
       x-axis = West -> East  (0..EW_dimension)
       y-axis = North -> South (0..NS_dimension)
+    Results dict is labelled in cardinal order: North, East, South, West.
     """
 
     # Colours
@@ -45,11 +45,11 @@ def detect_zone_E_and_visualise(session_state,
     upper_width_x = max(0.0, upper_x1 - upper_x0)  # West-East width
     upper_width_y = max(0.0, upper_y1 - upper_y0)  # North-South width
 
-    # Results skeleton
+    # Results skeleton (canonical cardinal order)
     results = {
-        "North": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False, "west_zone_E": False},
-        "South": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False, "west_zone_E": False},
+        "North": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False,  "west_zone_E": False},
         "East":  {"B1": None, "H1": H1, "e1": None, "north_zone_E": False, "south_zone_E": False},
+        "South": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False,  "west_zone_E": False},
         "West":  {"B1": None, "H1": H1, "e1": None, "north_zone_E": False, "south_zone_E": False},
     }
 
@@ -185,8 +185,8 @@ def detect_zone_E_and_visualise(session_state,
 
     # ---- Build 3D visual ----
     fig = go.Figure()
-
     top_z = base_z
+
     # Keep ORIGINAL top plane ordering (x spans 0..EW_dimension, y spans 0..NS_dimension)
     fig.add_trace(go.Mesh3d(
         x=[0.0, EW_dimension, EW_dimension, 0.0],
@@ -394,10 +394,10 @@ def detect_zone_E_and_visualise(session_state,
         height=520
     )
 
-    # Combined zone_E flags
+    # Combined zone_E flags (cardinal order)
     results["North"]["zone_E"] = bool(results["North"].get("east_zone_E", False) or results["North"].get("west_zone_E", False))
-    results["South"]["zone_E"] = bool(results["South"].get("east_zone_E", False) or results["South"].get("west_zone_E", False))
     results["East"]["zone_E"]  = bool(results["East"].get("north_zone_E", False) or results["East"].get("south_zone_E", False))
+    results["South"]["zone_E"] = bool(results["South"].get("east_zone_E", False) or results["South"].get("west_zone_E", False))
     results["West"]["zone_E"]  = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
 
     return results, fig
