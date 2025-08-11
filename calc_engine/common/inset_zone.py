@@ -15,10 +15,10 @@ def detect_zone_E_and_visualise(session_state,
       y-axis = West  -> East  (0..EW_dimension)
 
     Cardinal-to-face mapping used here (so cardinals match the input dims):
-      - North  = face at y = upper_y0  (y-constant face; spans x => NS length)
-      - South  = face at y = upper_y1  (y-constant face; spans x => NS length)
-      - West   = face at x = upper_x0  (x-constant face; spans y => EW length)
-      - East   = face at x = upper_x1  (x-constant face; spans y => EW length)
+      - North  = face at x = upper_x0  (x-constant face; spans y => EW length)
+      - South  = face at x = upper_x1  (x-constant face; spans y => EW length)
+      - West   = face at y = upper_y0  (y-constant face; spans x => NS length)
+      - East   = face at y = upper_y1  (y-constant face; spans x => NS length)
     """
     # Colours
     TT_TopPlane = "rgb(223,224,225)"
@@ -70,26 +70,19 @@ def detect_zone_E_and_visualise(session_state,
     zoneE_rects = []
 
     # -------------------------
-    # Preserve your original B1 formulas (you said they are correct),
-    # but *assign* them to the cardinals so that North/South correspond to the NS-length,
-    # and East/West correspond to the EW-length.
-    #
-    # Original B1_NS = EW - (east + west)
-    # Original B1_EW = NS - (north + south)
-    #
-    # We keep those, but assign:
-    #   results["East"/"West"]  <- original short-end B1_NS (EW-based)
-    #   results["North"/"South"]<- original long-end  B1_EW (NS-based)
+    # Updated B1 formulas to match the corrected cardinal-to-face mapping:
+    # North/South faces (x-constant) span the EW direction, so use EW-based B1
+    # East/West faces (y-constant) span the NS direction, so use NS-based B1
     # -------------------------
-    B1_short = max(0.0, EW_dimension - (east_offset + west_offset))   # short ends (EW direction)
-    e1_short = min(B1_short, 2.0 * H1)
-    results["East"].update({"B1": round(B1_short, 4), "e1": round(e1_short, 4)})
-    results["West"].update({"B1": round(B1_short, 4), "e1": round(e1_short, 4)})
+    B1_NS_faces = max(0.0, EW_dimension - (east_offset + west_offset))   # for North/South faces
+    e1_NS_faces = min(B1_NS_faces, 2.0 * H1)
+    results["North"].update({"B1": round(B1_NS_faces, 4), "e1": round(e1_NS_faces, 4)})
+    results["South"].update({"B1": round(B1_NS_faces, 4), "e1": round(e1_NS_faces, 4)})
 
-    B1_long = max(0.0, NS_dimension - (north_offset + south_offset))  # long faces (NS direction)
-    e1_long = min(B1_long, 2.0 * H1)
-    results["North"].update({"B1": round(B1_long, 4), "e1": round(e1_long, 4)})
-    results["South"].update({"B1": round(B1_long, 4), "e1": round(e1_long, 4)})
+    B1_EW_faces = max(0.0, NS_dimension - (north_offset + south_offset))  # for East/West faces
+    e1_EW_faces = min(B1_EW_faces, 2.0 * H1)
+    results["East"].update({"B1": round(B1_EW_faces, 4), "e1": round(e1_EW_faces, 4)})
+    results["West"].update({"B1": round(B1_EW_faces, 4), "e1": round(e1_EW_faces, 4)})
 
     # For readability below:
     # - face_length_NS = upper_width_x  (actual NS face length available after insets)
@@ -98,33 +91,108 @@ def detect_zone_E_and_visualise(session_state,
     face_length_EW = upper_width_y
 
     # -------------------------
-    # Create Zone-E rectangles ON THE FACE PLANES according to the new mapping:
-    # North / South are y-constant faces (they span x axis); rectangle span along x.
-    # East / West are  x-constant faces (they span y axis); rectangle span along y.
+    # Create Zone-E rectangles ON THE FACE PLANES according to the corrected mapping:
+    # North / South are x-constant faces (they span y axis); rectangle span along y.
+    # East / West are  y-constant faces (they span x axis); rectangle span along x.
     # -------------------------
 
-    # NORTH face (y = upper_y0) — uses e1_long (derived from NS-based B1)
-    if e1_long > 0 and north_offset > 0:
+    # NORTH face (x = upper_x0) — uses e1_NS_faces (derived from EW-based B1)
+    if e1_NS_faces > 0 and north_offset > 0:
         # North - East (near building east side)
-        if east_offset < 0.2 * e1_long:
-            rect_w = e1_long / 5.0    # width along the face (x direction)
-            rect_h = e1_long / 3.0
-            cx0 = upper_x1 - min(face_length_NS, rect_w)  # place near the South end of the face (high x)
-            cx1 = upper_x1
-            cy0 = upper_y0      # face plane y const
-            cy1 = upper_y0      # we'll use cy0==cy1 for face-plane; clamp_rect expects ranges so keep tiny depth into inset
-            # For a face-plane rectangle, we make a tiny y-depth into the inset to give it area for Mesh3d:
-            depth = min(face_length_EW, rect_h)
-            cy1 = cy0 + depth
+        if east_offset < 0.2 * e1_NS_faces:
+            rect_w = e1_NS_faces / 5.0    # width along the face (y direction)
+            rect_h = e1_NS_faces / 3.0
+            cy1 = upper_y1  # place near the East end of the face (high y)
+            cy0 = upper_y1 - min(face_length_EW, rect_w)
+            cx0 = upper_x0      # face plane x const
+            # For a face-plane rectangle, we make a tiny x-depth into the inset to give it area for Mesh3d:
+            depth = min(face_length_NS, rect_h)
+            cx1 = cx0 + depth
             clamped = clamp_rect(cx0, cx1, cy0, cy1)
             if clamped:
                 results["North"]["east_zone_E"] = True
                 zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "North-east"))
 
         # North - West (near building west side)
-        if west_offset < 0.2 * e1_long:
-            rect_w = e1_long / 5.0
-            rect_h = e1_long / 3.0
+        if west_offset < 0.2 * e1_NS_faces:
+            rect_w = e1_NS_faces / 5.0
+            rect_h = e1_NS_faces / 3.0
+            cy0 = upper_y0
+            cy1 = upper_y0 + min(face_length_EW, rect_w)
+            cx0 = upper_x0
+            depth = min(face_length_NS, rect_h)
+            cx1 = cx0 + depth
+            clamped = clamp_rect(cx0, cx1, cy0, cy1)
+            if clamped:
+                results["North"]["west_zone_E"] = True
+                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "North-west"))
+
+    # SOUTH face (x = upper_x1)
+    if e1_NS_faces > 0 and south_offset > 0:
+        # South - East (near building east side)
+        if east_offset < 0.2 * e1_NS_faces:
+            rect_w = e1_NS_faces / 5.0
+            rect_h = e1_NS_faces / 3.0
+            cy1 = upper_y1
+            cy0 = upper_y1 - min(face_length_EW, rect_w)
+            cx1 = upper_x1
+            depth = min(face_length_NS, rect_h)
+            cx0 = cx1 - depth
+            clamped = clamp_rect(cx0, cx1, cy0, cy1)
+            if clamped:
+                results["South"]["east_zone_E"] = True
+                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-east"))
+
+        # South - West
+        if west_offset < 0.2 * e1_NS_faces:
+            rect_w = e1_NS_faces / 5.0
+            rect_h = e1_NS_faces / 3.0
+            cy0 = upper_y0
+            cy1 = upper_y0 + min(face_length_EW, rect_w)
+            cx1 = upper_x1
+            depth = min(face_length_NS, rect_h)
+            cx0 = cx1 - depth
+            clamped = clamp_rect(cx0, cx1, cy0, cy1)
+            if clamped:
+                results["South"]["west_zone_E"] = True
+                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-west"))
+
+    # EAST face (y = upper_y1) — uses e1_EW_faces (derived from NS-based B1)
+    if e1_EW_faces > 0 and east_offset > 0:
+        # East - North (near building north side)
+        if north_offset < 0.2 * e1_EW_faces:
+            rect_w = e1_EW_faces / 5.0    # width along the face (x direction)
+            rect_h = e1_EW_faces / 3.0
+            cx0 = upper_x0  # place near the North end of the face (low x)
+            cx1 = upper_x0 + min(face_length_NS, rect_w)
+            cy1 = upper_y1
+            depth = min(face_length_EW, rect_h)
+            cy0 = cy1 - depth
+            clamped = clamp_rect(cx0, cx1, cy0, cy1)
+            if clamped:
+                results["East"]["north_zone_E"] = True
+                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "East-north"))
+
+        # East - South
+        if south_offset < 0.2 * e1_EW_faces:
+            rect_w = e1_EW_faces / 5.0
+            rect_h = e1_EW_faces / 3.0
+            cx1 = upper_x1  # place near the South end of the face (high x)
+            cx0 = upper_x1 - min(face_length_NS, rect_w)
+            cy1 = upper_y1
+            depth = min(face_length_EW, rect_h)
+            cy0 = cy1 - depth
+            clamped = clamp_rect(cx0, cx1, cy0, cy1)
+            if clamped:
+                results["East"]["south_zone_E"] = True
+                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "East-south"))
+
+    # WEST face (y = upper_y0)
+    if e1_EW_faces > 0 and west_offset > 0:
+        # West - North
+        if north_offset < 0.2 * e1_EW_faces:
+            rect_w = e1_EW_faces / 5.0
+            rect_h = e1_EW_faces / 3.0
             cx0 = upper_x0
             cx1 = upper_x0 + min(face_length_NS, rect_w)
             cy0 = upper_y0
@@ -132,92 +200,18 @@ def detect_zone_E_and_visualise(session_state,
             cy1 = cy0 + depth
             clamped = clamp_rect(cx0, cx1, cy0, cy1)
             if clamped:
-                results["North"]["west_zone_E"] = True
-                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "North-west"))
-
-    # SOUTH face (y = upper_y1)
-    if e1_long > 0 and south_offset > 0:
-        # South - East (near building east side)
-        if east_offset < 0.2 * e1_long:
-            rect_w = e1_long / 5.0
-            rect_h = e1_long / 3.0
-            cx0 = upper_x1 - min(face_length_NS, rect_w)
-            cx1 = upper_x1
-            cy1 = upper_y1
-            depth = min(face_length_EW, rect_h)
-            cy0 = cy1 - depth
-            clamped = clamp_rect(cx0, cx1, cy0, cy1)
-            if clamped:
-                results["South"]["east_zone_E"] = True
-                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-east"))
-
-        # South - West
-        if west_offset < 0.2 * e1_long:
-            rect_w = e1_long / 5.0
-            rect_h = e1_long / 3.0
-            cx0 = upper_x0
-            cx1 = upper_x0 + min(face_length_NS, rect_w)
-            cy1 = upper_y1
-            depth = min(face_length_EW, rect_h)
-            cy0 = cy1 - depth
-            clamped = clamp_rect(cx0, cx1, cy0, cy1)
-            if clamped:
-                results["South"]["west_zone_E"] = True
-                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-west"))
-
-    # EAST face (x = upper_x1) — uses e1_short (derived from EW-based B1)
-    if e1_short > 0 and east_offset > 0:
-        # East - North (near building north side)
-        if north_offset < 0.2 * e1_short:
-            rect_w = e1_short / 5.0    # width along the face (y direction)
-            rect_h = e1_short / 3.0
-            cy0 = upper_y0
-            cy1 = upper_y0 + min(face_length_EW, rect_w)
-            cx1 = upper_x1
-            depth = min(face_length_NS, rect_h)
-            cx0 = cx1 - depth
-            clamped = clamp_rect(cx0, cx1, cy0, cy1)
-            if clamped:
-                results["East"]["north_zone_E"] = True
-                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "East-north"))
-
-        # East - South
-        if south_offset < 0.2 * e1_short:
-            rect_w = e1_short / 5.0
-            rect_h = e1_short / 3.0
-            cy1 = upper_y1
-            cy0 = upper_y1 - min(face_length_EW, rect_w)
-            cx1 = upper_x1
-            depth = min(face_length_NS, rect_h)
-            cx0 = cx1 - depth
-            clamped = clamp_rect(cx0, cx1, cy0, cy1)
-            if clamped:
-                results["East"]["south_zone_E"] = True
-                zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "East-south"))
-
-    # WEST face (x = upper_x0)
-    if e1_short > 0 and west_offset > 0:
-        # West - North
-        if north_offset < 0.2 * e1_short:
-            rect_w = e1_short / 5.0
-            rect_h = e1_short / 3.0
-            cy0 = upper_y0
-            cy1 = upper_y0 + min(face_length_EW, rect_w)
-            cx0 = upper_x0
-            cx1 = upper_x0 + min(face_length_NS, rect_h)
-            clamped = clamp_rect(cx0, cx1, cy0, cy1)
-            if clamped:
                 results["West"]["north_zone_E"] = True
                 zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "West-north"))
 
         # West - South
-        if south_offset < 0.2 * e1_short:
-            rect_w = e1_short / 5.0
-            rect_h = e1_short / 3.0
-            cy1 = upper_y1
-            cy0 = upper_y1 - min(face_length_EW, rect_w)
-            cx0 = upper_x0
-            cx1 = upper_x0 + min(face_length_NS, rect_h)
+        if south_offset < 0.2 * e1_EW_faces:
+            rect_w = e1_EW_faces / 5.0
+            rect_h = e1_EW_faces / 3.0
+            cx1 = upper_x1
+            cx0 = upper_x1 - min(face_length_NS, rect_w)
+            cy0 = upper_y0
+            depth = min(face_length_EW, rect_h)
+            cy1 = cy0 + depth
             clamped = clamp_rect(cx0, cx1, cy0, cy1)
             if clamped:
                 results["West"]["south_zone_E"] = True
@@ -278,57 +272,13 @@ def detect_zone_E_and_visualise(session_state,
         fig.add_trace(go.Scatter3d(x=[ux0, ux1, ux1, ux0, ux0], y=[uy0, uy0, uy1, uy1, uy0], z=[tz]*5,
                                    mode='lines', line=dict(color='black', width=1), hoverinfo='none', showlegend=False))
 
-    # Draw ZoneE rectangles (labels unchanged)
+    # Draw ZoneE rectangles (updated for corrected face mapping)
     for (cx0, cx1, cy0, cy1, rect_h, label) in zoneE_rects:
         bottom_z = top_z
         top_z_rect = top_z + rect_h
 
         if "North" in label:
-            # North face (y = cy0..cy1 near upper_y0) -> treat as face plane at min y
-            fig.add_trace(go.Mesh3d(
-                x=[cx0, cx1, cx1, cx0],
-                y=[cy0, cy0, cy0, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
-                i=[0, 0], j=[1, 2], k=[2, 3],
-                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
-            ))
-            fig.add_trace(go.Scatter3d(
-                x=[cx0, cx1, cx1, cx0, cx0],
-                y=[cy0, cy0, cy0, cy0, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
-                mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
-            ))
-        elif "South" in label:
-            fig.add_trace(go.Mesh3d(
-                x=[cx0, cx1, cx1, cx0],
-                y=[cy1, cy1, cy1, cy1],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
-                i=[0, 0], j=[1, 2], k=[2, 3],
-                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
-            ))
-            fig.add_trace(go.Scatter3d(
-                x=[cx0, cx1, cx1, cx0, cx0],
-                y=[cy1, cy1, cy1, cy1, cy1],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
-                mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
-            ))
-        elif "East" in label:
-            # East face (x = cx1)
-            fig.add_trace(go.Mesh3d(
-                x=[cx1, cx1, cx1, cx1],
-                y=[cy0, cy1, cy1, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
-                i=[0, 0], j=[1, 2], k=[2, 3],
-                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
-            ))
-            fig.add_trace(go.Scatter3d(
-                x=[cx1, cx1, cx1, cx1, cx1],
-                y=[cy0, cy1, cy1, cy0, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
-                mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
-            ))
-        else:
-            # West face (x = cx0)
+            # North face (x = cx0) -> treat as face plane at min x
             fig.add_trace(go.Mesh3d(
                 x=[cx0, cx0, cx0, cx0],
                 y=[cy0, cy1, cy1, cy0],
@@ -342,8 +292,53 @@ def detect_zone_E_and_visualise(session_state,
                 z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
                 mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
             ))
+        elif "South" in label:
+            # South face (x = cx1)
+            fig.add_trace(go.Mesh3d(
+                x=[cx1, cx1, cx1, cx1],
+                y=[cy0, cy1, cy1, cy0],
+                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                i=[0, 0], j=[1, 2], k=[2, 3],
+                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
+            ))
+            fig.add_trace(go.Scatter3d(
+                x=[cx1, cx1, cx1, cx1, cx1],
+                y=[cy0, cy1, cy1, cy0, cy0],
+                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
+            ))
+        elif "East" in label:
+            # East face (y = cy1)
+            fig.add_trace(go.Mesh3d(
+                x=[cx0, cx1, cx1, cx0],
+                y=[cy1, cy1, cy1, cy1],
+                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                i=[0, 0], j=[1, 2], k=[2, 3],
+                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
+            ))
+            fig.add_trace(go.Scatter3d(
+                x=[cx0, cx1, cx1, cx0, cx0],
+                y=[cy1, cy1, cy1, cy1, cy1],
+                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
+            ))
+        else:
+            # West face (y = cy0)
+            fig.add_trace(go.Mesh3d(
+                x=[cx0, cx1, cx1, cx0],
+                y=[cy0, cy0, cy0, cy0],
+                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                i=[0, 0], j=[1, 2], k=[2, 3],
+                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
+            ))
+            fig.add_trace(go.Scatter3d(
+                x=[cx0, cx1, cx1, cx0, cx0],
+                y=[cy0, cy0, cy0, cy0, cy0],
+                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
+            ))
 
-    # Direction labels — positioned to match mapping (y-constant faces -> North/South)
+    # Direction labels — positioned to match corrected mapping (x-constant faces -> North/South)
     label_margin = max(1.0, max(NS_dimension, EW_dimension) * 0.06)
     center_x = NS_dimension / 2
     center_y = EW_dimension / 2
@@ -351,19 +346,19 @@ def detect_zone_E_and_visualise(session_state,
     if upper_width_x > 0 and upper_width_y > 0:
         lx_center = (upper_x0 + upper_x1) / 2
         ly_center = (upper_y0 + upper_y1) / 2
-        # North & South are y-constant faces
+        # North & South are x-constant faces, East & West are y-constant faces
         label_positions = {
-            "North": {"pos": [lx_center, upper_y0 - label_margin, top_z], "text": "N"},
-            "South": {"pos": [lx_center, upper_y1 + label_margin, top_z], "text": "S"},
-            "East":  {"pos": [upper_x1 + label_margin, ly_center, top_z], "text": "E"},
-            "West":  {"pos": [upper_x0 - label_margin, ly_center, top_z], "text": "W"},
+            "North": {"pos": [upper_x0 - label_margin, ly_center, top_z], "text": "N"},
+            "South": {"pos": [upper_x1 + label_margin, ly_center, top_z], "text": "S"},
+            "East":  {"pos": [lx_center, upper_y1 + label_margin, top_z], "text": "E"},
+            "West":  {"pos": [lx_center, upper_y0 - label_margin, top_z], "text": "W"},
         }
     else:
         label_positions = {
-            "North": {"pos": [center_x, 0.0 - label_margin, top_z], "text": "N"},
-            "South": {"pos": [center_x, EW_dimension + label_margin, top_z], "text": "S"},
-            "East":  {"pos": [NS_dimension + label_margin, center_y, top_z], "text": "E"},
-            "West":  {"pos": [0.0 - label_margin, center_y, top_z], "text": "W"},
+            "North": {"pos": [0.0 - label_margin, center_y, top_z], "text": "N"},
+            "South": {"pos": [NS_dimension + label_margin, center_y, top_z], "text": "S"},
+            "East":  {"pos": [center_x, EW_dimension + label_margin, top_z], "text": "E"},
+            "West":  {"pos": [center_x, 0.0 - label_margin, top_z], "text": "W"},
         }
 
     for label_info in label_positions.values():
