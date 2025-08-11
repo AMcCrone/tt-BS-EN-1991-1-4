@@ -189,8 +189,8 @@ def detect_zone_E_and_visualise(session_state,
     # Draw top plane of base building (flat quad) with clockwise ordering:
     top_z = base_z
     fig.add_trace(go.Mesh3d(
-        x=[0.0, NS_dimension, NS_dimension, 0.0],
-        y=[0.0, 0.0, EW_dimension, EW_dimension],
+        x=[0.0, EW_dimension, EW_dimension, 0.0],
+        y=[0.0, 0.0, NS_dimension, NS_dimension],
         z=[top_z, top_z, top_z, top_z],
         i=[0, 0], j=[1, 2], k=[2, 3],
         color=TT_TopPlane, opacity=1.0, hoverinfo="none", showlegend=False
