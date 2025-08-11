@@ -51,15 +51,7 @@ def detect_zone_E_and_visualise(session_state,
         "West":  {"B1": None, "H1": H1, "e1": None, "north_zone_E": False, "south_zone_E": False},
     }
 
-    def clamp_rect(x0, x1, y0, y1):
-        cx0 = max(x0, upper_x0)
-        cx1 = min(x1, upper_x1)
-        cy0 = max(y0, upper_y0)
-        cy1 = min(y1, upper_y1)
-        if cx1 <= cx0 or cy1 <= cy0:
-            return None
-        return (cx0, cx1, cy0, cy1)
-
+    # Store zone E rectangles with face information
     zoneE_rects = []
 
     # ---- Keep your original B1 calculations (they were correct) ----
@@ -82,123 +74,166 @@ def detect_zone_E_and_visualise(session_state,
     SW = (upper_x1, upper_y0)
     SE = (upper_x1, upper_y1)
 
-    # A small helper to add a corner-based rectangle if it fits:
-    def add_corner_rect(corner_x, corner_y, inward_along_x_sign, inward_along_y_sign, rect_w, rect_h, label):
+    # Helper function to add Zone E rectangles with proper face positioning
+    def add_zone_E_rect(face, corner_pos, width, depth, direction, label):
         """
-        corner_x, corner_y : coordinates of corner (on inset footprint)
-        inward_along_x_sign : +1 if depth into inset increases x, -1 if decreases x
-        inward_along_y_sign : +1 if width into inset increases y, -1 if decreases y
-        rect_w : desired width along the face (along the axis parallel to face)
-        rect_h : desired depth (how far into the inset the rectangle reaches)
+        Add a Zone E rectangle on the specified building face.
+        
+        face: "North", "South", "East", or "West"
+        corner_pos: (x, y) position of the corner on the upper storey footprint
+        width: dimension along the face
+        depth: dimension perpendicular to the face (into the building)
+        direction: direction along the face from the corner
         """
-        # depth is along the axis perpendicular to the face plane (we use rect_h for that)
-        depth = min(upper_width_x if abs(inward_along_x_sign) else upper_width_x, rect_h)
-        # width is along the face axis (we use rect_w)
-        width = rect_w
-
-        # compute x-range
-        if inward_along_x_sign > 0:
-            x0 = corner_x
-            x1 = corner_x + min(upper_width_x, depth)
-        else:
-            x1 = corner_x
-            x0 = corner_x - min(upper_width_x, depth)
-
-        # compute y-range
-        if inward_along_y_sign > 0:
-            y0 = corner_y
-            y1 = corner_y + min(upper_width_y, width)
-        else:
-            y1 = corner_y
-            y0 = corner_y - min(upper_width_y, width)
-
-        clamped = clamp_rect(x0, x1, y0, y1)
-        if clamped:
-            zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, label))
-            return True
-        return False
+        x, y = corner_pos
+        
+        if face == "North":
+            # North face is at x = upper_x0, rectangle extends in +x direction (south)
+            face_x = upper_x0
+            rect_x_start = face_x
+            rect_x_end = min(face_x + depth, upper_x1)
+            
+            if direction == "east":  # extends towards east
+                rect_y_start = y
+                rect_y_end = min(y + width, upper_y1)
+            else:  # direction == "west", extends towards west
+                rect_y_start = max(y - width, upper_y0)
+                rect_y_end = y
+                
+            zoneE_rects.append({
+                'face': 'North',
+                'x_range': (rect_x_start, rect_x_end),
+                'y_range': (rect_y_start, rect_y_end),
+                'face_coord': face_x,
+                'height': depth,
+                'label': label
+            })
+            
+        elif face == "South":
+            # South face is at x = upper_x1, rectangle extends in -x direction (north)
+            face_x = upper_x1
+            rect_x_start = max(face_x - depth, upper_x0)
+            rect_x_end = face_x
+            
+            if direction == "east":
+                rect_y_start = y
+                rect_y_end = min(y + width, upper_y1)
+            else:  # direction == "west"
+                rect_y_start = max(y - width, upper_y0)
+                rect_y_end = y
+                
+            zoneE_rects.append({
+                'face': 'South',
+                'x_range': (rect_x_start, rect_x_end),
+                'y_range': (rect_y_start, rect_y_end),
+                'face_coord': face_x,
+                'height': depth,
+                'label': label
+            })
+            
+        elif face == "East":
+            # East face is at y = upper_y1, rectangle extends in -y direction (west)
+            face_y = upper_y1
+            rect_y_start = max(face_y - depth, upper_y0)
+            rect_y_end = face_y
+            
+            if direction == "north":
+                rect_x_start = max(x - width, upper_x0)
+                rect_x_end = x
+            else:  # direction == "south"
+                rect_x_start = x
+                rect_x_end = min(x + width, upper_x1)
+                
+            zoneE_rects.append({
+                'face': 'East',
+                'x_range': (rect_x_start, rect_x_end),
+                'y_range': (rect_y_start, rect_y_end),
+                'face_coord': face_y,
+                'height': depth,
+                'label': label
+            })
+            
+        elif face == "West":
+            # West face is at y = upper_y0, rectangle extends in +y direction (east)
+            face_y = upper_y0
+            rect_y_start = face_y
+            rect_y_end = min(face_y + depth, upper_y1)
+            
+            if direction == "north":
+                rect_x_start = max(x - width, upper_x0)
+                rect_x_end = x
+            else:  # direction == "south"
+                rect_x_start = x
+                rect_x_end = min(x + width, upper_x1)
+                
+            zoneE_rects.append({
+                'face': 'West',
+                'x_range': (rect_x_start, rect_x_end),
+                'y_range': (rect_y_start, rect_y_end),
+                'face_coord': face_y,
+                'height': depth,
+                'label': label
+            })
 
     # ---- Place corner rectangles using the correct corner coordinates ----
     # For North face corners we use e1_NS (B1_NS-driven)
     # North-East corner (NE)
     if e1_NS > 0 and north_offset > 0 and east_offset < 0.2 * e1_NS:
-        rect_w = e1_NS / 5.0   # along-face width (along y or x depending on mapping)
-        rect_h = e1_NS / 3.0   # depth into inset
-        # NE corner: corner=(upper_x0, upper_y1)
-        # rectangle should extend into inset in +x (southwards) and extend along face back towards west (decrease y)
-        # inward_along_x_sign = +1 (x increases into inset), inward_along_y_sign = -1 (y decreases from east toward west)
-        if add_corner_rect(NE[0], NE[1], inward_along_x_sign=+1, inward_along_y_sign=-1,
-                           rect_w=rect_w, rect_h=rect_h, label="North-east"):
-            results["North"]["east_zone_E"] = True
+        rect_w = e1_NS / 5.0   # along-face width
+        rect_h = e1_NS / 3.0   # depth into building
+        add_zone_E_rect("North", NE, rect_w, rect_h, "west", "North-east")
+        results["North"]["east_zone_E"] = True
 
     # North-West corner (NW)
     if e1_NS > 0 and north_offset > 0 and west_offset < 0.2 * e1_NS:
         rect_w = e1_NS / 5.0
         rect_h = e1_NS / 3.0
-        # NW corner: (upper_x0, upper_y0)
-        # extend into inset +x, and along face +y (west->east)
-        if add_corner_rect(NW[0], NW[1], inward_along_x_sign=+1, inward_along_y_sign=+1,
-                           rect_w=rect_w, rect_h=rect_h, label="North-west"):
-            results["North"]["west_zone_E"] = True
+        add_zone_E_rect("North", NW, rect_w, rect_h, "east", "North-west")
+        results["North"]["west_zone_E"] = True
 
     # South-East corner (SE) for South face
     if e1_NS > 0 and south_offset > 0 and east_offset < 0.2 * e1_NS:
         rect_w = e1_NS / 5.0
         rect_h = e1_NS / 3.0
-        # SE: (upper_x1, upper_y1)
-        # extend into inset -x (towards north) and along face -y (from east toward west)
-        if add_corner_rect(SE[0], SE[1], inward_along_x_sign=-1, inward_along_y_sign=-1,
-                           rect_w=rect_w, rect_h=rect_h, label="South-east"):
-            results["South"]["east_zone_E"] = True
+        add_zone_E_rect("South", SE, rect_w, rect_h, "west", "South-east")
+        results["South"]["east_zone_E"] = True
 
     # South-West corner (SW)
     if e1_NS > 0 and south_offset > 0 and west_offset < 0.2 * e1_NS:
         rect_w = e1_NS / 5.0
         rect_h = e1_NS / 3.0
-        # SW: (upper_x1, upper_y0)
-        # extend into inset -x and along face +y
-        if add_corner_rect(SW[0], SW[1], inward_along_x_sign=-1, inward_along_y_sign=+1,
-                           rect_w=rect_w, rect_h=rect_h, label="South-west"):
-            results["South"]["west_zone_E"] = True
+        add_zone_E_rect("South", SW, rect_w, rect_h, "east", "South-west")
+        results["South"]["west_zone_E"] = True
 
     # East face corners use e1_EW (B1_EW-driven)
     # East-North (corner at NE)
     if e1_EW > 0 and east_offset > 0 and north_offset < 0.2 * e1_EW:
         rect_w = e1_EW / 5.0
         rect_h = e1_EW / 3.0
-        # East-North: NE (upper_x0, upper_y1) -> extend into inset +y? No: East face is x=upper_x1
-        # For east face we place rectangle near x=upper_x1 and at the north-side (low x)
-        # So inward_along_x_sign for depth should be -1 (depth into inset reduces x),
-        # and along-face (y) direction for north side is -1 (from east towards west)? We'll use:
-        if add_corner_rect(NE[0], NE[1], inward_along_x_sign=-1, inward_along_y_sign=-1,
-                           rect_w=rect_w, rect_h=rect_h, label="East-north"):
-            results["East"]["north_zone_E"] = True
+        add_zone_E_rect("East", NE, rect_w, rect_h, "south", "East-north")
+        results["East"]["north_zone_E"] = True
 
     # East-South (SE)
     if e1_EW > 0 and east_offset > 0 and south_offset < 0.2 * e1_EW:
         rect_w = e1_EW / 5.0
         rect_h = e1_EW / 3.0
-        if add_corner_rect(SE[0], SE[1], inward_along_x_sign=-1, inward_along_y_sign=-1,
-                           rect_w=rect_w, rect_h=rect_h, label="East-south"):
-            results["East"]["south_zone_E"] = True
+        add_zone_E_rect("East", SE, rect_w, rect_h, "north", "East-south")
+        results["East"]["south_zone_E"] = True
 
     # West face corners use e1_EW
     # West-North (NW)
     if e1_EW > 0 and west_offset > 0 and north_offset < 0.2 * e1_EW:
         rect_w = e1_EW / 5.0
         rect_h = e1_EW / 3.0
-        # West face is x = upper_x0: depth goes +x into inset; north side is at NE? use NW corner
-        if add_corner_rect(NW[0], NW[1], inward_along_x_sign=+1, inward_along_y_sign=+1,
-                           rect_w=rect_w, rect_h=rect_h, label="West-north"):
-            results["West"]["north_zone_E"] = True
+        add_zone_E_rect("West", NW, rect_w, rect_h, "south", "West-north")
+        results["West"]["north_zone_E"] = True
 
     # West-South (SW)
     if e1_EW > 0 and west_offset > 0 and south_offset < 0.2 * e1_EW:
         rect_w = e1_EW / 5.0
         rect_h = e1_EW / 3.0
-        if add_corner_rect(SW[0], SW[1], inward_along_x_sign=+1, inward_along_y_sign=+1,
-                           rect_w=rect_w, rect_h=rect_h, label="West-south"):
-            results["West"]["south_zone_E"] = True
+        add_zone_E_rect("West", SW, rect_w, rect_h, "north", "West-south")
+        results["West"]["south_zone_E"] = True
 
     # ---- Build 3D visual ----
     fig = go.Figure()
@@ -251,70 +286,79 @@ def detect_zone_E_and_visualise(session_state,
         fig.add_trace(go.Scatter3d(x=[ux0, ux1, ux1, ux0, ux0], y=[uy0, uy0, uy1, uy1, uy0], z=[tz]*5,
                                    mode='lines', line=dict(color='black', width=1), hoverinfo='none', showlegend=False))
 
-    # Draw each Zone E as rectangles
-    for (cx0, cx1, cy0, cy1, rect_h, label) in zoneE_rects:
+    # Draw each Zone E rectangle on the correct building face
+    for rect_info in zoneE_rects:
+        face = rect_info['face']
+        x_start, x_end = rect_info['x_range']
+        y_start, y_end = rect_info['y_range']
+        face_coord = rect_info['face_coord']
+        height = rect_info['height']
+        
         bottom_z = top_z
-        top_z_rect = top_z + rect_h
+        top_z_rect = top_z + height
 
-        if "North" in label:
-            # North face -> plane at x in [cx0,cx1], y ~ cy0 (we made cy range non-zero)
+        if face == "North":
+            # Rectangle on North face (x = face_coord)
             fig.add_trace(go.Mesh3d(
-                x=[cx0, cx1, cx1, cx0],
-                y=[cy0, cy0, cy0, cy0],
+                x=[face_coord, face_coord, face_coord, face_coord],
+                y=[y_start, y_end, y_end, y_start],
                 z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
                 i=[0, 0], j=[1, 2], k=[2, 3],
                 color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
             ))
             fig.add_trace(go.Scatter3d(
-                x=[cx0, cx1, cx1, cx0, cx0],
-                y=[cy0, cy0, cy0, cy0, cy0],
+                x=[face_coord, face_coord, face_coord, face_coord, face_coord],
+                y=[y_start, y_end, y_end, y_start, y_start],
                 z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
                 mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
             ))
-        elif "South" in label:
+        elif face == "South":
+            # Rectangle on South face (x = face_coord)
             fig.add_trace(go.Mesh3d(
-                x=[cx0, cx1, cx1, cx0],
-                y=[cy1, cy1, cy1, cy1],
+                x=[face_coord, face_coord, face_coord, face_coord],
+                y=[y_start, y_end, y_end, y_start],
                 z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
                 i=[0, 0], j=[1, 2], k=[2, 3],
                 color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
             ))
             fig.add_trace(go.Scatter3d(
-                x=[cx0, cx1, cx1, cx0, cx0],
-                y=[cy1, cy1, cy1, cy1, cy1],
+                x=[face_coord, face_coord, face_coord, face_coord, face_coord],
+                y=[y_start, y_end, y_end, y_start, y_start],
                 z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
                 mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
             ))
-        elif "East" in label:
+        elif face == "East":
+            # Rectangle on East face (y = face_coord)
             fig.add_trace(go.Mesh3d(
-                x=[cx1, cx1, cx1, cx1],
-                y=[cy0, cy1, cy1, cy0],
+                x=[x_start, x_end, x_end, x_start],
+                y=[face_coord, face_coord, face_coord, face_coord],
                 z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
                 i=[0, 0], j=[1, 2], k=[2, 3],
                 color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
             ))
             fig.add_trace(go.Scatter3d(
-                x=[cx1, cx1, cx1, cx1, cx1],
-                y=[cy0, cy1, cy1, cy0, cy0],
+                x=[x_start, x_end, x_end, x_start, x_start],
+                y=[face_coord, face_coord, face_coord, face_coord, face_coord],
                 z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
                 mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
             ))
-        else:  # West
+        elif face == "West":
+            # Rectangle on West face (y = face_coord)
             fig.add_trace(go.Mesh3d(
-                x=[cx0, cx0, cx0, cx0],
-                y=[cy0, cy1, cy1, cy0],
+                x=[x_start, x_end, x_end, x_start],
+                y=[face_coord, face_coord, face_coord, face_coord],
                 z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
                 i=[0, 0], j=[1, 2], k=[2, 3],
                 color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
             ))
             fig.add_trace(go.Scatter3d(
-                x=[cx0, cx0, cx0, cx0, cx0],
-                y=[cy0, cy1, cy1, cy0, cy0],
+                x=[x_start, x_end, x_end, x_start, x_start],
+                y=[face_coord, face_coord, face_coord, face_coord, face_coord],
                 z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
                 mode='lines', line=dict(color='black', width=2), hoverinfo='none', showlegend=False
             ))
 
-    # Direction labels (we keep your existing styling / positions)
+    # Direction labels (keep your existing styling / positions)
     label_margin = max(1.0, max(NS_dimension, EW_dimension) * 0.06)
     center_x = NS_dimension / 2
     center_y = EW_dimension / 2
