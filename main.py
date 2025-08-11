@@ -642,7 +642,7 @@ if add_inset:
     st.session_state["inset_fig"] = fig
 
     st.plotly_chart(fig, use_container_width=True)
-    st.table(pd.DataFrame(results).T)
+    st.dataframe(pd.DataFrame(results).T)
 
 else:
     # Inset disabled: do NOT show inputs or visualisation.
