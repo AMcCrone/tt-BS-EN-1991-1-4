@@ -867,6 +867,3 @@ st.header("Conclusion")
 paragraphs = generate_pressure_summary_paragraphs(st.session_state, results_by_direction)
 for p in paragraphs:
     st.markdown(p)
-
-# Option to save session data
-add_save_ui()
