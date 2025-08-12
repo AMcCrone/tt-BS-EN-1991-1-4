@@ -12,13 +12,10 @@ def detect_zone_E_and_visualise(session_state,
     Coordinate convention:
       x-axis = North -> South (0..NS_dimension)
       y-axis = West -> East  (0..EW_dimension)
-    Changes:
-      - Zone E disabled on an elevation if that elevation's offset == 0
-      - results flags set only when the rectangle actually fits (after clamping)
-      - removed outline/perimeter for ground/top plane
-      - fixed axis ordering for the base/top plane so inset geometry uses the
-        same coordinate convention as the rest of the function
-      - FIXED: corrected East/West elevation zone E geometry to use proper dimensions
+    
+    FIXED: Corrected dimension assignment:
+    - North/South elevations: draw_width uses NS_dimension, crosswind_breadth uses EW_dimension
+    - East/West elevations: draw_width uses EW_dimension, crosswind_breadth uses NS_dimension
     """
     # Colours
     TT_TopPlane = "rgb(223,224,225)"
@@ -49,7 +46,16 @@ def detect_zone_E_and_visualise(session_state,
     upper_width_x = max(0.0, upper_x1 - upper_x0)  # North-South width
     upper_width_y = max(0.0, upper_y1 - upper_y0)  # East-West width
 
-    # Results dict skeleton
+    # FIXED: Separate draw width (for geometry) and crosswind breadth (for wind calculations)
+    # For North/South elevations (face runs North-South):
+    draw_width_north = draw_width_south = NS_dimension - east_offset - west_offset  # elevation spans NS
+    crosswind_breadth_north = crosswind_breadth_south = EW_dimension - north_offset - south_offset  # wind perpendicular to NS face
+    
+    # For East/West elevations (face runs East-West):
+    draw_width_east = draw_width_west = EW_dimension - north_offset - south_offset  # elevation spans EW
+    crosswind_breadth_east = crosswind_breadth_west = NS_dimension - east_offset - west_offset  # wind perpendicular to EW face
+
+    # Results dict skeleton with corrected B1 values
     results = {
         "North": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False, "west_zone_E": False},
         "South": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False, "west_zone_E": False},
@@ -70,8 +76,8 @@ def detect_zone_E_and_visualise(session_state,
     # Container for zone-E rectangles: each item holds (cx0,cx1,cy0,cy1,e_height, label)
     zoneE_rects = []
 
-    # ---- For North/South elevations: B1 = EW dimension - (east + west offsets) ----
-    B1_NS = max(0.0, EW_dimension - (east_offset + west_offset))
+    # ---- For North/South elevations: use crosswind_breadth (EW dimension - north/south offsets) ----
+    B1_NS = max(0.0, crosswind_breadth_north)  # FIXED: was EW_dimension - (east_offset + west_offset)
     e1_NS = min(B1_NS, 2.0 * H1)
     results["North"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
     results["South"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
@@ -128,8 +134,8 @@ def detect_zone_E_and_visualise(session_state,
             results["South"]["west_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-west"))
 
-    # ---- For East/West elevations: B1 = NS dimension - (north + south offsets) ----
-    B1_EW = max(0.0, NS_dimension - (north_offset + south_offset))
+    # ---- For East/West elevations: use crosswind_breadth (NS dimension - north/south offsets) ----
+    B1_EW = max(0.0, crosswind_breadth_east)  # FIXED: was NS_dimension - (north_offset + south_offset)
     e1_EW = min(B1_EW, 2.0 * H1)
     results["East"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
     results["West"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
@@ -141,7 +147,7 @@ def detect_zone_E_and_visualise(session_state,
         x0 = upper_x0  # North edge
         x1 = x0 + rect_w
         y1 = upper_y1  # East edge
-        y0 = upper_y1 - min(upper_width_y, rect_h)  # FIXED: now uses upper_width_y
+        y0 = upper_y1 - min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["East"]["north_zone_E"] = True
@@ -154,7 +160,7 @@ def detect_zone_E_and_visualise(session_state,
         x1 = upper_x1  # South edge
         x0 = x1 - rect_w
         y1 = upper_y1  # East edge
-        y0 = upper_y1 - min(upper_width_y, rect_h)  # FIXED: now uses upper_width_y
+        y0 = upper_y1 - min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["East"]["south_zone_E"] = True
@@ -167,7 +173,7 @@ def detect_zone_E_and_visualise(session_state,
         x0 = upper_x0  # North edge
         x1 = x0 + rect_w
         y0 = upper_y0  # West edge
-        y1 = upper_y0 + min(upper_width_y, rect_h)  # FIXED: now uses upper_width_y
+        y1 = upper_y0 + min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["West"]["north_zone_E"] = True
@@ -180,7 +186,7 @@ def detect_zone_E_and_visualise(session_state,
         x1 = upper_x1  # South edge
         x0 = x1 - rect_w
         y0 = upper_y0  # West edge
-        y1 = upper_y0 + min(upper_width_y, rect_h)  # FIXED: now uses upper_width_y
+        y1 = upper_y0 + min(upper_width_y, rect_h)
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["West"]["south_zone_E"] = True
@@ -191,7 +197,7 @@ def detect_zone_E_and_visualise(session_state,
 
     # Draw top plane of base building (flat quad) with clockwise ordering:
     top_z = base_z
-    # FIXED: use x = 0..NS_dimension and y = 0..EW_dimension (was swapped previously)
+    # Base footprint: NS_dimension by EW_dimension (gray rectangle, no outline)
     fig.add_trace(go.Mesh3d(
         x=[0.0, 0.0, NS_dimension, NS_dimension],
         y=[0.0, EW_dimension, EW_dimension, 0.0],
@@ -199,8 +205,6 @@ def detect_zone_E_and_visualise(session_state,
         i=[0, 0], j=[1, 2], k=[2, 3],
         color=TT_TopPlane, opacity=1.0, hoverinfo="none", showlegend=False
     ))
-
-    # NOTE: removed the perimeter/outline trace for the base/top plane as requested
 
     # Draw upper inset box as a proper 3D box (if it has positive footprint and H1>0)
     if upper_width_x > 0 and upper_width_y > 0 and H1 > 0:
@@ -445,5 +449,11 @@ def detect_zone_E_and_visualise(session_state,
     # For East/West elevations: True if either north_zone_E or south_zone_E is True
     results["East"]["zone_E"] = bool(results["East"].get("north_zone_E", False) or results["East"].get("south_zone_E", False))
     results["West"]["zone_E"] = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
+
+    # FIXED: Add draw_width to results for DataFrame display (uses correct dimensions for each elevation)
+    results["North"]["draw_width"] = round(draw_width_north, 4)
+    results["South"]["draw_width"] = round(draw_width_south, 4)
+    results["East"]["draw_width"] = round(draw_width_east, 4)
+    results["West"]["draw_width"] = round(draw_width_west, 4)
 
     return results, fig
