@@ -258,21 +258,35 @@ def add_save_load_ui():
     
     with col2:
         st.subheader("Load Previous Settings")
+        
+        # Use a unique key to track if we've processed this file
         uploaded_file = st.file_uploader(
             "Upload Configuration File",
             type=['json'],
-            help="Load previously saved wind load calculation settings"
+            help="Load previously saved wind load calculation settings",
+            key="config_uploader"
         )
         
         if uploaded_file is not None:
-            success, message = JSON_loader(uploaded_file)
+            # Create a unique identifier for this file
+            file_id = f"{uploaded_file.name}_{uploaded_file.size}"
             
-            if success:
-                st.success(message)
-                # Force a rerun to update the UI
-                st.rerun()
+            # Check if we've already processed this file
+            if f"processed_file_{file_id}" not in st.session_state:
+                # Process the file
+                success, message = JSON_loader(uploaded_file)
+                
+                if success:
+                    st.success(message)
+                    # Mark this file as processed
+                    st.session_state[f"processed_file_{file_id}"] = True
+                    # Use experimental_rerun instead of rerun to be safer
+                    st.rerun()
+                else:
+                    st.error(message)
             else:
-                st.error(message)
+                # File already processed, just show success message
+                st.info("✅ Configuration loaded successfully!")
 
 # Validation function to help debug save/load issues
 def validate_session_state():
