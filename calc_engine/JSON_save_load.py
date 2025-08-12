@@ -57,15 +57,22 @@ def JSON_generator():
         "use_custom_values", "K", "n", "return_period", "c_prob"
     ]
     
+    # Orography inputs
+    orography_inputs = [
+        "orography_significant"
+    ]
+    
     # UI state variables (checkboxes and toggles)
     ui_state_inputs = [
-        "show_educational", "use_map", "add_inset", "use_custom_values"
+        "show_educational", "use_map", "add_inset", "use_custom_values", 
+        "orography_significant"
     ]
     
     # Combine all input categories
     all_input_keys = (core_inputs + terrain_inputs + map_inputs + wind_inputs + 
                      displacement_inputs + inset_inputs + funnelling_inputs + 
-                     uk_directional_inputs + custom_wind_inputs + ui_state_inputs)
+                     uk_directional_inputs + custom_wind_inputs + orography_inputs + 
+                     ui_state_inputs)
     
     # Start with the main inputs dictionary
     data_to_save = {}
@@ -86,7 +93,8 @@ def JSON_generator():
     direct_session_keys = [
         "show_educational", "markers", "inset_results", "inset_fig",
         "cp_results", "h_dis", "z_minus_h_dis", "c_rz", "c_oz", "c_rT",
-        "terrain_type", "v_mean", "rho_air", "q_b"
+        "terrain_type", "v_mean", "rho_air", "q_b", "use_map", 
+        "orography_significant", "K", "n", "return_period", "c_prob"
     ]
     
     data_to_save["session_state"] = {}
@@ -112,8 +120,10 @@ def JSON_generator():
         "inset_enabled": st.session_state.inputs.get("inset_enabled", False),
         "consider_funnelling": st.session_state.inputs.get("consider_funnelling", False),
         "use_direction_factor": st.session_state.inputs.get("use_direction_factor", False),
+        "building_rotation": st.session_state.inputs.get("building_rotation", 0),
         "use_custom_values": st.session_state.inputs.get("use_custom_values", False),
         "use_map": st.session_state.get("use_map", False),
+        "orography_significant": st.session_state.get("orography_significant", False),
         "terrain_category": st.session_state.inputs.get("terrain_category", ""),
         "show_educational": st.session_state.get("show_educational", False)
     }
@@ -180,13 +190,15 @@ def JSON_loader(uploaded_file):
             
             # Set key app state variables that control UI flow
             for key in ["region", "inset_enabled", "consider_funnelling", 
-                       "use_direction_factor", "use_custom_values", "terrain_category"]:
+                       "use_direction_factor", "building_rotation", "use_custom_values", 
+                       "terrain_category"]:
                 if key in app_state:
                     st.session_state.inputs[key] = app_state[key]
             
             # Handle direct session state variables
-            if "show_educational" in app_state:
-                st.session_state.show_educational = app_state["show_educational"]
+            for key in ["show_educational", "use_map", "orography_significant"]:
+                if key in app_state:
+                    st.session_state[key] = app_state[key]
         
         # Handle widget state variables that might not be in inputs
         widget_states = {
@@ -194,6 +206,8 @@ def JSON_loader(uploaded_file):
             "consider_funnelling": st.session_state.inputs.get("consider_funnelling", False),
             "use_custom_values": st.session_state.inputs.get("use_custom_values", False),
             "use_direction_factor": st.session_state.inputs.get("use_direction_factor", False),
+            "use_map": st.session_state.get("use_map", False),
+            "orography_significant": st.session_state.get("orography_significant", False),
         }
         
         for widget_key, value in widget_states.items():
@@ -231,59 +245,58 @@ def create_download_filename():
 
 # Example usage functions that you can add to your main.py:
 
-def add_save_load_ui():
+def add_upload_ui():
     """
-    Minimal save/load UI for the Streamlit app.
+    Minimal upload UI for the start of the app.
     """
-    # Compact horizontal layout
-    col1, col2 = st.columns([1, 1])
+    uploaded_file = st.file_uploader(
+        "Upload file from previous session",
+        type=['json'],
+        key="config_uploader",
+        help="Load previously saved configuration"
+    )
     
-    with col1:
-        if st.button("💾 Save Configuration", use_container_width=True):
-            try:
-                data = JSON_generator()
-                json_string = json.dumps(data, indent=2)
-                filename = create_download_filename()
-                
-                st.download_button(
-                    label="⬇️ Download",
-                    data=json_string,
-                    file_name=filename,
-                    mime="application/json",
-                    use_container_width=True
-                )
-                
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
-    
-    with col2:
-        # Use a unique key to track if we've processed this file
-        uploaded_file = st.file_uploader(
-            "📂 Load Configuration",
-            type=['json'],
-            key="config_uploader",
-            label_visibility="collapsed"
-        )
+    if uploaded_file is not None:
+        # Create a unique identifier for this file
+        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
         
-        if uploaded_file is not None:
-            # Create a unique identifier for this file
-            file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+        # Check if we've already processed this file
+        if f"processed_file_{file_id}" not in st.session_state:
+            # Process the file
+            success, message = JSON_loader(uploaded_file)
             
-            # Check if we've already processed this file
-            if f"processed_file_{file_id}" not in st.session_state:
-                # Process the file
-                success, message = JSON_loader(uploaded_file)
-                
-                if success:
-                    st.success(message)
-                    # Mark this file as processed
-                    st.session_state[f"processed_file_{file_id}"] = True
-                    st.rerun()
-                else:
-                    st.error(message)
+            if success:
+                st.success(message)
+                # Mark this file as processed
+                st.session_state[f"processed_file_{file_id}"] = True
+                st.rerun()
             else:
-                # File already processed, just show success message
-                st.success("Configuration loaded!")
+                st.error(message)
+        else:
+            # File already processed, just show success message
+            st.success("Configuration loaded!")
+
+def add_save_ui():
+    """
+    Minimal save UI for the end of the app.
+    """
+    if st.button("💾 Save Current Configuration", type="primary", use_container_width=True):
+        try:
+            data = JSON_generator()
+            json_string = json.dumps(data, indent=2)
+            filename = create_download_filename()
+            
+            st.download_button(
+                label="⬇️ Download Configuration File",
+                data=json_string,
+                file_name=filename,
+                mime="application/json",
+                use_container_width=True,
+                help="Save all current inputs and calculations"
+            )
+            
+        except Exception as e:
+            st.error(f"Error generating save file: {str(e)}")
 
 # Validation function to help debug save/load issues
 def validate_session_state():
