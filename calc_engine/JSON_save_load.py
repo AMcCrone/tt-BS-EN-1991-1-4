@@ -245,11 +245,11 @@ def create_download_filename():
 
 # Example usage functions that you can add to your main.py:
 
-def add_upload_ui():
+def add_sidebar_upload_ui():
     """
-    Minimal upload UI for the start of the app.
+    Minimal upload UI for the sidebar.
     """
-    uploaded_file = st.file_uploader(
+    uploaded_file = st.sidebar.file_uploader(
         "Upload file from previous session",
         type=['json'],
         key="config_uploader",
@@ -266,37 +266,86 @@ def add_upload_ui():
             success, message = JSON_loader(uploaded_file)
             
             if success:
-                st.success(message)
+                st.sidebar.success("Configuration loaded!")
                 # Mark this file as processed
                 st.session_state[f"processed_file_{file_id}"] = True
                 st.rerun()
             else:
-                st.error(message)
+                st.sidebar.error(f"Error: {message}")
         else:
             # File already processed, just show success message
-            st.success("Configuration loaded!")
+            st.sidebar.success("Configuration loaded!")
 
-def add_save_ui():
+def add_sidebar_save_ui():
     """
-    Minimal save UI for the end of the app.
+    Minimal save UI for the sidebar.
     """
-    if st.button("💾 Save Current Configuration", type="primary", use_container_width=True):
+    if st.sidebar.button("💾 Save Configuration", use_container_width=True):
         try:
             data = JSON_generator()
             json_string = json.dumps(data, indent=2)
             filename = create_download_filename()
             
-            st.download_button(
-                label="⬇️ Download Configuration File",
+            st.sidebar.download_button(
+                label="⬇️ Download File",
                 data=json_string,
                 file_name=filename,
                 mime="application/json",
                 use_container_width=True,
-                help="Save all current inputs and calculations"
+                help="Download current configuration"
             )
             
         except Exception as e:
-            st.error(f"Error generating save file: {str(e)}")
+            st.sidebar.error(f"Error: {str(e)}")
+
+def add_complete_sidebar_ui():
+    """
+    Complete sidebar UI with both upload and save functions.
+    Use this if you want both in the sidebar together.
+    """
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("📁 Session Management")
+    
+    # Upload section
+    uploaded_file = st.sidebar.file_uploader(
+        "Upload previous session",
+        type=['json'],
+        key="config_uploader",
+        help="Load saved configuration"
+    )
+    
+    if uploaded_file is not None:
+        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+        
+        if f"processed_file_{file_id}" not in st.session_state:
+            success, message = JSON_loader(uploaded_file)
+            
+            if success:
+                st.sidebar.success("Loaded!")
+                st.session_state[f"processed_file_{file_id}"] = True
+                st.rerun()
+            else:
+                st.sidebar.error("Load failed")
+        else:
+            st.sidebar.success("Loaded!")
+    
+    # Save section
+    if st.sidebar.button("💾 Save Current Session", use_container_width=True):
+        try:
+            data = JSON_generator()
+            json_string = json.dumps(data, indent=2)
+            filename = create_download_filename()
+            
+            st.sidebar.download_button(
+                label="⬇️ Download",
+                data=json_string,
+                file_name=filename,
+                mime="application/json",
+                use_container_width=True
+            )
+            
+        except Exception as e:
+            st.sidebar.error("Save failed")
 
 # Validation function to help debug save/load issues
 def validate_session_state():
