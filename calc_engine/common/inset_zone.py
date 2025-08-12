@@ -18,6 +18,7 @@ def detect_zone_E_and_visualise(session_state,
       - removed outline/perimeter for ground/top plane
       - fixed axis ordering for the base/top plane so inset geometry uses the
         same coordinate convention as the rest of the function
+      - FIXED: corrected East/West elevation zone E geometry to use proper dimensions
     """
     # Colours
     TT_TopPlane = "rgb(223,224,225)"
@@ -136,11 +137,11 @@ def detect_zone_E_and_visualise(session_state,
     # East elevation - North edge check (only if east_offset > 0)
     if e1_EW > 0 and north_offset < 0.2 * e1_EW and east_offset > 0:
         rect_w = e1_EW / 5.0   # width along x (north-south)
-        rect_h = e1_EW / 3.0   # vertical height
+        rect_h = e1_EW / 3.0   # depth into building (along y-axis, limited by x-width)
         x0 = upper_x0  # North edge
         x1 = x0 + rect_w
         y1 = upper_y1  # East edge
-        y0 = upper_y1 - min(upper_width_y, rect_h)
+        y0 = upper_y1 - min(upper_width_x, rect_h)  # FIXED: was upper_width_y
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["East"]["north_zone_E"] = True
@@ -153,7 +154,7 @@ def detect_zone_E_and_visualise(session_state,
         x1 = upper_x1  # South edge
         x0 = x1 - rect_w
         y1 = upper_y1  # East edge
-        y0 = upper_y1 - min(upper_width_y, rect_h)
+        y0 = upper_y1 - min(upper_width_x, rect_h)  # FIXED: was upper_width_y
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["East"]["south_zone_E"] = True
@@ -166,7 +167,7 @@ def detect_zone_E_and_visualise(session_state,
         x0 = upper_x0  # North edge
         x1 = x0 + rect_w
         y0 = upper_y0  # West edge
-        y1 = upper_y0 + min(upper_width_y, rect_h)
+        y1 = upper_y0 + min(upper_width_x, rect_h)  # FIXED: was upper_width_y
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["West"]["north_zone_E"] = True
@@ -179,7 +180,7 @@ def detect_zone_E_and_visualise(session_state,
         x1 = upper_x1  # South edge
         x0 = x1 - rect_w
         y0 = upper_y0  # West edge
-        y1 = upper_y0 + min(upper_width_y, rect_h)
+        y1 = upper_y0 + min(upper_width_x, rect_h)  # FIXED: was upper_width_y
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["West"]["south_zone_E"] = True
@@ -444,6 +445,5 @@ def detect_zone_E_and_visualise(session_state,
     # For East/West elevations: True if either north_zone_E or south_zone_E is True
     results["East"]["zone_E"] = bool(results["East"].get("north_zone_E", False) or results["East"].get("south_zone_E", False))
     results["West"]["zone_E"] = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
-
 
     return results, fig
