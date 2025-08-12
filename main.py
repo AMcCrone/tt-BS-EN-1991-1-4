@@ -14,7 +14,7 @@ from calc_engine.common.pressure_summary import create_pressure_summary, plot_el
 from visualisation.building_viz import create_building_visualisation
 from visualisation.map import render_map_with_markers, get_elevation, compute_distance, interactive_map_ui
 from educational import text_content
-from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_save_load_ui
+from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_upload_ui(), add_save_ui()
 
 authenticate_user()
 
@@ -48,8 +48,8 @@ st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG"
 st.title("Wind Load Calculator")
 st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
 
-# Save and load session data as JSON file
-add_save_load_ui()
+# Upload session data as JSON file
+add_upload_ui()
 
 TT_Grey = "rgb(99,102,105)"
 st.markdown("""
@@ -866,3 +866,6 @@ st.header("Conclusion")
 paragraphs = generate_pressure_summary_paragraphs(st.session_state, results_by_direction)
 for p in paragraphs:
     st.markdown(p)
+
+# Option to save session data
+add_save_ui()
