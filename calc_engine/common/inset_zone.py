@@ -137,11 +137,11 @@ def detect_zone_E_and_visualise(session_state,
     # East elevation - North edge check (only if east_offset > 0)
     if e1_EW > 0 and north_offset < 0.2 * e1_EW and east_offset > 0:
         rect_w = e1_EW / 5.0   # width along x (north-south)
-        rect_h = e1_EW / 3.0   # depth into building (along y-axis, limited by x-width)
+        rect_h = e1_EW / 3.0   # depth into building (along y-axis, limited by y-width)
         x0 = upper_x0  # North edge
         x1 = x0 + rect_w
         y1 = upper_y1  # East edge
-        y0 = upper_y1 - min(upper_width_x, rect_h)  # FIXED: was upper_width_y
+        y0 = upper_y1 - min(upper_width_y, rect_h)  # FIXED: now uses upper_width_y
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["East"]["north_zone_E"] = True
@@ -154,7 +154,7 @@ def detect_zone_E_and_visualise(session_state,
         x1 = upper_x1  # South edge
         x0 = x1 - rect_w
         y1 = upper_y1  # East edge
-        y0 = upper_y1 - min(upper_width_x, rect_h)  # FIXED: was upper_width_y
+        y0 = upper_y1 - min(upper_width_y, rect_h)  # FIXED: now uses upper_width_y
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["East"]["south_zone_E"] = True
@@ -167,7 +167,7 @@ def detect_zone_E_and_visualise(session_state,
         x0 = upper_x0  # North edge
         x1 = x0 + rect_w
         y0 = upper_y0  # West edge
-        y1 = upper_y0 + min(upper_width_x, rect_h)  # FIXED: was upper_width_y
+        y1 = upper_y0 + min(upper_width_y, rect_h)  # FIXED: now uses upper_width_y
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["West"]["north_zone_E"] = True
@@ -180,7 +180,7 @@ def detect_zone_E_and_visualise(session_state,
         x1 = upper_x1  # South edge
         x0 = x1 - rect_w
         y0 = upper_y0  # West edge
-        y1 = upper_y0 + min(upper_width_x, rect_h)  # FIXED: was upper_width_y
+        y1 = upper_y0 + min(upper_width_y, rect_h)  # FIXED: now uses upper_width_y
         clamped = clamp_rect(x0, x1, y0, y1)
         if clamped:
             results["West"]["south_zone_E"] = True
