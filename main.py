@@ -14,6 +14,7 @@ from calc_engine.common.pressure_summary import create_pressure_summary, plot_el
 from visualisation.building_viz import create_building_visualisation
 from visualisation.map import render_map_with_markers, get_elevation, compute_distance, interactive_map_ui
 from educational import text_content
+from JSON_save_load import JSON_generator, JSON_loader, add_save_load_ui
 
 authenticate_user()
 
@@ -46,6 +47,9 @@ st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG"
 # Simple title and subtitle using Streamlit's built-in functions
 st.title("Wind Load Calculator")
 st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
+
+# Save and load session data as JSON file
+add_save_load_ui()
 
 TT_Grey = "rgb(99,102,105)"
 st.markdown("""
