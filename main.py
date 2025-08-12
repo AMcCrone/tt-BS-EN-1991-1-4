@@ -14,7 +14,7 @@ from calc_engine.common.pressure_summary import create_pressure_summary, plot_el
 from visualisation.building_viz import create_building_visualisation
 from visualisation.map import render_map_with_markers, get_elevation, compute_distance, interactive_map_ui
 from educational import text_content
-from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_upload_ui, add_save_ui
+from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_sidebar_save_ui, add_sidebar_upload_ui
 
 authenticate_user()
 
@@ -39,6 +39,10 @@ show_educational = st.sidebar.checkbox(
     "Show Educational Content", 
     value=st.session_state.get("show_educational", False)
 )
+# Upload session data as JSON file
+add_sidebar_upload_ui()
+# Save session data to JSON file
+add_sidebar_save_ui()
 st.session_state.show_educational = show_educational
 
 # Display company logo
@@ -47,9 +51,6 @@ st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG"
 # Simple title and subtitle using Streamlit's built-in functions
 st.title("Wind Load Calculator")
 st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
-
-# Upload session data as JSON file
-add_upload_ui()
 
 TT_Grey = "rgb(99,102,105)"
 st.markdown("""
