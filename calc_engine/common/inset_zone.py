@@ -9,14 +9,20 @@ def detect_zone_E_and_visualise(session_state,
     """
     Determine whether Zone E applies for each elevation edge and return a Plotly 3D
     visualisation.
-    Coordinate convention:
-      x-axis = North -> South (0..NS_dimension)
-      y-axis = West -> East  (0..EW_dimension)
-    
-    FIXED: Corrected dimension assignment:
-    - North/South elevations: draw_width uses NS_dimension, crosswind_breadth uses EW_dimension
-    - East/West elevations: draw_width uses EW_dimension, crosswind_breadth uses NS_dimension
+
+    Key fix:
+    - split drawing geometry width vs cross-wind breadth (B1) so the short/long sides
+      of the plan are not swapped between plotting and wind checks.
+
+    Mapping implemented exactly:
+      - For North/South elevations (face runs N-S):
+          draw_width = NS_dimension - east_offset - west_offset
+          crosswind_breadth (B1) = EW_dimension - north_offset - south_offset
+      - For East/West elevations (face runs E-W):
+          draw_width = EW_dimension - north_offset - south_offset
+          crosswind_breadth (B1) = NS_dimension - east_offset - west_offset
     """
+
     # Colours
     TT_TopPlane = "rgb(223,224,225)"
     TT_Upper = "rgb(136,219,223)"
@@ -24,11 +30,11 @@ def detect_zone_E_and_visualise(session_state,
     TT_Roof = "lightgrey"
 
     # Read base plan dims + base roof height from session_state
-    NS_dimension = float(session_state.inputs.get("NS_dimension", 20.0))  # x-axis
-    EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))  # y-axis
+    NS_dimension = float(session_state.inputs.get("NS_dimension", 20.0))  # x-axis (North->South)
+    EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))  # y-axis (West->East)
     base_z = float(session_state.inputs.get("z", 10.0))  # roof plane z
 
-    # Sanitize offsets and H1 — NO forced defaults (treat None as 0.0)
+    # Sanitize offsets and H1 — treat None as 0.0
     north_offset = max(0.0, float(north_offset or 0.0))
     south_offset = max(0.0, float(south_offset or 0.0))
     east_offset  = max(0.0, float(east_offset  or 0.0))
@@ -37,25 +43,31 @@ def detect_zone_E_and_visualise(session_state,
 
     # Upper-storey footprint in plan coordinates
     # x-axis (North-South): x=0 is North, x=NS_dimension is South
-    # y-axis (East-West):  y=0 is West,  y=EW_dimension is East
+    # y-axis (West-East):  y=0 is West,  y=EW_dimension is East
     upper_x0 = north_offset  # North edge
     upper_x1 = max(north_offset, NS_dimension - south_offset)  # South edge
     upper_y0 = west_offset   # West edge
     upper_y1 = max(west_offset, EW_dimension - east_offset)   # East edge
 
-    upper_width_x = max(0.0, upper_x1 - upper_x0)  # North-South width
-    upper_width_y = max(0.0, upper_y1 - upper_y0)  # East-West width
+    upper_width_x = max(0.0, upper_x1 - upper_x0)  # North-South width of inset footprint
+    upper_width_y = max(0.0, upper_y1 - upper_y0)  # East-West width of inset footprint
 
-    # FIXED: Separate draw width (for geometry) and crosswind breadth (for wind calculations)
+    # ---------------------------
+    # FIXED: separate draw width (geometry) and crosswind breadth (for wind calcs, B1)
+    # ---------------------------
     # For North/South elevations (face runs North-South):
-    draw_width_north = draw_width_south = NS_dimension - east_offset - west_offset  # elevation spans NS
-    crosswind_breadth_north = crosswind_breadth_south = EW_dimension - north_offset - south_offset  # wind perpendicular to NS face
-    
-    # For East/West elevations (face runs East-West):
-    draw_width_east = draw_width_west = EW_dimension - north_offset - south_offset  # elevation spans EW
-    crosswind_breadth_east = crosswind_breadth_west = NS_dimension - east_offset - west_offset  # wind perpendicular to EW face
+    # draw width along the wall (what's shown on N/S elevation) must be the NS plan dimension minus E/W offsets
+    draw_width_north = draw_width_south = max(0.0, NS_dimension - east_offset - west_offset)
+    # cross-wind breadth (B1) for N/S face is the EW plan dimension minus N/S offsets (perpendicular to face)
+    crosswind_breadth_north = crosswind_breadth_south = max(0.0, EW_dimension - north_offset - south_offset)
 
-    # Results dict skeleton with corrected B1 values
+    # For East/West elevations (face runs East-West):
+    # draw width along the wall (what's shown on E/W elevation) must be the EW plan dimension minus N/S offsets
+    draw_width_east = draw_width_west = max(0.0, EW_dimension - north_offset - south_offset)
+    # cross-wind breadth (B1) for E/W face is the NS plan dimension minus E/W offsets (perpendicular to face)
+    crosswind_breadth_east = crosswind_breadth_west = max(0.0, NS_dimension - east_offset - west_offset)
+
+    # Results skeleton
     results = {
         "North": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False, "west_zone_E": False},
         "South": {"B1": None, "H1": H1, "e1": None, "east_zone_E": False, "west_zone_E": False},
@@ -76,8 +88,8 @@ def detect_zone_E_and_visualise(session_state,
     # Container for zone-E rectangles: each item holds (cx0,cx1,cy0,cy1,e_height, label)
     zoneE_rects = []
 
-    # ---- For North/South elevations: use crosswind_breadth (EW dimension - north/south offsets) ----
-    B1_NS = max(0.0, crosswind_breadth_north)  # FIXED: was EW_dimension - (east_offset + west_offset)
+    # ---- For North/South elevations: use crosswind_breadth_north (EW_dimension - north/south offsets) ----
+    B1_NS = crosswind_breadth_north  # used only in wind checks (E1 etc.)
     e1_NS = min(B1_NS, 2.0 * H1)
     results["North"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
     results["South"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
@@ -134,8 +146,8 @@ def detect_zone_E_and_visualise(session_state,
             results["South"]["west_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-west"))
 
-    # ---- For East/West elevations: use crosswind_breadth (NS dimension - north/south offsets) ----
-    B1_EW = max(0.0, crosswind_breadth_east)  # FIXED: was NS_dimension - (north_offset + south_offset)
+    # ---- For East/West elevations: use crosswind_breadth_east (NS_dimension - east/west offsets) ----
+    B1_EW = crosswind_breadth_east  # used only in wind checks (E1 etc.)
     e1_EW = min(B1_EW, 2.0 * H1)
     results["East"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
     results["West"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
@@ -211,11 +223,9 @@ def detect_zone_E_and_visualise(session_state,
         ux0, ux1, uy0, uy1 = upper_x0, upper_x1, upper_y0, upper_y1
         bz = top_z
         tz = top_z + H1
-
-        # small pad for bottom face to avoid z-fighting with base plane (kept tiny)
         pad = 1e-6
 
-        # Bottom face (slightly above roof plane so it is visible)
+        # Bottom face
         fig.add_trace(go.Mesh3d(
             x=[ux0, ux1, ux1, ux0],
             y=[uy0, uy0, uy1, uy1],
@@ -233,167 +243,110 @@ def detect_zone_E_and_visualise(session_state,
             color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
         ))
 
-        # Four vertical faces (north, south, west, east)
+        # Vertical faces (N, S, W, E)
         # North face (x = ux0)
-        fig.add_trace(go.Mesh3d(
-            x=[ux0, ux0, ux0, ux0],
-            y=[uy0, uy1, uy1, uy0],
-            z=[bz, bz, tz, tz],
-            i=[0,0], j=[1,2], k=[2,3],
-            color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
-        ))
+        fig.add_trace(go.Mesh3d(x=[ux0, ux0, ux0, ux0],
+                                y=[uy0, uy1, uy1, uy0],
+                                z=[bz, bz, tz, tz], i=[0,0], j=[1,2], k=[2,3],
+                                color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False))
         # South face (x = ux1)
-        fig.add_trace(go.Mesh3d(
-            x=[ux1, ux1, ux1, ux1],
-            y=[uy0, uy1, uy1, uy0],
-            z=[bz, bz, tz, tz],
-            i=[0,0], j=[1,2], k=[2,3],
-            color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
-        ))
+        fig.add_trace(go.Mesh3d(x=[ux1, ux1, ux1, ux1],
+                                y=[uy0, uy1, uy1, uy0],
+                                z=[bz, bz, tz, tz], i=[0,0], j=[1,2], k=[2,3],
+                                color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False))
         # West face (y = uy0)
-        fig.add_trace(go.Mesh3d(
-            x=[ux0, ux1, ux1, ux0],
-            y=[uy0, uy0, uy0, uy0],
-            z=[bz, bz, tz, tz],
-            i=[0,0], j=[1,2], k=[2,3],
-            color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
-        ))
+        fig.add_trace(go.Mesh3d(x=[ux0, ux1, ux1, ux0],
+                                y=[uy0, uy0, uy0, uy0],
+                                z=[bz, bz, tz, tz], i=[0,0], j=[1,2], k=[2,3],
+                                color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False))
         # East face (y = uy1)
-        fig.add_trace(go.Mesh3d(
-            x=[ux0, ux1, ux1, ux0],
-            y=[uy1, uy1, uy1, uy1],
-            z=[bz, bz, tz, tz],
-            i=[0,0], j=[1,2], k=[2,3],
-            color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False
-        ))
+        fig.add_trace(go.Mesh3d(x=[ux0, ux1, ux1, ux0],
+                                y=[uy1, uy1, uy1, uy1],
+                                z=[bz, bz, tz, tz], i=[0,0], j=[1,2], k=[2,3],
+                                color=TT_Upper, opacity=0.95, hoverinfo="none", showlegend=False))
 
-        # Add perimeter lines for inset base & top & vertical edges
-        fig.add_trace(go.Scatter3d(
-            x=[ux0, ux1, ux1, ux0, ux0],
-            y=[uy0, uy0, uy1, uy1, uy0],
-            z=[bz + pad]*5,
-            mode='lines',
-            line=dict(color='black', width=2),
-            hoverinfo='none',
-            showlegend=False
-        ))
-        fig.add_trace(go.Scatter3d(
-            x=[ux0, ux1, ux1, ux0, ux0],
-            y=[uy0, uy0, uy1, uy1, uy0],
-            z=[tz]*5,
-            mode='lines',
-            line=dict(color='black', width=2),
-            hoverinfo='none',
-            showlegend=False
-        ))
+        # Perimeter lines and vertical edges (outline)
+        fig.add_trace(go.Scatter3d(x=[ux0, ux1, ux1, ux0, ux0],
+                                   y=[uy0, uy0, uy1, uy1, uy0],
+                                   z=[bz + pad]*5,
+                                   mode='lines', line=dict(color='black', width=2),
+                                   hoverinfo='none', showlegend=False))
+        fig.add_trace(go.Scatter3d(x=[ux0, ux1, ux1, ux0, ux0],
+                                   y=[uy0, uy0, uy1, uy1, uy0],
+                                   z=[tz]*5,
+                                   mode='lines', line=dict(color='black', width=2),
+                                   hoverinfo='none', showlegend=False))
         vert_x = [ux0, ux1, ux1, ux0]
         vert_y = [uy0, uy0, uy1, uy1]
         for vx, vy in zip(vert_x, vert_y):
-            fig.add_trace(go.Scatter3d(
-                x=[vx, vx],
-                y=[vy, vy],
-                z=[bz + pad, tz],
-                mode='lines',
-                line=dict(color='black', width=2),
-                hoverinfo='none',
-                showlegend=False
-            ))
+            fig.add_trace(go.Scatter3d(x=[vx, vx], y=[vy, vy],
+                                       z=[bz + pad, tz],
+                                       mode='lines', line=dict(color='black', width=2),
+                                       hoverinfo='none', showlegend=False))
 
-        # Add a light grey roof flush with the inset top (no gap)
-        roof_z = tz  # flush with inset top to remove vertical gap
-        fig.add_trace(go.Mesh3d(
-            x=[ux0, ux1, ux1, ux0],
-            y=[uy0, uy0, uy1, uy1],
-            z=[roof_z, roof_z, roof_z, roof_z],
-            i=[0, 0], j=[1, 2], k=[2, 3],
-            color=TT_Roof, opacity=1.0, hoverinfo="none", showlegend=False
-        ))
-        # outline the roof
-        fig.add_trace(go.Scatter3d(
-            x=[ux0, ux1, ux1, ux0, ux0],
-            y=[uy0, uy0, uy1, uy1, uy0],
-            z=[roof_z]*5,
-            mode='lines',
-            line=dict(color='black', width=1),
-            hoverinfo='none',
-            showlegend=False
-        ))
+        # Light grey roof flush with inset top
+        roof_z = tz
+        fig.add_trace(go.Mesh3d(x=[ux0, ux1, ux1, ux0],
+                                y=[uy0, uy0, uy1, uy1],
+                                z=[roof_z, roof_z, roof_z, roof_z],
+                                i=[0, 0], j=[1, 2], k=[2, 3],
+                                color=TT_Roof, opacity=1.0, hoverinfo="none", showlegend=False))
+        fig.add_trace(go.Scatter3d(x=[ux0, ux1, ux1, ux0, ux0],
+                                   y=[uy0, uy0, uy1, uy1, uy0],
+                                   z=[roof_z]*5,
+                                   mode='lines', line=dict(color='black', width=1),
+                                   hoverinfo='none', showlegend=False))
 
-    # Draw each Zone E as a simple vertical rectangle (4 vertices)
+    # Draw each Zone E rectangle
     for (cx0, cx1, cy0, cy1, rect_h, label) in zoneE_rects:
         bottom_z = top_z
         top_z_rect = top_z + rect_h
-
         if "North" in label:
-            # North elevation - vertical rectangle at x = cx0 (north edge)
-            fig.add_trace(go.Mesh3d(
-                x=[cx0, cx0, cx0, cx0],
-                y=[cy0, cy1, cy1, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
-                i=[0, 0], j=[1, 2], k=[2, 3],
-                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
-            ))
-            fig.add_trace(go.Scatter3d(
-                x=[cx0, cx0, cx0, cx0, cx0],
-                y=[cy0, cy1, cy1, cy0, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
-                mode='lines',
-                line=dict(color='black', width=2),
-                showlegend=False, hoverinfo='none'
-            ))
+            fig.add_trace(go.Mesh3d(x=[cx0, cx0, cx0, cx0],
+                                    y=[cy0, cy1, cy1, cy0],
+                                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                                    i=[0, 0], j=[1, 2], k=[2, 3],
+                                    color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False))
+            fig.add_trace(go.Scatter3d(x=[cx0, cx0, cx0, cx0, cx0],
+                                       y=[cy0, cy1, cy1, cy0, cy0],
+                                       z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                                       mode='lines', line=dict(color='black', width=2),
+                                       showlegend=False, hoverinfo='none'))
         elif "South" in label:
-            # South elevation - vertical rectangle at x = cx1 (south edge)
-            fig.add_trace(go.Mesh3d(
-                x=[cx1, cx1, cx1, cx1],
-                y=[cy0, cy1, cy1, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
-                i=[0, 0], j=[1, 2], k=[2, 3],
-                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
-            ))
-            fig.add_trace(go.Scatter3d(
-                x=[cx1, cx1, cx1, cx1, cx1],
-                y=[cy0, cy1, cy1, cy0, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
-                mode='lines',
-                line=dict(color='black', width=2),
-                showlegend=False, hoverinfo='none'
-            ))
+            fig.add_trace(go.Mesh3d(x=[cx1, cx1, cx1, cx1],
+                                    y=[cy0, cy1, cy1, cy0],
+                                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                                    i=[0, 0], j=[1, 2], k=[2, 3],
+                                    color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False))
+            fig.add_trace(go.Scatter3d(x=[cx1, cx1, cx1, cx1, cx1],
+                                       y=[cy0, cy1, cy1, cy0, cy0],
+                                       z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                                       mode='lines', line=dict(color='black', width=2),
+                                       showlegend=False, hoverinfo='none'))
         elif "East" in label:
-            # East elevation - vertical rectangle at y = cy1 (east edge)
-            fig.add_trace(go.Mesh3d(
-                x=[cx0, cx1, cx1, cx0],
-                y=[cy1, cy1, cy1, cy1],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
-                i=[0, 0], j=[1, 2], k=[2, 3],
-                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
-            ))
-            fig.add_trace(go.Scatter3d(
-                x=[cx0, cx1, cx1, cx0, cx0],
-                y=[cy1, cy1, cy1, cy1, cy1],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
-                mode='lines',
-                line=dict(color='black', width=2),
-                showlegend=False, hoverinfo='none'
-            ))
+            fig.add_trace(go.Mesh3d(x=[cx0, cx1, cx1, cx0],
+                                    y=[cy1, cy1, cy1, cy1],
+                                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                                    i=[0, 0], j=[1, 2], k=[2, 3],
+                                    color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False))
+            fig.add_trace(go.Scatter3d(x=[cx0, cx1, cx1, cx0, cx0],
+                                       y=[cy1, cy1, cy1, cy1, cy1],
+                                       z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                                       mode='lines', line=dict(color='black', width=2),
+                                       showlegend=False, hoverinfo='none'))
         else:  # West
-            # West elevation - vertical rectangle at y = cy0 (west edge)
-            fig.add_trace(go.Mesh3d(
-                x=[cx0, cx1, cx1, cx0],
-                y=[cy0, cy0, cy0, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
-                i=[0, 0], j=[1, 2], k=[2, 3],
-                color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False
-            ))
-            fig.add_trace(go.Scatter3d(
-                x=[cx0, cx1, cx1, cx0, cx0],
-                y=[cy0, cy0, cy0, cy0, cy0],
-                z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
-                mode='lines',
-                line=dict(color='black', width=2),
-                showlegend=False, hoverinfo='none'
-            ))
+            fig.add_trace(go.Mesh3d(x=[cx0, cx1, cx1, cx0],
+                                    y=[cy0, cy0, cy0, cy0],
+                                    z=[bottom_z, bottom_z, top_z_rect, top_z_rect],
+                                    i=[0, 0], j=[1, 2], k=[2, 3],
+                                    color=TT_Orange, opacity=0.95, hoverinfo="none", showlegend=False))
+            fig.add_trace(go.Scatter3d(x=[cx0, cx1, cx1, cx0, cx0],
+                                       y=[cy0, cy0, cy0, cy0, cy0],
+                                       z=[bottom_z, bottom_z, top_z_rect, top_z_rect, bottom_z],
+                                       mode='lines', line=dict(color='black', width=2),
+                                       showlegend=False, hoverinfo='none'))
 
-    # Add direction labels (N, E, S, W) positioned correctly
+    # Direction labels
     label_margin = max(1.0, max(NS_dimension, EW_dimension) * 0.06)
     center_x = NS_dimension / 2
     center_y = EW_dimension / 2
@@ -427,7 +380,6 @@ def detect_zone_E_and_visualise(session_state,
             hoverinfo='none'
         ))
 
-    # Layout: remove title and summary annotation; no legend
     fig.update_layout(
         scene=dict(
             xaxis=dict(visible=False, showgrid=False, showticklabels=False, zeroline=False),
@@ -441,17 +393,14 @@ def detect_zone_E_and_visualise(session_state,
         height=520
     )
 
-    # --- Combined Zone E flag for easy downstream checks ---
-    # For North/South elevations: True if either east_zone_E or west_zone_E is True
+    # Combined Zone E flags
     results["North"]["zone_E"] = bool(results["North"].get("east_zone_E", False) or results["North"].get("west_zone_E", False))
     results["South"]["zone_E"] = bool(results["South"].get("east_zone_E", False) or results["South"].get("west_zone_E", False))
-
-    # For East/West elevations: True if either north_zone_E or south_zone_E is True
     results["East"]["zone_E"] = bool(results["East"].get("north_zone_E", False) or results["East"].get("south_zone_E", False))
     results["West"]["zone_E"] = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
 
-    # FIXED: Add draw_width to results for DataFrame display (uses correct dimensions for each elevation)
-    results["North"]["draw_width"] = round(draw_width_north, 4)
+    # FIXED: include draw_width values for DataFrame display so displayed width matches plotted width
+    results["North"]["draw_width"] = round(draw_width_north, 4)  # used only for plotting/display
     results["South"]["draw_width"] = round(draw_width_south, 4)
     results["East"]["draw_width"] = round(draw_width_east, 4)
     results["West"]["draw_width"] = round(draw_width_west, 4)
