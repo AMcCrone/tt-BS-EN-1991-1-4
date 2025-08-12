@@ -1066,7 +1066,7 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
         else:
             elevation_text = ", ".join(sorted(pos_dirs))
         # Pressure is always zone D (per your rule) so don't report zone
-        paragraphs.append(f"Maximum wind pressure: {max_pos_val:.2f} kPa — present on {elevation_text}.")
+        paragraphs.append(f"Maximum wind pressure: {max_pos_val:.2f} kPa - present on the {elevation_text} elevation(s).")
     else:
         paragraphs.append("No positive wind pressure (net > 0) was found in the results.")
 
@@ -1084,7 +1084,7 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
 
         # Describe zones: if single zone mention it, otherwise list
         zones_text = neg_zones[0] if len(neg_zones) == 1 else ", ".join(neg_zones)
-        paragraphs.append(f"Maximum wind suction: {min_neg_val:.2f} kPa — {zones_text} on {elevation_text_neg}.")
+        paragraphs.append(f"Maximum wind suction: {min_neg_val:.2f} kPa - Zone(s) {zones_text} on the {elevation_text_neg} elevation(s).")
     else:
         paragraphs.append("No wind suction (net negative pressures) was found in the results.")
 
@@ -1112,7 +1112,7 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
             })
 
     if zone_e_entries:
-        entries_txt = "; ".join([f"{ent['Direction']} = {ent['Net (kPa)']:.2f} kPa (cp,e={ent['cp,e']})"
+        entries_txt = "; ".join([f"{ent['Direction']} = {ent['Net (kPa)']:.2f} kPa"
                                  for ent in zone_e_entries])
         if inset_enabled:
             inset_phrase = "Inset zone has been considered."
@@ -1156,7 +1156,7 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
 
     paragraphs.append(
         f'**TT recommend a design value of {max_abs_val:.2f} kPa to be adopted for the building.** '
-        f'**This is driven by {driver_kind} from Zone {zone_phrase} on {elev_phrase}.**'
+        f'**This is driven by {driver_kind} from Zone {zone_phrase} on the {elev_phrase} elevation(s).**'
     )
 
     return paragraphs
