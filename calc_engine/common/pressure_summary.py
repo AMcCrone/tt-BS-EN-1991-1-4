@@ -1055,18 +1055,26 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
 
     all_elevations = set(summary_df["Direction"].unique())
 
+    def format_elevations(elevations_set):
+        """Helper function to format elevation text properly"""
+        if elevations_set == all_elevations:
+            return "all elevations"
+        else:
+            sorted_elevs = sorted(elevations_set)
+            if len(sorted_elevs) == 1:
+                return f"the {sorted_elevs[0]} elevation"
+            else:
+                return f"the {', '.join(sorted_elevs)} elevations"
+
     # -------- Maximum positive wind pressure (pressure is always zone D) --------
     pos_df = summary_df[summary_df["Net (kPa)"] > 0]
     if not pos_df.empty:
         max_pos_val = pos_df["Net (kPa)"].max()
         max_pos_rows = pos_df[pos_df["Net (kPa)"] == max_pos_val]
         pos_dirs = set(max_pos_rows["Direction"].unique())
-        if pos_dirs == all_elevations:
-            elevation_text = "all elevations"
-        else:
-            elevation_text = ", ".join(sorted(pos_dirs))
+        elevation_text = format_elevations(pos_dirs)
         # Pressure is always zone D (per your rule) so don't report zone
-        paragraphs.append(f"Maximum wind pressure: {max_pos_val:.2f} kPa - present on the {elevation_text} elevation(s).")
+        paragraphs.append(f"Maximum wind pressure: {max_pos_val:.2f} kPa - present on {elevation_text}.")
     else:
         paragraphs.append("No positive wind pressure (net > 0) was found in the results.")
 
@@ -1077,14 +1085,15 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
         min_neg_rows = neg_df[neg_df["Net (kPa)"] == min_neg_val]
         neg_dirs = set(min_neg_rows["Direction"].unique())
         neg_zones = sorted(set(min_neg_rows["Zone"].unique()))
-        if neg_dirs == all_elevations:
-            elevation_text_neg = "all elevations"
-        else:
-            elevation_text_neg = ", ".join(sorted(neg_dirs))
+        elevation_text_neg = format_elevations(neg_dirs)
 
-        # Describe zones: if single zone mention it, otherwise list
-        zones_text = neg_zones[0] if len(neg_zones) == 1 else ", ".join(neg_zones)
-        paragraphs.append(f"Maximum wind suction: {min_neg_val:.2f} kPa - Zone(s) {zones_text} on the {elevation_text_neg} elevation(s).")
+        # Format zones properly
+        if len(neg_zones) == 1:
+            zones_text = f"Zone {neg_zones[0]}"
+        else:
+            zones_text = f"Zones {', '.join(neg_zones)}"
+        
+        paragraphs.append(f"Maximum wind suction: {min_neg_val:.2f} kPa - {zones_text} on {elevation_text_neg}.")
     else:
         paragraphs.append("No wind suction (net negative pressures) was found in the results.")
 
@@ -1118,7 +1127,12 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
             inset_phrase = "Inset zone has been considered."
         else:
             inset_phrase = "Inset zone has not been considered."
-        paragraphs.append(f"{inset_phrase} Zone E is present on the following elevation(s): {entries_txt}.")
+        
+        # Determine if singular or plural elevation text
+        e_dirs = {ent['Direction'] for ent in zone_e_entries}
+        e_elevation_text = format_elevations(e_dirs)
+        
+        paragraphs.append(f"{inset_phrase} Zone E is present on {e_elevation_text}: {entries_txt}.")
     else:
         if inset_enabled:
             paragraphs.append("Inset zone has been considered. Zone E was not present on any elevation.")
@@ -1134,17 +1148,15 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
     # Determine whether driver is pressure or suction (use Net (kPa) sign)
     # If there are multiple driver rows, try to present concisely
     unique_dirs = set(max_abs_rows["Direction"].unique())
-    unique_zones = set(max_abs_rows["Zone"].unique())
-    # determine phrase for elevations
-    if unique_dirs == all_elevations:
-        elev_phrase = "all elevations"
-    else:
-        elev_phrase = ", ".join(sorted(unique_dirs))
-    # determine zone phrase
+    unique_zones = sorted(set(max_abs_rows["Zone"].unique()))
+    
+    # Format elevations and zones properly
+    elev_phrase = format_elevations(unique_dirs)
+    
     if len(unique_zones) == 1:
-        zone_phrase = next(iter(unique_zones))
+        zone_phrase = f"Zone {unique_zones[0]}"
     else:
-        zone_phrase = ", ".join(sorted(unique_zones))
+        zone_phrase = f"Zones {', '.join(unique_zones)}"
 
     # Determine whether driver is pressure or suction for wording
     # If some rows are positive and some negative (unlikely), report generically as "wind suction/pressure"
@@ -1156,7 +1168,7 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
 
     paragraphs.append(
         f'**TT recommend a design value of {max_abs_val:.2f} kPa to be adopted for the building.** '
-        f'**This is driven by {driver_kind} from Zone {zone_phrase} on the {elev_phrase} elevation(s).**'
+        f'**This is driven by {driver_kind} from {zone_phrase} on {elev_phrase}.**'
     )
 
     return paragraphs
