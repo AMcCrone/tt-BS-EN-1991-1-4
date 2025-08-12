@@ -149,14 +149,11 @@ def JSON_loader(uploaded_file):
         
         metadata = data.get("_metadata", {})
         
-        # Clear existing state to avoid conflicts (optional - comment out if you want to merge)
-        # st.session_state.inputs = {}
-        
         # Initialize inputs dictionary if it doesn't exist
         if not hasattr(st.session_state, 'inputs'):
             st.session_state.inputs = {}
         
-        # Load inputs data
+        # Load inputs data first
         if "inputs" in data:
             for key, value in data["inputs"].items():
                 st.session_state.inputs[key] = value
@@ -177,37 +174,47 @@ def JSON_loader(uploaded_file):
                 else:
                     st.session_state[key] = value
         
-        # Load app state flags
+        # Load app state flags - this ensures UI elements show correctly
         if "app_state" in data:
             app_state = data["app_state"]
             
-            # Set key app state variables
-            st.session_state.inputs["region"] = app_state.get("region", "United Kingdom")
-            st.session_state.inputs["inset_enabled"] = app_state.get("inset_enabled", False)
-            st.session_state.inputs["consider_funnelling"] = app_state.get("consider_funnelling", False)
-            st.session_state.inputs["use_direction_factor"] = app_state.get("use_direction_factor", False)
-            st.session_state.inputs["use_custom_values"] = app_state.get("use_custom_values", False)
-            st.session_state.inputs["terrain_category"] = app_state.get("terrain_category", "")
-            st.session_state.show_educational = app_state.get("show_educational", False)
+            # Set key app state variables that control UI flow
+            for key in ["region", "inset_enabled", "consider_funnelling", 
+                       "use_direction_factor", "use_custom_values", "terrain_category"]:
+                if key in app_state:
+                    st.session_state.inputs[key] = app_state[key]
+            
+            # Handle direct session state variables
+            if "show_educational" in app_state:
+                st.session_state.show_educational = app_state["show_educational"]
         
-        # Force rerun to update the UI with loaded values
-        # Note: st.rerun() should be called by the main app after this function returns True
+        # Handle widget state variables that might not be in inputs
+        widget_states = {
+            "ui_add_inset": st.session_state.inputs.get("inset_enabled", False),
+            "consider_funnelling": st.session_state.inputs.get("consider_funnelling", False),
+            "use_custom_values": st.session_state.inputs.get("use_custom_values", False),
+            "use_direction_factor": st.session_state.inputs.get("use_direction_factor", False),
+        }
+        
+        for widget_key, value in widget_states.items():
+            if widget_key not in st.session_state:
+                st.session_state[widget_key] = value
         
         saved_time = metadata.get("saved_at", "Unknown time")
         total_vars = metadata.get("total_variables", "Unknown number of")
         
-        return True, f"✅ Successfully loaded {total_vars} variables from file saved at {saved_time}"
+        return True, f"Data loaded successfully from {saved_time}"
         
     except json.JSONDecodeError as e:
-        return False, f"❌ Invalid JSON file format: {str(e)}"
+        return False, f"Invalid JSON file: {str(e)}"
     except KeyError as e:
-        return False, f"❌ Missing required data in file: {str(e)}"
+        return False, f"Missing data in file: {str(e)}"
     except Exception as e:
-        return False, f"❌ Error loading file: {str(e)}"
+        return False, f"Error loading file: {str(e)}"
 
 def create_download_filename():
     """Generate a descriptive filename for the JSON download."""
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.datetime.now().strftime("%d.%m.%Y_%H.%M")
     
     # Try to get project name for filename
     project_name = ""
@@ -218,53 +225,44 @@ def create_download_filename():
         # Clean project name for filename
         clean_name = "".join(c for c in project_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
         clean_name = clean_name.replace(' ', '_')
-        return f"WindLoad_{clean_name}_{timestamp}.json"
+        return f"{clean_name}_Wind Load Analysis_{timestamp}.json"
     else:
-        return f"WindLoad_Calculation_{timestamp}.json"
+        return f"Wind Load Analysis_{timestamp}.json"
 
 # Example usage functions that you can add to your main.py:
 
 def add_save_load_ui():
     """
-    Add save/load UI to your Streamlit app. 
-    Call this function where you want the save/load interface to appear.
+    Minimal save/load UI for the Streamlit app.
     """
-    st.markdown("---")
-    st.header("💾 Save & Load Configuration")
-    
-    col1, col2 = st.columns(2)
+    # Compact horizontal layout
+    col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.subheader("Save Current Settings")
-        if st.button("📁 Generate Download File", type="primary"):
+        if st.button("💾 Save Configuration", use_container_width=True):
             try:
                 data = JSON_generator()
                 json_string = json.dumps(data, indent=2)
                 filename = create_download_filename()
                 
                 st.download_button(
-                    label="⬇️ Download Configuration",
+                    label="⬇️ Download",
                     data=json_string,
                     file_name=filename,
                     mime="application/json",
-                    help="Save all your current inputs and calculations"
+                    use_container_width=True
                 )
                 
-                total_vars = data["_metadata"]["total_variables"]
-                st.success(f"✅ Ready to download {total_vars} variables!")
-                
             except Exception as e:
-                st.error(f"❌ Error generating save file: {str(e)}")
+                st.error(f"Error: {str(e)}")
     
     with col2:
-        st.subheader("Load Previous Settings")
-        
         # Use a unique key to track if we've processed this file
         uploaded_file = st.file_uploader(
-            "Upload Configuration File",
+            "📂 Load Configuration",
             type=['json'],
-            help="Load previously saved wind load calculation settings",
-            key="config_uploader"
+            key="config_uploader",
+            label_visibility="collapsed"
         )
         
         if uploaded_file is not None:
@@ -280,13 +278,12 @@ def add_save_load_ui():
                     st.success(message)
                     # Mark this file as processed
                     st.session_state[f"processed_file_{file_id}"] = True
-                    # Use experimental_rerun instead of rerun to be safer
                     st.rerun()
                 else:
                     st.error(message)
             else:
                 # File already processed, just show success message
-                st.info("✅ Configuration loaded successfully!")
+                st.success("Configuration loaded!")
 
 # Validation function to help debug save/load issues
 def validate_session_state():
