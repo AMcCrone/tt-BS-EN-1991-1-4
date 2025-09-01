@@ -9,18 +9,6 @@ def detect_zone_E_and_visualise(session_state,
     """
     Determine whether Zone E applies for each elevation edge and return a Plotly 3D
     visualisation.
-
-    CORRECTED dimension mapping:
-    - NS_dimension is the width of North/South elevations (spans East-West)
-    - EW_dimension is the width of East/West elevations (spans North-South)
-
-    Mapping implemented:
-      - For North/South elevations:
-          draw_width = NS_dimension - east_offset - west_offset
-          crosswind_breadth (B1) = EW_dimension - north_offset - south_offset
-      - For East/West elevations:
-          draw_width = EW_dimension - north_offset - south_offset
-          crosswind_breadth (B1) = NS_dimension - east_offset - west_offset
     """
 
     # Colours
@@ -88,7 +76,7 @@ def detect_zone_E_and_visualise(session_state,
     # Container for zone-E rectangles: each item holds (cx0,cx1,cy0,cy1,e_height, label)
     zoneE_rects = []
 
-    # ---- For North/South elevations: use crosswind_breadth_north (EW_dimension - north/south offsets) ----
+    # ---- For North/South elevations: use crosswind_breadth_north (NS_dimension - north/south offsets) ----
     B1_NS = crosswind_breadth_north  # used only in wind checks (E1 etc.)
     e1_NS = min(B1_NS, 2.0 * H1)
     results["North"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
@@ -146,7 +134,7 @@ def detect_zone_E_and_visualise(session_state,
             results["South"]["west_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-west"))
 
-    # ---- For East/West elevations: use crosswind_breadth_east (NS_dimension - east/west offsets) ----
+    # ---- For East/West elevations: use crosswind_breadth_east (EW_dimension - east/west offsets) ----
     B1_EW = crosswind_breadth_east  # used only in wind checks (E1 etc.)
     e1_EW = min(B1_EW, 2.0 * H1)
     results["East"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
@@ -400,7 +388,7 @@ def detect_zone_E_and_visualise(session_state,
     results["East"]["zone_E"] = bool(results["East"].get("north_zone_E", False) or results["East"].get("south_zone_E", False))
     results["West"]["zone_E"] = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
 
-    # FIXED: include draw_width values for DataFrame display so displayed width matches plotted width
+    # CORRECTED: include draw_width values for DataFrame display so displayed width matches plotted width
     results["North"]["draw_width"] = round(draw_width_north, 4)  # used only for plotting/display
     results["South"]["draw_width"] = round(draw_width_south, 4)
     results["East"]["draw_width"] = round(draw_width_east, 4)
