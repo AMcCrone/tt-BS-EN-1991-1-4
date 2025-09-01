@@ -79,8 +79,19 @@ def detect_zone_E_and_visualise(session_state,
     # ---- For North/South elevations: use crosswind_breadth_north (NS_dimension - north/south offsets) ----
     B1_NS = crosswind_breadth_north  # used only in wind checks (E1 etc.)
     e1_NS = min(B1_NS, 2.0 * H1)
-    results["North"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
-    results["South"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
+    e1_div5_NS = e1_NS / 5.0  # 0.2e1 value
+    results["North"].update({
+        "B1": round(B1_NS, 4), 
+        "0.2e1": round(e1_div5_NS, 4),
+        "east gap": round(east_offset, 4),
+        "west gap": round(west_offset, 4)
+    })
+    results["South"].update({
+        "B1": round(B1_NS, 4), 
+        "0.2e1": round(e1_div5_NS, 4),
+        "east gap": round(east_offset, 4),
+        "west gap": round(west_offset, 4)
+    })
 
     # North elevation - East edge check (only if north_offset > 0)
     if e1_NS > 0 and east_offset < 0.2 * e1_NS and north_offset > 0:
@@ -137,8 +148,19 @@ def detect_zone_E_and_visualise(session_state,
     # ---- For East/West elevations: use crosswind_breadth_east (EW_dimension - east/west offsets) ----
     B1_EW = crosswind_breadth_east  # used only in wind checks (E1 etc.)
     e1_EW = min(B1_EW, 2.0 * H1)
-    results["East"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
-    results["West"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
+    e1_div5_EW = e1_EW / 5.0  # 0.2e1 value
+    results["East"].update({
+        "B1": round(B1_EW, 4), 
+        "0.2e1": round(e1_div5_EW, 4),
+        "north gap": round(north_offset, 4),
+        "south gap": round(south_offset, 4)
+    })
+    results["West"].update({
+        "B1": round(B1_EW, 4), 
+        "0.2e1": round(e1_div5_EW, 4),
+        "north gap": round(north_offset, 4),
+        "south gap": round(south_offset, 4)
+    })
 
     # East elevation - North edge check (only if east_offset > 0)
     if e1_EW > 0 and north_offset < 0.2 * e1_EW and east_offset > 0:
@@ -382,16 +404,10 @@ def detect_zone_E_and_visualise(session_state,
         height=520
     )
 
-    # Combined Zone E flags
-    results["North"]["zone_E"] = bool(results["North"].get("east_zone_E", False) or results["North"].get("west_zone_E", False))
-    results["South"]["zone_E"] = bool(results["South"].get("east_zone_E", False) or results["South"].get("west_zone_E", False))
-    results["East"]["zone_E"] = bool(results["East"].get("north_zone_E", False) or results["East"].get("south_zone_E", False))
-    results["West"]["zone_E"] = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
-
-    # CORRECTED: include draw_width values for DataFrame display so displayed width matches plotted width
-    results["North"]["draw_width"] = round(draw_width_north, 4)  # used only for plotting/display
-    results["South"]["draw_width"] = round(draw_width_south, 4)
-    results["East"]["draw_width"] = round(draw_width_east, 4)
-    results["West"]["draw_width"] = round(draw_width_west, 4)
+    # Combined Zone E flags - move to final column and rename
+    results["North"]["Zone E?"] = bool(results["North"].get("east_zone_E", False) or results["North"].get("west_zone_E", False))
+    results["South"]["Zone E?"] = bool(results["South"].get("east_zone_E", False) or results["South"].get("west_zone_E", False))
+    results["East"]["Zone E?"] = bool(results["East"].get("north_zone_E", False) or results["East"].get("south_zone_E", False))
+    results["West"]["Zone E?"] = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
 
     return results, fig
