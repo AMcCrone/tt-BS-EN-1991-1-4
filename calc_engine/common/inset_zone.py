@@ -34,7 +34,7 @@ def detect_zone_E_and_visualise(session_state,
 
     # Read base plan dims + base roof height from session_state
     NS_dimension = float(session_state.inputs.get("NS_dimension", 20.0))  # Width of North/South elevations
-    EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))  # Width of East/West elevations
+    EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))  # Width of East/West elevations  
     base_z = float(session_state.inputs.get("z", 10.0))  # roof plane z
 
     # Sanitize offsets and H1 — treat None as 0.0
@@ -45,12 +45,12 @@ def detect_zone_E_and_visualise(session_state,
     H1 = max(0.0, float(inset_height or 0.0))
 
     # Upper-storey footprint in plan coordinates
-    # x-axis (North-South): x=0 is North, x=NS_dimension is South
-    # y-axis (West-East):  y=0 is West,  y=EW_dimension is East
+    # x-axis (North-South): x=0 is North, x=EW_dimension is South
+    # y-axis (West-East):  y=0 is West,  y=NS_dimension is East
     upper_x0 = north_offset  # North edge
-    upper_x1 = max(north_offset, NS_dimension - south_offset)  # South edge
+    upper_x1 = max(north_offset, EW_dimension - south_offset)  # South edge
     upper_y0 = west_offset   # West edge
-    upper_y1 = max(west_offset, EW_dimension - east_offset)   # East edge
+    upper_y1 = max(west_offset, NS_dimension - east_offset)   # East edge
 
     upper_width_x = max(0.0, upper_x1 - upper_x0)  # North-South width of inset footprint
     upper_width_y = max(0.0, upper_y1 - upper_y0)  # East-West width of inset footprint
@@ -232,11 +232,11 @@ def detect_zone_E_and_visualise(session_state,
 
     # Draw top plane of base building (flat quad) with clockwise ordering:
     top_z = base_z
-    # Base footprint: NS_dimension by EW_dimension (gray rectangle, no outline)
-    # x-axis spans North-South (NS_dimension), y-axis spans West-East (EW_dimension)
+    # Base footprint: EW_dimension by NS_dimension (gray rectangle, no outline)
+    # x-axis spans North-South (EW_dimension), y-axis spans West-East (NS_dimension)
     fig.add_trace(go.Mesh3d(
-        x=[0.0, 0.0, NS_dimension, NS_dimension],
-        y=[0.0, EW_dimension, EW_dimension, 0.0],
+        x=[0.0, 0.0, EW_dimension, EW_dimension],
+        y=[0.0, NS_dimension, NS_dimension, 0.0],
         z=[top_z, top_z, top_z, top_z],
         i=[0, 0], j=[1, 2], k=[2, 3],
         color=TT_TopPlane, opacity=1.0, hoverinfo="none", showlegend=False
@@ -372,8 +372,8 @@ def detect_zone_E_and_visualise(session_state,
 
     # Direction labels
     label_margin = max(1.0, max(NS_dimension, EW_dimension) * 0.06)
-    center_x = NS_dimension / 2  # x-axis center (North-South span)
-    center_y = EW_dimension / 2  # y-axis center (West-East span)
+    center_x = EW_dimension / 2  # x-axis center (North-South span)
+    center_y = NS_dimension / 2  # y-axis center (West-East span)
 
     if upper_width_x > 0 and upper_width_y > 0:
         lx_center = (upper_x0 + upper_x1) / 2
@@ -387,8 +387,8 @@ def detect_zone_E_and_visualise(session_state,
     else:
         label_positions = {
             "North": {"pos": [0.0 - label_margin, center_y, top_z], "text": "N"},
-            "South": {"pos": [NS_dimension + label_margin, center_y, top_z], "text": "S"},
-            "East":  {"pos": [center_x, EW_dimension + label_margin, top_z], "text": "E"},
+            "South": {"pos": [EW_dimension + label_margin, center_y, top_z], "text": "S"},
+            "East":  {"pos": [center_x, NS_dimension + label_margin, top_z], "text": "E"},
             "West":  {"pos": [center_x, 0.0 - label_margin, top_z], "text": "W"},
         }
 
