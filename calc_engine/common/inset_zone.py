@@ -456,10 +456,42 @@ def create_styled_inset_dataframe(results):
         else:
             return 'color: #808080'  # Grey
     
-    # Apply styling to the dataframe if Zone E? column exists
+    # Define styling function for gap columns when all gaps < 0.2e1
+    def style_gaps(row):
+        gap_columns = ['east gap', 'west gap', 'north gap', 'south gap']
+        # Check if all gap columns exist and all values are < 0.2
+        existing_gaps = [col for col in gap_columns if col in row.index]
+        
+        if existing_gaps and all(pd.notna(row[col]) and row[col] < 0.2 for col in existing_gaps):
+            # Return styling for all gap columns in this row
+            return ['color: #D3451D; font-weight: bold' if col in existing_gaps else '' for col in row.index]
+        else:
+            # Return empty styling for all columns
+            return ['' for _ in row.index]
+    
+    # Format numeric columns to 1 decimal place
+    format_dict = {}
+    for col in df_display.columns:
+        if df_display[col].dtype in ['float64', 'float32', 'int64', 'int32']:
+            # Skip boolean-like columns
+            if col != 'Zone E?' and not df_display[col].isin([0, 1, True, False]).all():
+                format_dict[col] = '{:.1f}'
+    
+    # Apply styling to the dataframe
     if 'Zone E?' in df_display.columns:
         styled_df = df_display.style.applymap(style_zone_e, subset=['Zone E?'])
     else:
-        styled_df = df_display
+        styled_df = df_display.style
+    
+    # Apply gap styling (row-wise)
+    gap_columns = ['east gap', 'west gap', 'north gap', 'south gap']
+    existing_gap_columns = [col for col in gap_columns if col in df_display.columns]
+    
+    if existing_gap_columns:
+        styled_df = styled_df.apply(style_gaps, axis=1)
+    
+    # Apply number formatting
+    if format_dict:
+        styled_df = styled_df.format(format_dict)
     
     return styled_df
