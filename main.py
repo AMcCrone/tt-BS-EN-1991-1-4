@@ -9,7 +9,7 @@ from geopy.distance import geodesic
 from auth import authenticate_user
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
-from calc_engine.common.inset_zone import detect_zone_E_and_visualise
+from calc_engine.common.inset_zone import detect_zone_E_and_visualise, create_styled_inset_dataframe
 from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures, generate_pressure_summary_paragraphs
 from visualisation.building_viz import create_building_visualisation
 from visualisation.map import render_map_with_markers, get_elevation, compute_distance, interactive_map_ui
@@ -648,28 +648,8 @@ if add_inset:
 
     st.plotly_chart(fig, use_container_width=True)
         
-    # Create styled dataframe
-    df = pd.DataFrame(results).T
-    
-    # Remove internal tracking columns (keep only user-relevant columns)
-    display_columns = ['B1', 'H1', '0.2e1', 'east gap', 'west gap', 'north gap', 'south gap', 'Zone E?']
-    # Filter to only columns that exist in the dataframe
-    available_columns = [col for col in display_columns if col in df.columns]
-    df_display = df[available_columns]
-    
-    # Define styling function for Zone E? column
-    def style_zone_e(val):
-        if val == True:
-            return 'color: #D3451D; font-weight: bold'  # TT Orange
-        else:
-            return 'color: #808080'  # Grey
-    
-    # Apply styling to the dataframe if Zone E? column exists
-    if 'Zone E?' in df_display.columns:
-        styled_df = df_display.style.applymap(style_zone_e, subset=['Zone E?'])
-    else:
-        styled_df = df_display
-    
+    # Display styled dataframe
+    styled_df = create_styled_inset_dataframe(results)
     st.dataframe(styled_df)
 
 else:
