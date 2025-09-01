@@ -647,7 +647,30 @@ if add_inset:
     st.session_state["inset_fig"] = fig
 
     st.plotly_chart(fig, use_container_width=True)
-    st.dataframe(pd.DataFrame(results).T)
+        
+    # Create styled dataframe
+    df = pd.DataFrame(results).T
+    
+    # Remove internal tracking columns (keep only user-relevant columns)
+    display_columns = ['B1', 'H1', '0.2e1', 'east gap', 'west gap', 'north gap', 'south gap', 'Zone E?']
+    # Filter to only columns that exist in the dataframe
+    available_columns = [col for col in display_columns if col in df.columns]
+    df_display = df[available_columns]
+    
+    # Define styling function for Zone E? column
+    def style_zone_e(val):
+        if val == True:
+            return 'color: #D3451D; font-weight: bold'  # TT Orange
+        else:
+            return 'color: #808080'  # Grey
+    
+    # Apply styling to the dataframe if Zone E? column exists
+    if 'Zone E?' in df_display.columns:
+        styled_df = df_display.style.applymap(style_zone_e, subset=['Zone E?'])
+    else:
+        styled_df = df_display
+    
+    st.dataframe(styled_df)
 
 else:
     # Inset disabled: do NOT show inputs or visualisation.
