@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+import pandas as pd
 
 def detect_zone_E_and_visualise(session_state,
                                 inset_height,
@@ -9,6 +10,20 @@ def detect_zone_E_and_visualise(session_state,
     """
     Determine whether Zone E applies for each elevation edge and return a Plotly 3D
     visualisation.
+
+    CORRECTED dimension mapping (matching pressure_summary.py):
+    - NS_dimension is the width of North/South elevations
+    - EW_dimension is the width of East/West elevations
+
+    Mapping implemented (matches pressure_summary.py logic):
+      - For North/South elevations:
+          width = NS_dimension, crosswind_dim = EW_dimension
+          draw_width = NS_dimension - east_offset - west_offset
+          crosswind_breadth (B1) = EW_dimension - north_offset - south_offset
+      - For East/West elevations:
+          width = EW_dimension, crosswind_dim = NS_dimension
+          draw_width = EW_dimension - north_offset - south_offset
+          crosswind_breadth (B1) = NS_dimension - east_offset - west_offset
     """
 
     # Colours
@@ -411,3 +426,41 @@ def detect_zone_E_and_visualise(session_state,
     results["West"]["Zone E?"] = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
 
     return results, fig
+
+def create_styled_inset_dataframe(results):
+    """
+    Create a styled dataframe from inset zone results for display.
+    
+    Parameters:
+    -----------
+    results : dict
+        Results dictionary from detect_zone_E_and_visualise function
+    
+    Returns:
+    --------
+    pandas.io.formats.style.Styler
+        Styled dataframe ready for display
+    """
+    # Create dataframe from results
+    df = pd.DataFrame(results).T
+    
+    # Remove internal tracking columns (keep only user-relevant columns)
+    display_columns = ['B1', 'H1', '0.2e1', 'east gap', 'west gap', 'north gap', 'south gap', 'Zone E?']
+    # Filter to only columns that exist in the dataframe
+    available_columns = [col for col in display_columns if col in df.columns]
+    df_display = df[available_columns]
+    
+    # Define styling function for Zone E? column
+    def style_zone_e(val):
+        if val == True:
+            return 'color: #D3451D; font-weight: bold'  # TT Orange
+        else:
+            return 'color: #808080'  # Grey
+    
+    # Apply styling to the dataframe if Zone E? column exists
+    if 'Zone E?' in df_display.columns:
+        styled_df = df_display.style.applymap(style_zone_e, subset=['Zone E?'])
+    else:
+        styled_df = df_display
+    
+    return styled_df
