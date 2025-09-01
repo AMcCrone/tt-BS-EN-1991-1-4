@@ -11,16 +11,16 @@ def detect_zone_E_and_visualise(session_state,
     visualisation.
 
     Key fix:
-    - split drawing geometry width vs cross-wind breadth (B1) so the short/long sides
-      of the plan are not swapped between plotting and wind checks.
+    - Corrected dimension usage so North/South elevations use EW_dimension for width
+      and East/West elevations use NS_dimension for width.
 
-    Mapping implemented exactly:
+    Corrected mapping:
       - For North/South elevations (face runs N-S):
-          draw_width = NS_dimension - east_offset - west_offset
-          crosswind_breadth (B1) = EW_dimension - north_offset - south_offset
+          draw_width = EW_dimension - east_offset - west_offset  
+          crosswind_breadth (B1) = NS_dimension - north_offset - south_offset
       - For East/West elevations (face runs E-W):
-          draw_width = EW_dimension - north_offset - south_offset
-          crosswind_breadth (B1) = NS_dimension - east_offset - west_offset
+          draw_width = NS_dimension - north_offset - south_offset
+          crosswind_breadth (B1) = EW_dimension - east_offset - west_offset
     """
 
     # Colours
@@ -53,19 +53,19 @@ def detect_zone_E_and_visualise(session_state,
     upper_width_y = max(0.0, upper_y1 - upper_y0)  # East-West width of inset footprint
 
     # ---------------------------
-    # FIXED: separate draw width (geometry) and crosswind breadth (for wind calcs, B1)
+    # CORRECTED: Fixed dimension usage for geometry creation
     # ---------------------------
     # For North/South elevations (face runs North-South):
-    # draw width along the wall (what's shown on N/S elevation) must be the NS plan dimension minus E/W offsets
-    draw_width_north = draw_width_south = max(0.0, NS_dimension - east_offset - west_offset)
-    # cross-wind breadth (B1) for N/S face is the EW plan dimension minus N/S offsets (perpendicular to face)
-    crosswind_breadth_north = crosswind_breadth_south = max(0.0, EW_dimension - north_offset - south_offset)
+    # The elevation width spans East-West, so use EW_dimension minus E/W offsets
+    draw_width_north = draw_width_south = max(0.0, EW_dimension - east_offset - west_offset)
+    # cross-wind breadth (B1) for N/S face spans North-South, so use NS_dimension minus N/S offsets
+    crosswind_breadth_north = crosswind_breadth_south = max(0.0, NS_dimension - north_offset - south_offset)
 
     # For East/West elevations (face runs East-West):
-    # draw width along the wall (what's shown on E/W elevation) must be the EW plan dimension minus N/S offsets
-    draw_width_east = draw_width_west = max(0.0, EW_dimension - north_offset - south_offset)
-    # cross-wind breadth (B1) for E/W face is the NS plan dimension minus E/W offsets (perpendicular to face)
-    crosswind_breadth_east = crosswind_breadth_west = max(0.0, NS_dimension - east_offset - west_offset)
+    # The elevation width spans North-South, so use NS_dimension minus N/S offsets
+    draw_width_east = draw_width_west = max(0.0, NS_dimension - north_offset - south_offset)
+    # cross-wind breadth (B1) for E/W face spans East-West, so use EW_dimension minus E/W offsets
+    crosswind_breadth_east = crosswind_breadth_west = max(0.0, EW_dimension - east_offset - west_offset)
 
     # Results skeleton
     results = {
@@ -88,7 +88,7 @@ def detect_zone_E_and_visualise(session_state,
     # Container for zone-E rectangles: each item holds (cx0,cx1,cy0,cy1,e_height, label)
     zoneE_rects = []
 
-    # ---- For North/South elevations: use crosswind_breadth_north (EW_dimension - north/south offsets) ----
+    # ---- For North/South elevations: use crosswind_breadth_north (NS_dimension - north/south offsets) ----
     B1_NS = crosswind_breadth_north  # used only in wind checks (E1 etc.)
     e1_NS = min(B1_NS, 2.0 * H1)
     results["North"].update({"B1": round(B1_NS, 4), "e1": round(e1_NS, 4)})
@@ -146,7 +146,7 @@ def detect_zone_E_and_visualise(session_state,
             results["South"]["west_zone_E"] = True
             zoneE_rects.append((clamped[0], clamped[1], clamped[2], clamped[3], rect_h, "South-west"))
 
-    # ---- For East/West elevations: use crosswind_breadth_east (NS_dimension - east/west offsets) ----
+    # ---- For East/West elevations: use crosswind_breadth_east (EW_dimension - east/west offsets) ----
     B1_EW = crosswind_breadth_east  # used only in wind checks (E1 etc.)
     e1_EW = min(B1_EW, 2.0 * H1)
     results["East"].update({"B1": round(B1_EW, 4), "e1": round(e1_EW, 4)})
@@ -399,7 +399,7 @@ def detect_zone_E_and_visualise(session_state,
     results["East"]["zone_E"] = bool(results["East"].get("north_zone_E", False) or results["East"].get("south_zone_E", False))
     results["West"]["zone_E"] = bool(results["West"].get("north_zone_E", False) or results["West"].get("south_zone_E", False))
 
-    # FIXED: include draw_width values for DataFrame display so displayed width matches plotted width
+    # CORRECTED: include draw_width values for DataFrame display so displayed width matches plotted width
     results["North"]["draw_width"] = round(draw_width_north, 4)  # used only for plotting/display
     results["South"]["draw_width"] = round(draw_width_south, 4)
     results["East"]["draw_width"] = round(draw_width_east, 4)
