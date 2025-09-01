@@ -447,51 +447,60 @@ def create_styled_inset_dataframe(results):
     display_columns = ['B1', 'H1', '0.2e1', 'east gap', 'west gap', 'north gap', 'south gap', 'Zone E?']
     # Filter to only columns that exist in the dataframe
     available_columns = [col for col in display_columns if col in df.columns]
-    df_display = df[available_columns]
+    df_display = df[available_columns].copy()
     
-    # Define styling function for Zone E? column
-    def style_zone_e(val):
-        if val == True:
-            return 'color: #D3451D; font-weight: bold'  # TT Orange
-        else:
-            return 'color: #808080'  # Grey
+    # Round numeric columns to 1 decimal place
+    gap_columns = ['east gap', 'west gap', 'north gap', 'south gap']
+    numeric_columns = ['B1', 'H1', '0.2e1'] + gap_columns
     
-    # Define styling function for gap columns when all gaps < 0.2e1
-    def style_gaps(row):
-        gap_columns = ['east gap', 'west gap', 'north gap', 'south gap']
-        # Check if all gap columns exist and all values are < 0.2
-        existing_gaps = [col for col in gap_columns if col in row.index]
+    for col in numeric_columns:
+        if col in df_display.columns:
+            df_display[col] = pd.to_numeric(df_display[col], errors='coerce').round(1)
+    
+    # Define styling function that works on the entire dataframe
+    def style_dataframe(styler):
+        # Style Zone E? column
+        if 'Zone E?' in df_display.columns:
+            def zone_e_color(val):
+                if val == True:
+                    return 'color: #D3451D; font-weight: bold'
+                else:
+                    return 'color: #808080'
+            styler = styler.applymap(zone_e_color, subset=['Zone E?'])
         
-        if existing_gaps and all(pd.notna(row[col]) and row[col] < 0.2 for col in existing_gaps):
-            # Return styling for all gap columns in this row
-            return ['color: #D3451D; font-weight: bold' if col in existing_gaps else '' for col in row.index]
-        else:
-            # Return empty styling for all columns
-            return ['' for _ in row.index]
+        # Style gap columns when all gaps in row < 0.2
+        existing_gap_cols = [col for col in gap_columns if col in df_display.columns]
+        
+        if existing_gap_cols:
+            for idx in df_display.index:
+                row = df_display.loc[idx]
+                try:
+                    gap_values = [float(row[col]) for col in existing_gap_cols if pd.notna(row[col])]
+                    if gap_values and all(val < 0.2 for val in gap_values):
+                        # Apply styling to gap columns in this row
+                        for col in existing_gap_cols:
+                            styler = styler.applymap(
+                                lambda x: 'color: #D3451D; font-weight: bold',
+                                subset=pd.IndexSlice[idx:idx, col:col]
+                            )
+                except (ValueError, TypeError):
+                    continue
+        
+        return styler
     
-    # Format numeric columns to 1 decimal place
+    # Create base styler
+    styled_df = df_display.style
+    
+    # Apply formatting first (1 decimal place for numeric columns)
     format_dict = {}
     for col in df_display.columns:
-        if df_display[col].dtype in ['float64', 'float32', 'int64', 'int32']:
-            # Skip boolean-like columns
-            if col != 'Zone E?' and not df_display[col].isin([0, 1, True, False]).all():
-                format_dict[col] = '{:.1f}'
+        if col in numeric_columns:
+            format_dict[col] = '{:.1f}'
     
-    # Apply styling to the dataframe
-    if 'Zone E?' in df_display.columns:
-        styled_df = df_display.style.applymap(style_zone_e, subset=['Zone E?'])
-    else:
-        styled_df = df_display.style
-    
-    # Apply gap styling (row-wise)
-    gap_columns = ['east gap', 'west gap', 'north gap', 'south gap']
-    existing_gap_columns = [col for col in gap_columns if col in df_display.columns]
-    
-    if existing_gap_columns:
-        styled_df = styled_df.apply(style_gaps, axis=1)
-    
-    # Apply number formatting
     if format_dict:
         styled_df = styled_df.format(format_dict)
+    
+    # Apply custom styling
+    styled_df = style_dataframe(styled_df)
     
     return styled_df
