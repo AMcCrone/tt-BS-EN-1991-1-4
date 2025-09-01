@@ -9,18 +9,6 @@ def detect_zone_E_and_visualise(session_state,
     """
     Determine whether Zone E applies for each elevation edge and return a Plotly 3D
     visualisation.
-
-    Key fix:
-    - Corrected dimension usage so North/South elevations use EW_dimension for width
-      and East/West elevations use NS_dimension for width.
-
-    Corrected mapping:
-      - For North/South elevations (face runs N-S):
-          draw_width = EW_dimension - east_offset - west_offset  
-          crosswind_breadth (B1) = NS_dimension - north_offset - south_offset
-      - For East/West elevations (face runs E-W):
-          draw_width = NS_dimension - north_offset - south_offset
-          crosswind_breadth (B1) = EW_dimension - east_offset - west_offset
     """
 
     # Colours
@@ -30,8 +18,8 @@ def detect_zone_E_and_visualise(session_state,
     TT_Roof = "lightgrey"
 
     # Read base plan dims + base roof height from session_state
-    NS_dimension = float(session_state.inputs.get("NS_dimension", 20.0))  # x-axis (North->South)
-    EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))  # y-axis (West->East)
+    NS_dimension = float(session_state.inputs.get("NS_dimension", 20.0))  # Width of North/South elevations (East-West span)
+    EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))  # Width of East/West elevations (North-South span)
     base_z = float(session_state.inputs.get("z", 10.0))  # roof plane z
 
     # Sanitize offsets and H1 — treat None as 0.0
@@ -42,30 +30,30 @@ def detect_zone_E_and_visualise(session_state,
     H1 = max(0.0, float(inset_height or 0.0))
 
     # Upper-storey footprint in plan coordinates
-    # x-axis (North-South): x=0 is North, x=NS_dimension is South
-    # y-axis (West-East):  y=0 is West,  y=EW_dimension is East
+    # x-axis (North-South): x=0 is North, x=EW_dimension is South
+    # y-axis (West-East):  y=0 is West,  y=NS_dimension is East
     upper_x0 = north_offset  # North edge
-    upper_x1 = max(north_offset, NS_dimension - south_offset)  # South edge
+    upper_x1 = max(north_offset, EW_dimension - south_offset)  # South edge
     upper_y0 = west_offset   # West edge
-    upper_y1 = max(west_offset, EW_dimension - east_offset)   # East edge
+    upper_y1 = max(west_offset, NS_dimension - east_offset)   # East edge
 
     upper_width_x = max(0.0, upper_x1 - upper_x0)  # North-South width of inset footprint
     upper_width_y = max(0.0, upper_y1 - upper_y0)  # East-West width of inset footprint
 
     # ---------------------------
-    # CORRECTED: Fixed dimension usage for geometry creation
+    # CORRECTED: Fixed dimension usage for proper geometry creation
     # ---------------------------
     # For North/South elevations (face runs North-South):
-    # The elevation width spans East-West, so use EW_dimension minus E/W offsets
-    draw_width_north = draw_width_south = max(0.0, EW_dimension - east_offset - west_offset)
-    # cross-wind breadth (B1) for N/S face spans North-South, so use NS_dimension minus N/S offsets
-    crosswind_breadth_north = crosswind_breadth_south = max(0.0, NS_dimension - north_offset - south_offset)
+    # draw width is NS_dimension (width of N/S elevations) minus E/W offsets
+    draw_width_north = draw_width_south = max(0.0, NS_dimension - east_offset - west_offset)
+    # cross-wind breadth (B1) for N/S face is EW_dimension (depth perpendicular to face) minus N/S offsets
+    crosswind_breadth_north = crosswind_breadth_south = max(0.0, EW_dimension - north_offset - south_offset)
 
     # For East/West elevations (face runs East-West):
-    # The elevation width spans North-South, so use NS_dimension minus N/S offsets
-    draw_width_east = draw_width_west = max(0.0, NS_dimension - north_offset - south_offset)
-    # cross-wind breadth (B1) for E/W face spans East-West, so use EW_dimension minus E/W offsets
-    crosswind_breadth_east = crosswind_breadth_west = max(0.0, EW_dimension - east_offset - west_offset)
+    # draw width is EW_dimension (width of E/W elevations) minus N/S offsets
+    draw_width_east = draw_width_west = max(0.0, EW_dimension - north_offset - south_offset)
+    # cross-wind breadth (B1) for E/W face is NS_dimension (depth perpendicular to face) minus E/W offsets
+    crosswind_breadth_east = crosswind_breadth_west = max(0.0, NS_dimension - east_offset - west_offset)
 
     # Results skeleton
     results = {
@@ -209,10 +197,11 @@ def detect_zone_E_and_visualise(session_state,
 
     # Draw top plane of base building (flat quad) with clockwise ordering:
     top_z = base_z
-    # Base footprint: NS_dimension by EW_dimension (gray rectangle, no outline)
+    # Base footprint: EW_dimension by NS_dimension (gray rectangle, no outline)
+    # x-axis spans North-South (EW_dimension), y-axis spans West-East (NS_dimension)
     fig.add_trace(go.Mesh3d(
-        x=[0.0, 0.0, NS_dimension, NS_dimension],
-        y=[0.0, EW_dimension, EW_dimension, 0.0],
+        x=[0.0, 0.0, EW_dimension, EW_dimension],
+        y=[0.0, NS_dimension, NS_dimension, 0.0],
         z=[top_z, top_z, top_z, top_z],
         i=[0, 0], j=[1, 2], k=[2, 3],
         color=TT_TopPlane, opacity=1.0, hoverinfo="none", showlegend=False
@@ -348,8 +337,8 @@ def detect_zone_E_and_visualise(session_state,
 
     # Direction labels
     label_margin = max(1.0, max(NS_dimension, EW_dimension) * 0.06)
-    center_x = NS_dimension / 2
-    center_y = EW_dimension / 2
+    center_x = EW_dimension / 2  # x-axis center (North-South span)
+    center_y = NS_dimension / 2  # y-axis center (West-East span)
 
     if upper_width_x > 0 and upper_width_y > 0:
         lx_center = (upper_x0 + upper_x1) / 2
@@ -363,8 +352,8 @@ def detect_zone_E_and_visualise(session_state,
     else:
         label_positions = {
             "North": {"pos": [0.0 - label_margin, center_y, top_z], "text": "N"},
-            "South": {"pos": [NS_dimension + label_margin, center_y, top_z], "text": "S"},
-            "East":  {"pos": [center_x, EW_dimension + label_margin, top_z], "text": "E"},
+            "South": {"pos": [EW_dimension + label_margin, center_y, top_z], "text": "S"},
+            "East":  {"pos": [center_x, NS_dimension + label_margin, top_z], "text": "E"},
             "West":  {"pos": [center_x, 0.0 - label_margin, top_z], "text": "W"},
         }
 
