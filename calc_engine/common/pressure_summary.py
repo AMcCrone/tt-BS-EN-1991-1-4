@@ -1028,7 +1028,7 @@ def create_wind_visualization_ui(session_state, results_by_direction):
     fig = create_3d_wind_visualization(session_state, results_by_direction, mode=viz_mode)
     
     # Display the figure
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 def generate_pressure_summary_paragraphs(session_state, results_by_direction) -> List[str]:
     """
