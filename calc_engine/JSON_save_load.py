@@ -1,368 +1,216 @@
-import streamlit as st
 import json
-import datetime
-from io import StringIO
+import streamlit as st
+from typing import Any, Dict, List, Union
+from datetime import datetime
 
-def JSON_generator():
+class AutomaticJSONHandler:
     """
-    Generate JSON file containing all relevant session state data for the wind load calculator.
-    Handles conditional variables based on app forks and user selections.
+    Automatic JSON save/load handler for Streamlit session state variables.
+    This class automatically detects and handles all session state variables
+    without requiring manual updates when new variables are added.
     """
-    # Core project information
-    core_inputs = [
-        "project_name", "project_number", "location", "region",
-        "NS_dimension", "EW_dimension", "z", "altitude_factor", 
-        "V_bmap", "V_b"
+    
+    def __init__(self, excluded_keys: List[str] = None):
+        """
+        Initialize the handler with optional excluded keys.
+        
+        Args:
+            excluded_keys: List of session state keys to exclude from save/load
+        """
+        self.excluded_keys = excluded_keys or []
+        # Add common Streamlit internal keys that shouldn't be saved
+        self.excluded_keys.extend([
+            'FormSubmitter',
+            'file_uploader',
+            '_last_form_id',
+            '_submit_button_key'
+        ])
+    
+    def serialize_value(self, value: Any) -> Any:
+        """
+        Serialize a value to be JSON-compatible.
+        Handles various data types including custom objects.
+        """
+        if value is None:
+            return None
+        elif isinstance(value, (bool, int, float, str)):
+            return value
+        elif isinstance(value, (list, tuple)):
+            return [self.serialize_value(item) for item in value]
+        elif isinstance(value, dict):
+            return {k: self.serialize_value(v) for k, v in value.items()}
+        elif hasattr(value, '__dict__'):
+            # Handle custom objects by converting to dict
+            return {
+                '_type': type(value).__name__,
+                '_module': type(value).__module__,
+                'data': self.serialize_value(value.__dict__)
+            }
+        else:
+            # For other types, try to convert to string
+            try:
+                return str(value)
+            except:
+                return f"<{type(value).__name__} object>"
+    
+    def get_all_session_variables(self) -> Dict[str, Any]:
+        """
+        Automatically extract all relevant variables from session state.
+        """
+        variables = {}
+        
+        for key, value in st.session_state.items():
+            # Skip excluded keys
+            if key in self.excluded_keys:
+                continue
+                
+            # Skip keys that start with underscore (usually internal)
+            if key.startswith('_'):
+                continue
+                
+            variables[key] = self.serialize_value(value)
+        
+        return variables
+    
+    def save_to_json(self, filename: str, include_metadata: bool = True) -> bool:
+        """
+        Save all session state variables to JSON file.
+        
+        Args:
+            filename: Path to save the JSON file
+            include_metadata: Whether to include metadata like timestamp
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            data = {
+                'variables': self.get_all_session_variables()
+            }
+            
+            if include_metadata:
+                data['metadata'] = {
+                    'timestamp': datetime.now().isoformat(),
+                    'version': '1.0',
+                    'total_variables': len(data['variables'])
+                }
+            
+            with open(filename, 'w') as f:
+                json.dump(data, f, indent=2, default=str)
+            
+            return True
+            
+        except Exception as e:
+            st.error(f"Error saving to JSON: {str(e)}")
+            return False
+    
+    def load_from_json(self, filename: str, merge_with_existing: bool = True) -> bool:
+        """
+        Load variables from JSON file into session state.
+        
+        Args:
+            filename: Path to the JSON file
+            merge_with_existing: If True, merge with existing session state.
+                               If False, replace existing session state.
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+            
+            if 'variables' not in data:
+                st.error("Invalid JSON format: missing 'variables' key")
+                return False
+            
+            variables = data['variables']
+            
+            # Load variables into session state
+            for key, value in variables.items():
+                st.session_state[key] = value
+            
+            # Display success message
+            if 'metadata' in data:
+                metadata = data['metadata']
+                st.success(f"Loaded {metadata.get('total_variables', len(variables))} variables")
+            else:
+                st.success(f"Loaded {len(variables)} variables successfully")
+            
+            return True
+            
+        except FileNotFoundError:
+            st.error(f"File not found: {filename}")
+            return False
+        except json.JSONDecodeError as e:
+            st.error(f"Invalid JSON format: {str(e)}")
+            return False
+        except Exception as e:
+            st.error(f"Error loading from JSON: {str(e)}")
+            return False
+
+# Convenience functions for your wind load app
+def save_wind_load_config(filename: str = "wind_load_config.json") -> bool:
+    """
+    Save wind load application configuration including all checkboxes and inputs.
+    """
+    # Define any keys you want to exclude from saving
+    excluded_keys = [
+        'file_uploader_key',  # Example of keys to exclude
+        # Add other keys you don't want to save
     ]
     
-    # Terrain-related variables
-    terrain_inputs = [
-        "terrain_category", "d_town_terrain", "d_sea"
+    handler = AutomaticJSONHandler(excluded_keys)
+    return handler.save_to_json(filename)
+
+def load_wind_load_config(filename: str = "wind_load_config.json") -> bool:
+    """
+    Load wind load application configuration.
+    """
+    excluded_keys = [
+        'file_uploader_key',
+        # Add other keys you don't want to load
     ]
     
-    # Map-related variables (conditional on use_map checkbox)
-    map_inputs = [
-        "markers"  # This stores the interactive map markers
-    ]
+    handler = AutomaticJSONHandler(excluded_keys)
+    success = handler.load_from_json(filename)
     
-    # Wind velocity and pressure variables
-    wind_inputs = [
-        "v_mean", "rho_air", "q_b", "loaded_area"
-    ]
+    if success:
+        # Ensure checkbox states are properly handled
+        ensure_checkbox_states()
     
-    # Displacement and roughness variables
-    displacement_inputs = [
-        "h_dis", "z_minus_h_dis", "c_rz", "c_oz", "c_rT", "terrain_type"
-    ]
+    return success
+
+def ensure_checkbox_states():
+    """
+    Ensure that checkbox states are properly handled after loading.
+    Call this function after loading to make sure UI elements reflect loaded state.
+    """
+    # Handle the inset zone checkbox specifically
+    if "inset_enabled" in st.session_state:
+        st.session_state["inset_enabled"] = bool(st.session_state["inset_enabled"])
     
-    # Inset zone variables (conditional on inset_enabled checkbox)
-    inset_inputs = [
-        "inset_enabled", "north_offset", "south_offset", 
-        "east_offset", "west_offset", "inset_height"
-    ]
-    
-    # Funnelling variables (conditional on consider_funnelling checkbox)
-    funnelling_inputs = [
-        "consider_funnelling", "north_gap", "south_gap", 
-        "east_gap", "west_gap"
-    ]
-    
-    # UK-specific directional factor variables (conditional on region == "United Kingdom")
-    uk_directional_inputs = [
-        "use_direction_factor", "building_rotation"
-    ]
-    
-    # Custom wind parameters (conditional on use_custom_values checkbox)
-    custom_wind_inputs = [
-        "use_custom_values", "K", "n", "return_period", "c_prob"
-    ]
-    
-    # Orography inputs
-    orography_inputs = [
-        "orography_significant"
-    ]
-    
-    # UI state variables (checkboxes and toggles)
-    ui_state_inputs = [
-        "show_educational", "use_map", "add_inset", "use_custom_values", 
-        "orography_significant"
-    ]
-    
-    # Combine all input categories
-    all_input_keys = (core_inputs + terrain_inputs + map_inputs + wind_inputs + 
-                     displacement_inputs + inset_inputs + funnelling_inputs + 
-                     uk_directional_inputs + custom_wind_inputs + orography_inputs + 
-                     ui_state_inputs)
-    
-    # Start with the main inputs dictionary
-    data_to_save = {}
-    
-    # Save inputs from st.session_state.inputs
-    if hasattr(st.session_state, 'inputs') and st.session_state.inputs:
-        data_to_save["inputs"] = {}
-        for key in all_input_keys:
-            if key in st.session_state.inputs:
-                value = st.session_state.inputs[key]
-                # Handle serializable data types
-                if isinstance(value, (str, int, float, bool, list, dict)) or value is None:
-                    data_to_save["inputs"][key] = value
-                else:
-                    data_to_save["inputs"][key] = str(value)
-    
-    # Save direct session state variables (not in inputs dict)
-    direct_session_keys = [
-        "show_educational", "markers", "inset_results", "inset_fig",
-        "cp_results", "h_dis", "z_minus_h_dis", "c_rz", "c_oz", "c_rT",
-        "terrain_type", "v_mean", "rho_air", "q_b", "use_map", 
-        "orography_significant", "K", "n", "return_period", "c_prob"
-    ]
-    
-    data_to_save["session_state"] = {}
-    for key in direct_session_keys:
+    # Add handling for other checkboxes as needed
+    checkbox_keys = [key for key in st.session_state.keys() if key.endswith('_enabled') or 'checkbox' in key.lower()]
+    for key in checkbox_keys:
         if key in st.session_state:
-            value = st.session_state[key]
-            # Handle different data types
-            if isinstance(value, (str, int, float, bool, list, dict)) or value is None:
-                data_to_save["session_state"][key] = value
-            elif hasattr(value, 'to_dict'):  # For pandas DataFrames
-                try:
-                    data_to_save["session_state"][key] = value.to_dict()
-                    data_to_save["session_state"][key + "_type"] = "dataframe"
-                except:
-                    data_to_save["session_state"][key] = str(value)
-            else:
-                # For complex objects like Plotly figures, store as string
-                data_to_save["session_state"][key] = str(value)
-    
-    # Save app state flags to help with reconstruction
-    data_to_save["app_state"] = {
-        "region": st.session_state.inputs.get("region", "United Kingdom"),
-        "inset_enabled": st.session_state.inputs.get("inset_enabled", False),
-        "consider_funnelling": st.session_state.inputs.get("consider_funnelling", False),
-        "use_direction_factor": st.session_state.inputs.get("use_direction_factor", False),
-        "building_rotation": st.session_state.inputs.get("building_rotation", 0),
-        "use_custom_values": st.session_state.inputs.get("use_custom_values", False),
-        "use_map": st.session_state.get("use_map", False),
-        "orography_significant": st.session_state.get("orography_significant", False),
-        "terrain_category": st.session_state.inputs.get("terrain_category", ""),
-        "show_educational": st.session_state.get("show_educational", False)
-    }
-    
-    # Add metadata
-    data_to_save["_metadata"] = {
-        "saved_at": datetime.datetime.now().isoformat(),
-        "app_version": "1.0",
-        "calculator_type": "wind_load_bs_en_1991",
-        "total_variables": len([k for section in data_to_save.values() 
-                               if isinstance(section, dict) for k in section.keys()])
-    }
-    
-    return data_to_save
+            st.session_state[key] = bool(st.session_state[key])
 
-def JSON_loader(uploaded_file):
+def show_variable_summary():
     """
-    Load JSON data back into session state, handling the different app forks.
-    Returns success status and message.
+    Display a summary of all variables that would be saved.
+    Useful for debugging.
     """
-    try:
-        # Read the uploaded file
-        if hasattr(uploaded_file, 'getvalue'):
-            stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-        else:
-            stringio = StringIO(uploaded_file)
-        
-        data = json.load(stringio)
-        
-        # Validate the file format
-        if "_metadata" not in data:
-            return False, "Invalid file format: Missing metadata"
-        
-        metadata = data.get("_metadata", {})
-        
-        # Initialize inputs dictionary if it doesn't exist
-        if not hasattr(st.session_state, 'inputs'):
-            st.session_state.inputs = {}
-        
-        # Load inputs data first
-        if "inputs" in data:
-            for key, value in data["inputs"].items():
-                st.session_state.inputs[key] = value
-        
-        # Load direct session state variables
-        if "session_state" in data:
-            for key, value in data["session_state"].items():
-                if key.endswith("_type") and value == "dataframe":
-                    # Skip type markers
-                    continue
-                elif key + "_type" in data["session_state"] and data["session_state"][key + "_type"] == "dataframe":
-                    # Reconstruct DataFrame
-                    try:
-                        import pandas as pd
-                        st.session_state[key] = pd.DataFrame.from_dict(value)
-                    except:
-                        st.session_state[key] = value
-                else:
-                    st.session_state[key] = value
-        
-        # Load app state flags - this ensures UI elements show correctly
-        if "app_state" in data:
-            app_state = data["app_state"]
-            
-            # Set key app state variables that control UI flow
-            for key in ["region", "inset_enabled", "consider_funnelling", 
-                       "use_direction_factor", "building_rotation", "use_custom_values", 
-                       "terrain_category"]:
-                if key in app_state:
-                    st.session_state.inputs[key] = app_state[key]
-            
-            # Handle direct session state variables
-            for key in ["show_educational", "use_map", "orography_significant"]:
-                if key in app_state:
-                    st.session_state[key] = app_state[key]
-        
-        # Handle widget state variables that might not be in inputs
-        widget_states = {
-            "ui_add_inset": st.session_state.inputs.get("inset_enabled", False),
-            "consider_funnelling": st.session_state.inputs.get("consider_funnelling", False),
-            "use_custom_values": st.session_state.inputs.get("use_custom_values", False),
-            "use_direction_factor": st.session_state.inputs.get("use_direction_factor", False),
-            "use_map": st.session_state.get("use_map", False),
-            "orography_significant": st.session_state.get("orography_significant", False),
-        }
-        
-        for widget_key, value in widget_states.items():
-            if widget_key not in st.session_state:
-                st.session_state[widget_key] = value
-        
-        saved_time = metadata.get("saved_at", "Unknown time")
-        total_vars = metadata.get("total_variables", "Unknown number of")
-        
-        return True, f"Data loaded successfully from {saved_time}"
-        
-    except json.JSONDecodeError as e:
-        return False, f"Invalid JSON file: {str(e)}"
-    except KeyError as e:
-        return False, f"Missing data in file: {str(e)}"
-    except Exception as e:
-        return False, f"Error loading file: {str(e)}"
-
-def create_download_filename():
-    """Generate a descriptive filename for the JSON download."""
-    timestamp = datetime.datetime.now().strftime("%d.%m.%Y_%H.%M")
+    handler = AutomaticJSONHandler()
+    variables = handler.get_all_session_variables()
     
-    # Try to get project name for filename
-    project_name = ""
-    if hasattr(st.session_state, 'inputs') and st.session_state.inputs:
-        project_name = st.session_state.inputs.get("project_name", "")
+    st.subheader("Variable Summary")
+    st.write(f"Total variables: {len(variables)}")
     
-    if project_name:
-        # Clean project name for filename
-        clean_name = "".join(c for c in project_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-        clean_name = clean_name.replace(' ', '_')
-        return f"{clean_name}_Wind Load Analysis_{timestamp}.json"
-    else:
-        return f"Wind Load Analysis_{timestamp}.json"
-
-# Example usage functions that you can add to your main.py:
-
-def add_sidebar_upload_ui():
-    """
-    Minimal upload UI for the sidebar.
-    """
-    uploaded_file = st.sidebar.file_uploader(
-        "Upload file from previous session",
-        type=['json'],
-        key="config_uploader",
-        help="Load previously saved configuration"
-    )
+    boolean_vars = [k for k, v in variables.items() if isinstance(v, bool)]
+    if boolean_vars:
+        st.write("**Boolean Variables (Checkboxes):**")
+        st.write(", ".join(boolean_vars))
     
-    if uploaded_file is not None:
-        # Create a unique identifier for this file
-        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-        
-        # Check if we've already processed this file
-        if f"processed_file_{file_id}" not in st.session_state:
-            # Process the file
-            success, message = JSON_loader(uploaded_file)
-            
-            if success:
-                st.sidebar.success("Configuration loaded!")
-                # Mark this file as processed
-                st.session_state[f"processed_file_{file_id}"] = True
-                st.rerun()
-            else:
-                st.sidebar.error(f"Error: {message}")
-        else:
-            # File already processed, just show success message
-            st.sidebar.success("Configuration loaded!")
-
-def add_sidebar_save_ui():
-    """
-    Minimal save UI for the sidebar.
-    """
-    if st.sidebar.button("💾 Save Configuration", use_container_width=True):
-        try:
-            data = JSON_generator()
-            json_string = json.dumps(data, indent=2)
-            filename = create_download_filename()
-            
-            st.sidebar.download_button(
-                label="⬇️ Download File",
-                data=json_string,
-                file_name=filename,
-                mime="application/json",
-                use_container_width=True,
-                help="Download current configuration"
-            )
-            
-        except Exception as e:
-            st.sidebar.error(f"Error: {str(e)}")
-
-def add_complete_sidebar_ui():
-    """
-    Complete sidebar UI with both upload and save functions.
-    Use this if you want both in the sidebar together.
-    """
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("📁 Session Management")
-    
-    # Upload section
-    uploaded_file = st.sidebar.file_uploader(
-        "Upload previous session",
-        type=['json'],
-        key="config_uploader",
-        help="Load saved configuration"
-    )
-    
-    if uploaded_file is not None:
-        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-        
-        if f"processed_file_{file_id}" not in st.session_state:
-            success, message = JSON_loader(uploaded_file)
-            
-            if success:
-                st.sidebar.success("Loaded!")
-                st.session_state[f"processed_file_{file_id}"] = True
-                st.rerun()
-            else:
-                st.sidebar.error("Load failed")
-        else:
-            st.sidebar.success("Loaded!")
-    
-    # Save section
-    if st.sidebar.button("💾 Save Current Session", use_container_width=True):
-        try:
-            data = JSON_generator()
-            json_string = json.dumps(data, indent=2)
-            filename = create_download_filename()
-            
-            st.sidebar.download_button(
-                label="⬇️ Download",
-                data=json_string,
-                file_name=filename,
-                mime="application/json",
-                use_container_width=True
-            )
-            
-        except Exception as e:
-            st.sidebar.error("Save failed")
-
-# Validation function to help debug save/load issues
-def validate_session_state():
-    """
-    Debug function to show what's currently in session state.
-    Useful for troubleshooting save/load issues.
-    """
-    st.write("### Session State Debug Info")
-    
-    if hasattr(st.session_state, 'inputs'):
-        st.write("**st.session_state.inputs:**")
-        st.json(dict(st.session_state.inputs))
-    
-    st.write("**Direct session state keys:**")
-    direct_keys = [key for key in st.session_state.keys() 
-                   if key not in ['inputs'] and not key.startswith('_')]
-    st.json({key: str(st.session_state[key])[:100] + "..." 
-             if len(str(st.session_state[key])) > 100 
-             else st.session_state[key] 
-             for key in direct_keys})
+    if st.checkbox("Show all variables"):
+        st.json(variables)
