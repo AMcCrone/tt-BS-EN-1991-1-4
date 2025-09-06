@@ -402,7 +402,7 @@ if region == "United Kingdom":
         
     # Display the final result
     st.markdown("**Basic Wind Speed**")
-    st.latex(f"V_b = V_{{b0}} × c_{{dir}} × c_{{season}} × c_{{prob}} = {V_b:.2f}\\; m/s")
+    st.latex(f"V_b = c_{{dir}} × c_{{season}} × c_{{prob}} × V_{{b0}} = {V_b:.2f}\\; m/s")
 
 else:
     # EU calculation - uses V_b,0 directly without altitude correction
@@ -494,7 +494,7 @@ else:
     
     # Display the final result
     st.markdown("**Basic Wind Speed**")
-    st.latex(f"V_b = c_{{dir}} × c_{{season}} × c_{{prob}} × V_{{b,0}} = {c_dir} × {c_season} × {c_prob:.3f} × {V_b0:.2f} = {V_b:.2f}\\; m/s")
+    st.latex(f"V_b = c_{{dir}} × c_{{season}} × c_{{prob}} × V_{{b,0}} = {V_b:.2f}\\; m/s")
 
 # Import needed modules
 from calc_engine.common.displacement import calculate_displacement_height, display_displacement_results
