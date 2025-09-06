@@ -231,7 +231,7 @@ def integrate_with_streamlit(session_state):
     
     # Display in Streamlit
     st.subheader("Wind Zones - North-South Elevation")
-    st.plotly_chart(ns_fig, use_container_width=True)
+    st.plotly_chart(ns_fig, width="stretch")
     
     st.subheader("Wind Zones - East-West Elevation")
-    st.plotly_chart(ew_fig, use_container_width=True)
+    st.plotly_chart(ew_fig, width="stretch")
