@@ -283,9 +283,6 @@ st.markdown("---")
 st.header("Wind Velocity")
 st.subheader("Basic Wind Velocity")
 
-# Get region from session state
-region = st.session_state.get("region", "United Kingdom")
-
 if region == "United Kingdom":
     # UK calculation - uses V_b,map with altitude correction
     V_bmap = st.number_input(
