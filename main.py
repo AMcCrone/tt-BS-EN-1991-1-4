@@ -284,125 +284,221 @@ st.markdown("---")
 st.header("Wind Velocity")
 st.subheader("Basic Wind Velocity")
 
-# Vb,map input
-V_bmap = st.number_input(
-    "$$v_{b,map}$$ (m/s)",
-    min_value=0.1,
-    max_value=100.0,
-    value=float(st.session_state.inputs.get("V_bmap", 21.5)),
-    step=0.1,
-    help="Fundamental wind velocity from Figure 3.2"
-)
-st.session_state.inputs["V_bmap"] = V_bmap
+# Get region from session state
+region = st.session_state.get("region", "United Kingdom")
 
-if st.session_state.get("show_educational", False):
-    # wrap in your educational-expander container
-    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+if region == "United Kingdom":
+    # UK calculation - uses V_b,map with altitude correction
+    V_bmap = st.number_input(
+        "$$v_{b,map}$$ (m/s)",
+        min_value=0.1,
+        max_value=100.0,
+        value=float(st.session_state.inputs.get("V_bmap", 21.5)),
+        step=0.1,
+        help="Fundamental wind velocity from Figure 3.2"
+    )
+    st.session_state.inputs["V_bmap"] = V_bmap
 
-    with st.expander("What $$v_{b,map}$$ Value Should I Use?", expanded=False):
-        # two columns: text (wide) on left, image (narrow) on right
-        col1, col2 = st.columns([0.7, 0.3])
-        with col1:
+    if st.session_state.get("show_educational", False):
+        # wrap in your educational-expander container
+        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+
+        with st.expander("What $$v_{b,map}$$ Value Should I Use?", expanded=False):
+            # two columns: text (wide) on left, image (narrow) on right
+            col1, col2 = st.columns([0.7, 0.3])
+            with col1:
+                st.markdown(
+                    f'<div class="educational-content">{text_content.basic_wind_help}</div>',
+                    unsafe_allow_html=True
+                )
+            with col2:
+                st.image(
+                    "educational/images/Basic_Wind_Map.png",
+                    caption="Basic Wind Map",
+                    use_container_width=True
+                )
+
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    # Let the user choose whether they want to override standard K, n, return period
+    use_custom_values = st.checkbox("Use custom K, n, and return period?")
+
+    if use_custom_values:
+        # Create three columns for input
+        shape_column, exponent_column, period_column = st.columns(3)
+        with shape_column:
+            K = st.number_input(
+                "Shape parameter (K)",
+                min_value=0.0,
+                max_value=5.0,
+                value=0.2,
+                step=0.1,
+                help="Typically 0.2 if unspecified."
+            )
+        with exponent_column:
+            n = st.number_input(
+                "Exponent (n)",
+                min_value=0.0,
+                max_value=5.0,
+                value=0.5,
+                step=0.1,
+                help="Typically 0.5 if unspecified."
+            )
+        with period_column:
+            return_period = st.number_input(
+                "Return Period (years)",
+                min_value=1,
+                max_value=10000,
+                value=50,
+                step=1,
+                help="Typical is 50 years."
+            )
+        
+        # Probability of exceedance
+        p = 1.0 / return_period
+        
+        # Equation (4.2):
+        # c_prob = [ (1 - K * ln(-ln(1 - p))) / (1 - K * ln(-ln(0.98))) ]^n
+        numerator = 1.0 - K * math.log(-math.log(1.0 - p))
+        denominator = 1.0 - K * math.log(-math.log(0.98))
+        # Guard against division by zero
+        if abs(denominator) < 1e-9:
+            st.warning("Denominator is close to zero; check K and standard reference. Setting c_prob = 1.")
+            c_prob = 1.0
+        else:
+            c_prob = (numerator / denominator) ** n
+    else:
+        # If user doesn't override, c_prob = 1.0
+        c_prob = 1.0
+
+    # Display the probability factor
+    st.write(f"Probability factor $c_{{prob}}$: {c_prob:.3f}")
+
+    altitude_factor = st.session_state.inputs.get("altitude_factor", 20.0)
+    # Altitude correction - display the case and working
+    if z <= 10:
+        case = "z ≤ 10m"
+        altitude_equation = "c_{alt} = 1 + 0.001 × A"
+        c_alt = 1 + 0.001 * altitude_factor
+    else:
+        case = "z > 10m"
+        altitude_equation = "c_{alt} = 1 + 0.001 × A × (10/z)^{0.2}"
+        c_alt = 1 + 0.001 * altitude_factor * (10 / z) ** 0.2
+
+    st.write(f"**Case: {case}**")
+    st.latex(altitude_equation)
+    st.write(f"Where A = {altitude_factor}")
+    st.write(f"Therefore, $c_{{alt}}$ = {c_alt:.3f}")
+        
+    # Calculate V_b0
+    V_b0 = V_bmap * c_alt
+    st.write(f"$V_{{b0}} = V_{{b,map}} × c_{{alt}} = {V_bmap:.2f} × {c_alt:.3f} = {V_b0:.2f}$ m/s")
+        
+    # Directional & seasonal factors
+    c_dir = 1.0
+    c_season = 1.0
+    st.write(f"Directional factor $c_{{dir}}$: {c_dir}")
+    st.write(f"Seasonal factor $c_{{season}}$: {c_season}")
+        
+    # Basic Wind Speed with c_prob included (UK)
+    V_b = V_b0 * c_dir * c_season * c_prob
+    st.session_state.inputs["V_b"] = V_b
+        
+    # Display the final result
+    st.markdown("**Basic Wind Speed**")
+    st.latex(f"V_b = V_{{b0}} × c_{{dir}} × c_{{season}} × c_{{prob}} = {V_b:.2f}\\; m/s")
+
+else:
+    # EU calculation - uses V_b,0 directly without altitude correction
+    V_b0 = st.number_input(
+        "$v_{b,0}$ (m/s)",
+        min_value=0.1,
+        max_value=100.0,
+        value=float(st.session_state.inputs.get("V_b0", 21.5)),
+        step=0.1,
+        help="Basic wind velocity for EU calculation"
+    )
+    st.session_state.inputs["V_b0"] = V_b0
+
+    if st.session_state.get("show_educational", False):
+        # wrap in your educational-expander container
+        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+
+        with st.expander("What $v_{b,0}$ Value Should I Use?", expanded=False):
             st.markdown(
-                f'<div class="educational-content">{text_content.basic_wind_help}</div>',
+                '<div class="educational-content">For EU calculations, use the basic wind velocity value directly from the relevant wind map or standards.</div>',
                 unsafe_allow_html=True
             )
-        with col2:
-            st.image(
-                "educational/images/Basic_Wind_Map.png",
-                caption="Basic Wind Map",
-                use_container_width=True
+
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Let the user choose whether they want to override standard K, n, return period
+    use_custom_values = st.checkbox("Use custom K, n, and return period?")
+
+    if use_custom_values:
+        # Create three columns for input
+        shape_column, exponent_column, period_column = st.columns(3)
+        with shape_column:
+            K = st.number_input(
+                "Shape parameter (K)",
+                min_value=0.0,
+                max_value=5.0,
+                value=0.2,
+                step=0.1,
+                help="Typically 0.2 if unspecified."
             )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-# Let the user choose whether they want to override standard K, n, return period
-use_custom_values = st.checkbox("Use custom K, n, and return period?")
-
-if use_custom_values:
-    # Create three columns for input
-    shape_column, exponent_column, period_column = st.columns(3)
-    with shape_column:
-        K = st.number_input(
-            "Shape parameter (K)",
-            min_value=0.0,
-            max_value=5.0,
-            value=0.2,
-            step=0.1,
-            help="Typically 0.2 if unspecified."
-        )
-    with exponent_column:
-        n = st.number_input(
-            "Exponent (n)",
-            min_value=0.0,
-            max_value=5.0,
-            value=0.5,
-            step=0.1,
-            help="Typically 0.5 if unspecified."
-        )
-    with period_column:
-        return_period = st.number_input(
-            "Return Period (years)",
-            min_value=1,
-            max_value=10000,
-            value=50,
-            step=1,
-            help="Typical is 50 years."
-        )
-    
-    # Probability of exceedance
-    p = 1.0 / return_period
-    
-    # Equation (4.2):
-    # c_prob = [ (1 - K * ln(-ln(1 - p))) / (1 - K * ln(-ln(0.98))) ]^n
-    numerator = 1.0 - K * math.log(-math.log(1.0 - p))
-    denominator = 1.0 - K * math.log(-math.log(0.98))
-    # Guard against division by zero
-    if abs(denominator) < 1e-9:
-        st.warning("Denominator is close to zero; check K and standard reference. Setting c_prob = 1.")
-        c_prob = 1.0
+        with exponent_column:
+            n = st.number_input(
+                "Exponent (n)",
+                min_value=0.0,
+                max_value=5.0,
+                value=0.5,
+                step=0.1,
+                help="Typically 0.5 if unspecified."
+            )
+        with period_column:
+            return_period = st.number_input(
+                "Return Period (years)",
+                min_value=1,
+                max_value=10000,
+                value=50,
+                step=1,
+                help="Typical is 50 years."
+            )
+        
+        # Probability of exceedance
+        p = 1.0 / return_period
+        
+        # Equation (4.2):
+        # c_prob = [ (1 - K * ln(-ln(1 - p))) / (1 - K * ln(-ln(0.98))) ]^n
+        numerator = 1.0 - K * math.log(-math.log(1.0 - p))
+        denominator = 1.0 - K * math.log(-math.log(0.98))
+        # Guard against division by zero
+        if abs(denominator) < 1e-9:
+            st.warning("Denominator is close to zero; check K and standard reference. Setting c_prob = 1.")
+            c_prob = 1.0
+        else:
+            c_prob = (numerator / denominator) ** n
     else:
-        c_prob = (numerator / denominator) ** n
-else:
-    # If user doesn't override, c_prob = 1.0
-    c_prob = 1.0
+        # If user doesn't override, c_prob = 1.0
+        c_prob = 1.0
 
-# Display the probability factor
-st.write(f"Probability factor $c_{{prob}}$: {c_prob:.3f}")
-
-altitude_factor = st.session_state.inputs.get("altitude_factor", 20.0)
-# Altitude correction - display the case and working
-if z <= 10:
-    case = "z ≤ 10m"
-    altitude_equation = "c_{alt} = 1 + 0.001 × A"
-    c_alt = 1 + 0.001 * altitude_factor
-else:
-    case = "z > 10m"
-    altitude_equation = "c_{alt} = 1 + 0.001 × A × (10/z)^{0.2}"
-    c_alt = 1 + 0.001 * altitude_factor * (10 / z) ** 0.2
-
-st.write(f"**Case: {case}**")
-st.latex(altitude_equation)
-st.write(f"Where A = {altitude_factor}")
-st.write(f"Therefore, $c_{{alt}}$ = {c_alt:.3f}")
+    # Display the probability factor
+    st.write(f"Probability factor $c_{{prob}}$: {c_prob:.3f}")
     
-# Calculate V_b0
-V_b0 = V_bmap * c_alt
-st.write(f"$V_{{b0}} = V_{{b,map}} × c_{{alt}} = {V_bmap:.2f} × {c_alt:.3f} = {V_b0:.2f}$ m/s")
+    # Directional & seasonal factors
+    c_dir = 1.0
+    c_season = 1.0
+    st.write(f"Directional factor $c_{{dir}}$: {c_dir}")
+    st.write(f"Seasonal factor $c_{{season}}$: {c_season}")
     
-# Directional & seasonal factors
-c_dir = 1.0
-c_season = 1.0
-st.write(f"Directional factor $c_{{dir}}$: {c_dir}")
-st.write(f"Seasonal factor $c_{{season}}$: {c_season}")
+    # Basic Wind Speed (EU - no altitude correction, but includes probability factor)
+    V_b = c_dir * c_season * c_prob * V_b0
+    st.session_state.inputs["V_b"] = V_b
     
-# Basic Wind Speed with c_prob included
-V_b = V_b0 * c_dir * c_season * c_prob
-st.session_state.inputs["V_b"] = V_b
-    
-# Display the final result
-st.markdown("**Basic Wind Speed**")
-st.latex(f"V_b = V_{{b0}} × c_{{dir}} × c_{{season}} × c_{{prob}} = {V_b:.2f}\\; m/s")
+    # Display the final result
+    st.markdown("**Basic Wind Speed**")
+    st.latex(f"V_b = c_{{dir}} × c_{{season}} × c_{{prob}} × V_{{b,0}} = {c_dir} × {c_season} × {c_prob:.3f} × {V_b0:.2f} = {V_b:.2f}\\; m/s")
 
 # Import needed modules
 from calc_engine.common.displacement import calculate_displacement_height, display_displacement_results
