@@ -186,7 +186,7 @@ building_fig = create_building_visualisation(
     EW_dimension,
     z
 )
-st.plotly_chart(building_fig, use_container_width=True)
+st.plotly_chart(building_fig, width="stretch")
 
 st.markdown("---")
 st.header("Terrain")
@@ -311,7 +311,7 @@ if region == "United Kingdom":
                 st.image(
                     "educational/images/Basic_Wind_Map.png",
                     caption="Basic Wind Map",
-                    use_container_width=True
+                    width="stretch"
                 )
 
         st.markdown('</div>', unsafe_allow_html=True)
@@ -513,7 +513,7 @@ def wind_velocity_section():
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
     
         with st.expander("What Is All $$h_{dis}$$ About?", expanded=False):
-            st.image("educational/images/h_dis_diagram.png", use_container_width=True)
+            st.image("educational/images/h_dis_diagram.png", width="stretch")
             st.markdown(f'<div class="educational-content">{text_content.h_dis_help}</div>', unsafe_allow_html=True)
     
         st.markdown('</div>', unsafe_allow_html=True)
@@ -601,7 +601,7 @@ def peak_pressure_section():
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
     
         with st.expander("Is Orography Significant?", expanded=False):
-            st.image("educational/images/Orography_Diagram.png", use_container_width=True)
+            st.image("educational/images/Orography_Diagram.png", width="stretch")
             st.markdown(f'<div class="educational-content">{text_content.orography_help}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -652,7 +652,7 @@ if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
 
     with st.expander("What Are Inset Zones?", expanded=False):
-        # st.image("educational/images/h_dis_diagram.png", use_container_width=True)
+        # st.image("educational/images/h_dis_diagram.png", width="stretch")
         st.markdown(f'<div class="educational-content">{text_content.inset_zone_help}</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
@@ -738,7 +738,7 @@ if add_inset:
     st.session_state["inset_results"] = results
     st.session_state["inset_fig"] = fig
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
         
     # Display styled dataframe
     styled_df = create_styled_inset_dataframe(results)
@@ -770,7 +770,7 @@ if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
 
     with st.expander("What Is Funnelling?", expanded=False):
-        # st.image("educational/images/h_dis_diagram.png", use_container_width=True)
+        # st.image("educational/images/h_dis_diagram.png", width="stretch")
         st.markdown(f'<div class="educational-content">{text_content.funnelling_help}</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
@@ -829,7 +829,7 @@ if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
 
     with st.expander("How Are Wind Zones Plotted?", expanded=False):
-        st.image("educational/images/wind_zones_diagram.png", use_container_width=True)
+        st.image("educational/images/wind_zones_diagram.png", width="stretch")
         st.markdown(f'<div class="educational-content">{text_content.wind_zone_help}</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
@@ -837,9 +837,9 @@ if st.session_state.get("show_educational", False):
 # Display wind zone plots (using your existing function)
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
 # Display North-South Elevation
-st.plotly_chart(ns_elevation_fig, use_container_width=True)
+st.plotly_chart(ns_elevation_fig, width="stretch")
 # Display East-West Elevation
-st.plotly_chart(ew_elevation_fig, use_container_width=True)
+st.plotly_chart(ew_elevation_fig, width="stretch")
 
 # Wind pressure parameters
 st.markdown("---")
@@ -935,7 +935,7 @@ if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
     
     with st.expander("How Is Net Pressure Calculated?", expanded=False):
-        st.image("educational/images/We_Wi.png", use_container_width=True)
+        st.image("educational/images/We_Wi.png", width="stretch")
         st.markdown(f'<div class="educational-content">{text_content.net_pressure_help}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
