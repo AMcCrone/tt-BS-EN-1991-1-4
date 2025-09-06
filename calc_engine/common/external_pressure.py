@@ -525,19 +525,26 @@ def display_elevation_results(elevation, cp_results, h, NS_dimension, EW_dimensi
     # Calculate e (the smaller of b or 2h)
     e = min(b, 2*h)
     
-    # Get the gap value for this elevation
-    gap = st.session_state.inputs.get(f"{elevation.lower()}_gap", 10.0)
+    # Check if funnelling is being considered
+    consider_funnelling = st.session_state.inputs.get("consider_funnelling", False)
     
-    # Determine funnelling status
-    if gap <= e/4:
-        funnelling_status = "No Funnelling since **gap ≤ e/4**"
-    elif gap >= e:
-        funnelling_status = "No Funnelling since **gap ≥ e**"
+    if consider_funnelling:
+        # Get the gap value for this elevation
+        gap = st.session_state.inputs.get(f"{elevation.lower()}_gap", 10.0)
+        
+        # Determine funnelling status
+        if gap <= e/4:
+            funnelling_status = "No Funnelling since **gap ≤ e/4**"
+        elif gap >= e:
+            funnelling_status = "No Funnelling since **gap ≥ e**"
+        else:
+            funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
+        
+        # Display calculation info with funnelling status
+        st.write(f"h/d = {h_d:.2f}, e = {e:.2f}m, gap = {gap:.2f}m ({funnelling_status})")
     else:
-        funnelling_status = "Funnelling Applied since **e/4 < gap < e**"
-    
-    # Display calculation info
-    st.write(f"h/d = {h_d:.2f}, e = {e:.2f}m, gap = {gap:.2f}m ({funnelling_status})")
+        # Display calculation info without funnelling status
+        st.write(f"h/d = {h_d:.2f}")
     
     # Display the results table
     st.dataframe(cp_results[elevation], hide_index=True)
