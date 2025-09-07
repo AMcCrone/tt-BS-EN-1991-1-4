@@ -243,6 +243,19 @@ def detect_zone_E_and_visualise(session_state,
         color=TT_TopPlane, opacity=1.0, hoverinfo="none", showlegend=False
     ))
 
+    # Draw grey ground plane (no edges)
+    ground_margin = max(NS_dimension, EW_dimension) * 0.3  # 30% margin around building
+    ground_x0, ground_x1 = -ground_margin, EW_dimension + ground_margin
+    ground_y0, ground_y1 = -ground_margin, NS_dimension + ground_margin
+    
+    fig.add_trace(go.Mesh3d(
+        x=[ground_x0, ground_x1, ground_x1, ground_x0],
+        y=[ground_y0, ground_y0, ground_y1, ground_y1],
+        z=[0.0, 0.0, 0.0, 0.0],
+        i=[0, 0], j=[1, 2], k=[2, 3],
+        color="darkgrey", opacity=0.3, hoverinfo="none", showlegend=False
+    ))
+
     # Draw the main building box (from ground to roof)
     if base_z > 0:
         # Define building corners
