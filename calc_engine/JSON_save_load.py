@@ -245,16 +245,19 @@ def show_variable_summary():
 # Sidebar UI functions (what you were trying to import)
 def add_sidebar_save_ui():
     """
-    Add save functionality to sidebar with download option.
+    Add save functionality to sidebar with automatic filename generation.
     """
     st.sidebar.subheader("💾 Save Session")
     
-    # Default filename with timestamp
-    default_filename = f"wind_load_calculation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    save_filename = st.sidebar.text_input("Filename:", value=default_filename)
+    # Get project name from session state or use default
+    project_name = st.session_state.get("project_name", "Project")
+    
+    # Generate automatic filename: YYMMDD_Project Name_Wind Load Calculation.json
+    date_str = datetime.now().strftime('%y%m%d')
+    filename = f"{date_str}_{project_name}_Wind Load Calculation.json"
     
     if st.sidebar.button("📥 Download", help="Download JSON file"):
-        JSON_generator(save_filename)
+        JSON_generator(filename)
 
 def add_sidebar_upload_ui():
     """
