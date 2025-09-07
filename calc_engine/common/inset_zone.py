@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
 import pandas as pd
+import streamlit as st
 
 def detect_zone_E_and_visualise(session_state,
                                 inset_height,
