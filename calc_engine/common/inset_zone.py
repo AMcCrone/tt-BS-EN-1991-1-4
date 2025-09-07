@@ -473,44 +473,17 @@ def create_styled_inset_dataframe(results):
     if format_dict:
         styled_df = styled_df.format(format_dict)
     
-    # Enhanced styling function with better visual indicators
+    # Styling function for orange highlighting of Zone E rows
     def apply_conditional_styling(df_slice):
         # Initialize styles matrix
         styles = pd.DataFrame('', index=df_slice.index, columns=df_slice.columns)
         
-        # Style Zone E? column with enhanced visual feedback
-        if 'Zone E?' in df_slice.columns:
-            zone_e_mask = df_slice['Zone E?'] == True
-            # Red background for Zone E present
-            styles.loc[zone_e_mask, 'Zone E?'] = 'background-color: #ffebee; color: #d32f2f; font-weight: bold; text-align: center'
-            # Light gray for no Zone E
-            styles.loc[~zone_e_mask, 'Zone E?'] = 'background-color: #fafafa; color: #757575; text-align: center'
-        
-        # Style entire rows where Zone E is present
+        # Style entire rows where Zone E is present with orange background and white text
         if 'Zone E?' in df_slice.columns:
             zone_e_rows = df_slice[df_slice['Zone E?'] == True].index
             for idx in zone_e_rows:
                 for col in df_slice.columns:
-                    if col != 'Zone E?':  # Don't override Zone E column styling
-                        styles.loc[idx, col] = 'background-color: #fff3e0; border-left: 4px solid #ff9800'
-        
-        # Style gap columns when all gaps < 0.2 in the same row
-        existing_gap_cols = [col for col in gap_columns if col in df_slice.columns]
-        
-        if existing_gap_cols:
-            for idx in df_slice.index:
-                try:
-                    row_gaps = [df_slice.loc[idx, col] for col in existing_gap_cols if pd.notna(df_slice.loc[idx, col])]
-                    if row_gaps and all(float(val) < 0.2 for val in row_gaps):
-                        for col in existing_gap_cols:
-                            current_style = styles.loc[idx, col]
-                            # Add gap warning styling while preserving existing background
-                            if 'background-color' in current_style:
-                                styles.loc[idx, col] = current_style + '; color: #d32f2f; font-weight: bold'
-                            else:
-                                styles.loc[idx, col] = 'color: #d32f2f; font-weight: bold; background-color: #ffebee'
-                except (ValueError, TypeError):
-                    continue
+                    styles.loc[idx, col] = 'background-color: #ff9800; color: white; font-weight: bold'
         
         return styles
     
