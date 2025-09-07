@@ -473,17 +473,17 @@ def create_styled_inset_dataframe(results):
     if format_dict:
         styled_df = styled_df.format(format_dict)
     
-    # Styling function for orange highlighting of Zone E rows
+    # Styling function for Zone E rows with TT_Orange background
     def apply_conditional_styling(df_slice):
         # Initialize styles matrix
         styles = pd.DataFrame('', index=df_slice.index, columns=df_slice.columns)
         
-        # Style entire rows where Zone E is present with orange background and white text
+        # Style entire rows where Zone E is present with TT_Orange background at 0.3 opacity
         if 'Zone E?' in df_slice.columns:
             zone_e_rows = df_slice[df_slice['Zone E?'] == True].index
             for idx in zone_e_rows:
                 for col in df_slice.columns:
-                    styles.loc[idx, col] = 'background-color: #D3451D; color: white; font-weight: bold'
+                    styles.loc[idx, col] = 'background-color: rgba(211,69,29,0.3)'
         
         return styles
     
