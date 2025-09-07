@@ -27,7 +27,13 @@ class AutomaticJSONHandler:
             'file_uploader',
             '_last_form_id',
             '_submit_button_key',
-            'file_uploader_key'
+            'file_uploader_key',
+            # Add more problematic Streamlit internals
+            '_widgets',
+            '_widget_ids',
+            '_script_run_ctx',
+            '_session_state',
+            'session_state'
         ])
     
     def serialize_value(self, value: Any) -> Any:
