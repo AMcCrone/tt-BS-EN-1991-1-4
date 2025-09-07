@@ -243,6 +243,89 @@ def detect_zone_E_and_visualise(session_state,
         color=TT_TopPlane, opacity=1.0, hoverinfo="none", showlegend=False
     ))
 
+    # Draw the main building box (from ground to roof)
+    if base_z > 0:
+        # Define building corners
+        bx0, bx1 = 0.0, EW_dimension  # North-South extent
+        by0, by1 = 0.0, NS_dimension  # West-East extent
+        ground_z = 0.0
+        roof_z = base_z
+        
+        # Bottom face (ground level)
+        fig.add_trace(go.Mesh3d(
+            x=[bx0, bx1, bx1, bx0],
+            y=[by0, by0, by1, by1],
+            z=[ground_z, ground_z, ground_z, ground_z],
+            i=[0, 0], j=[1, 2], k=[2, 3],
+            color="lightgrey", opacity=0.7, hoverinfo="none", showlegend=False
+        ))
+        
+        # Vertical faces of main building
+        # North face (x = bx0)
+        fig.add_trace(go.Mesh3d(
+            x=[bx0, bx0, bx0, bx0],
+            y=[by0, by1, by1, by0],
+            z=[ground_z, ground_z, roof_z, roof_z],
+            i=[0, 0], j=[1, 2], k=[2, 3],
+            color="lightgrey", opacity=0.7, hoverinfo="none", showlegend=False
+        ))
+        
+        # South face (x = bx1)
+        fig.add_trace(go.Mesh3d(
+            x=[bx1, bx1, bx1, bx1],
+            y=[by0, by1, by1, by0],
+            z=[ground_z, ground_z, roof_z, roof_z],
+            i=[0, 0], j=[1, 2], k=[2, 3],
+            color="lightgrey", opacity=0.7, hoverinfo="none", showlegend=False
+        ))
+        
+        # West face (y = by0)
+        fig.add_trace(go.Mesh3d(
+            x=[bx0, bx1, bx1, bx0],
+            y=[by0, by0, by0, by0],
+            z=[ground_z, ground_z, roof_z, roof_z],
+            i=[0, 0], j=[1, 2], k=[2, 3],
+            color="lightgrey", opacity=0.7, hoverinfo="none", showlegend=False
+        ))
+        
+        # East face (y = by1)
+        fig.add_trace(go.Mesh3d(
+            x=[bx0, bx1, bx1, bx0],
+            y=[by1, by1, by1, by1],
+            z=[ground_z, ground_z, roof_z, roof_z],
+            i=[0, 0], j=[1, 2], k=[2, 3],
+            color="lightgrey", opacity=0.7, hoverinfo="none", showlegend=False
+        ))
+        
+        # Building outline edges
+        # Ground level perimeter
+        fig.add_trace(go.Scatter3d(
+            x=[bx0, bx1, bx1, bx0, bx0],
+            y=[by0, by0, by1, by1, by0],
+            z=[ground_z] * 5,
+            mode='lines', line=dict(color='black', width=1),
+            hoverinfo='none', showlegend=False
+        ))
+        
+        # Roof level perimeter (this will be covered by the existing top plane)
+        fig.add_trace(go.Scatter3d(
+            x=[bx0, bx1, bx1, bx0, bx0],
+            y=[by0, by0, by1, by1, by0],
+            z=[roof_z] * 5,
+            mode='lines', line=dict(color='black', width=1),
+            hoverinfo='none', showlegend=False
+        ))
+        
+        # Vertical edges
+        corner_x = [bx0, bx1, bx1, bx0]
+        corner_y = [by0, by0, by1, by1]
+        for cx, cy in zip(corner_x, corner_y):
+            fig.add_trace(go.Scatter3d(
+                x=[cx, cx], y=[cy, cy], z=[ground_z, roof_z],
+                mode='lines', line=dict(color='black', width=1),
+                hoverinfo='none', showlegend=False
+            ))
+
     # Draw upper inset box as a proper 3D box (if it has positive footprint and H1>0)
     if upper_width_x > 0 and upper_width_y > 0 and H1 > 0:
         ux0, ux1, uy0, uy1 = upper_x0, upper_x1, upper_y0, upper_y1
