@@ -311,7 +311,7 @@ def JSON_generator(filename: str = "session_data.json"):
 
 def JSON_loader(uploaded_file):
     """
-    Load JSON file and restore session state.
+    Load JSON file and restore session state automatically.
     """
     try:
         # Read the uploaded file
@@ -322,7 +322,6 @@ def JSON_loader(uploaded_file):
         success = handler.load_from_json(json_content)
         
         if success:
-            st.sidebar.success("Session loaded successfully!")
             # Force a rerun to update the UI
             st.rerun()
         else:
