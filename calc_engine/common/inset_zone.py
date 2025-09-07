@@ -483,7 +483,7 @@ def create_styled_inset_dataframe(results):
             zone_e_rows = df_slice[df_slice['Zone E?'] == True].index
             for idx in zone_e_rows:
                 for col in df_slice.columns:
-                    styles.loc[idx, col] = 'background-color: #ff9800; color: white; font-weight: bold'
+                    styles.loc[idx, col] = 'background-color: #D3451D; color: white; font-weight: bold'
         
         return styles
     
