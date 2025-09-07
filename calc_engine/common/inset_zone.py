@@ -429,7 +429,7 @@ def detect_zone_E_and_visualise(session_state,
 
 def create_styled_inset_dataframe(results):
     """
-    Create a styled dataframe from inset zone results for display.
+    Create a styled dataframe from inset zone results for display in Streamlit.
     
     Parameters:
     -----------
@@ -439,7 +439,7 @@ def create_styled_inset_dataframe(results):
     Returns:
     --------
     pandas.io.formats.style.Styler
-        Styled dataframe ready for display
+        Styled dataframe ready for display with st.dataframe()
     """
     # Create dataframe from results
     df = pd.DataFrame(results).T
@@ -458,7 +458,7 @@ def create_styled_inset_dataframe(results):
         if col in df_display.columns:
             df_display[col] = pd.to_numeric(df_display[col], errors='coerce').round(1)
     
-    # Create styled dataframe
+    # Create styled dataframe with enhanced formatting
     styled_df = df_display.style
     
     # Format numeric columns to 1 decimal place
@@ -466,20 +466,33 @@ def create_styled_inset_dataframe(results):
     for col in df_display.columns:
         if col in numeric_columns:
             format_dict[col] = '{:.1f}'
+        elif col == 'Zone E?':
+            # Format boolean values more clearly
+            format_dict[col] = lambda x: '✓ Yes' if x else '✗ No'
     
     if format_dict:
         styled_df = styled_df.format(format_dict)
     
-    # Define comprehensive styling function
+    # Enhanced styling function with better visual indicators
     def apply_conditional_styling(df_slice):
         # Initialize styles matrix
         styles = pd.DataFrame('', index=df_slice.index, columns=df_slice.columns)
         
-        # Style Zone E? column
+        # Style Zone E? column with enhanced visual feedback
         if 'Zone E?' in df_slice.columns:
             zone_e_mask = df_slice['Zone E?'] == True
-            styles.loc[zone_e_mask, 'Zone E?'] = 'color: #D3451D; font-weight: bold'
-            styles.loc[~zone_e_mask, 'Zone E?'] = 'color: #808080'
+            # Red background for Zone E present
+            styles.loc[zone_e_mask, 'Zone E?'] = 'background-color: #ffebee; color: #d32f2f; font-weight: bold; text-align: center'
+            # Light gray for no Zone E
+            styles.loc[~zone_e_mask, 'Zone E?'] = 'background-color: #fafafa; color: #757575; text-align: center'
+        
+        # Style entire rows where Zone E is present
+        if 'Zone E?' in df_slice.columns:
+            zone_e_rows = df_slice[df_slice['Zone E?'] == True].index
+            for idx in zone_e_rows:
+                for col in df_slice.columns:
+                    if col != 'Zone E?':  # Don't override Zone E column styling
+                        styles.loc[idx, col] = 'background-color: #fff3e0; border-left: 4px solid #ff9800'
         
         # Style gap columns when all gaps < 0.2 in the same row
         existing_gap_cols = [col for col in gap_columns if col in df_slice.columns]
@@ -490,7 +503,12 @@ def create_styled_inset_dataframe(results):
                     row_gaps = [df_slice.loc[idx, col] for col in existing_gap_cols if pd.notna(df_slice.loc[idx, col])]
                     if row_gaps and all(float(val) < 0.2 for val in row_gaps):
                         for col in existing_gap_cols:
-                            styles.loc[idx, col] = 'color: #D3451D; font-weight: bold'
+                            current_style = styles.loc[idx, col]
+                            # Add gap warning styling while preserving existing background
+                            if 'background-color' in current_style:
+                                styles.loc[idx, col] = current_style + '; color: #d32f2f; font-weight: bold'
+                            else:
+                                styles.loc[idx, col] = 'color: #d32f2f; font-weight: bold; background-color: #ffebee'
                 except (ValueError, TypeError):
                     continue
         
@@ -498,5 +516,24 @@ def create_styled_inset_dataframe(results):
     
     # Apply the styling function
     styled_df = styled_df.apply(apply_conditional_styling, axis=None)
+    
+    # Add table-wide styling for better presentation
+    styled_df = styled_df.set_table_styles([
+        # Header styling
+        {'selector': 'thead th', 
+         'props': [('background-color', '#e3f2fd'), 
+                   ('color', '#1976d2'), 
+                   ('font-weight', 'bold'),
+                   ('text-align', 'center'),
+                   ('border', '1px solid #bbdefb')]},
+        # Cell styling
+        {'selector': 'td', 
+         'props': [('text-align', 'center'),
+                   ('padding', '8px'),
+                   ('border', '1px solid #e0e0e0')]},
+        # Hover effect
+        {'selector': 'tbody tr:hover', 
+         'props': [('background-color', '#f5f5f5')]}
+    ])
     
     return styled_df
