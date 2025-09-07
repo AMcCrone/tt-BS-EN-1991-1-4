@@ -239,33 +239,16 @@ def show_variable_summary():
 # Sidebar UI functions (what you were trying to import)
 def add_sidebar_save_ui():
     """
-    Add save functionality to sidebar with options for download and folder save.
+    Add save functionality to sidebar with download option.
     """
     st.sidebar.subheader("💾 Save Session")
     
     # Default filename with timestamp
-    default_filename = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    default_filename = f"wind_load_calculation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     save_filename = st.sidebar.text_input("Filename:", value=default_filename)
     
-    col1, col2 = st.sidebar.columns(2)
-    
-    with col1:
-        if st.button("📥 Download", help="Download JSON file"):
-            JSON_generator(save_filename)
-    
-    with col2:
-        if st.button("📁 Save to Folder", help="Save to local folder"):
-            save_folder = st.sidebar.text_input("Folder path:", value="./saved_sessions")
-            if save_folder:
-                handler = AutomaticJSONHandler()
-                if handler.save_to_folder(save_folder, save_filename):
-                    st.sidebar.success(f"Saved to {save_folder}")
-                else:
-                    st.sidebar.error("Failed to save to folder")
-    
-    # Show variable summary option
-    if st.sidebar.checkbox("Show variables to save"):
-        show_variable_summary()
+    if st.sidebar.button("📥 Download", help="Download JSON file"):
+        JSON_generator(save_filename)
 
 def add_sidebar_upload_ui():
     """
