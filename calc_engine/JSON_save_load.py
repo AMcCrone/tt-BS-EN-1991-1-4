@@ -236,36 +236,39 @@ def show_variable_summary():
     if st.checkbox("Show full JSON preview"):
         st.json(variables)
 
+def generate_filename():
+    """
+    Generate filename in the format: project_name_Wind Load Analysis_DD.MM.YYYY_HH.MM
+    If no project name, use: Wind Load Analysis_DD.MM.YYYY_HH.MM
+    """
+    now = datetime.now()
+    timestamp = now.strftime("%d.%m.%Y_%H.%M")
+    
+    # Try to get project name from session state
+    project_name = st.session_state.get("project_name", "")
+    
+    if project_name:
+        return f"{project_name}_Wind Load Analysis_{timestamp}.json"
+    else:
+        return f"Wind Load Analysis_{timestamp}.json"
+
 # Sidebar UI functions (what you were trying to import)
 def add_sidebar_save_ui():
     """
-    Add save functionality to sidebar with options for download and folder save.
+    Add save functionality to sidebar with download option.
     """
     st.sidebar.subheader("💾 Save Session")
     
-    # Default filename with timestamp
-    default_filename = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    # Generate default filename
+    default_filename = generate_filename()
     save_filename = st.sidebar.text_input("Filename:", value=default_filename)
     
-    col1, col2 = st.sidebar.columns(2)
+    if st.sidebar.button("📥 Download JSON", help="Download JSON file"):
+        JSON_generator(save_filename)
     
-    with col1:
-        if st.button("📥 Download", help="Download JSON file"):
-            JSON_generator(save_filename)
-    
-    with col2:
-        if st.button("📁 Save to Folder", help="Save to local folder"):
-            save_folder = st.sidebar.text_input("Folder path:", value="./saved_sessions")
-            if save_folder:
-                handler = AutomaticJSONHandler()
-                if handler.save_to_folder(save_folder, save_filename):
-                    st.sidebar.success(f"Saved to {save_folder}")
-                else:
-                    st.sidebar.error("Failed to save to folder")
-    
-    # Show variable summary option
-    if st.sidebar.checkbox("Show variables to save"):
-        show_variable_summary()
+    # Show JSON preview option
+    if st.sidebar.checkbox("Show JSON preview"):
+        show_json_preview()
 
 def add_sidebar_upload_ui():
     """
