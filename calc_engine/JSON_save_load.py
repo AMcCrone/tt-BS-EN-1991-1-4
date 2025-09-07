@@ -1,7 +1,10 @@
 import json
 import streamlit as st
+import os
 from typing import Any, Dict, List, Union
 from datetime import datetime
+import zipfile
+import io
 
 class AutomaticJSONHandler:
     """
@@ -23,7 +26,8 @@ class AutomaticJSONHandler:
             'FormSubmitter',
             'file_uploader',
             '_last_form_id',
-            '_submit_button_key'
+            '_submit_button_key',
+            'file_uploader_key'
         ])
     
     def serialize_value(self, value: Any) -> Any:
@@ -72,16 +76,16 @@ class AutomaticJSONHandler:
         
         return variables
     
-    def save_to_json(self, filename: str, include_metadata: bool = True) -> bool:
+    def save_to_json(self, filename: str, include_metadata: bool = True) -> str:
         """
-        Save all session state variables to JSON file.
+        Save all session state variables to JSON string.
         
         Args:
-            filename: Path to save the JSON file
+            filename: Name for the file (used in metadata)
             include_metadata: Whether to include metadata like timestamp
             
         Returns:
-            bool: True if successful, False otherwise
+            str: JSON string if successful, empty string otherwise
         """
         try:
             data = {
@@ -90,35 +94,59 @@ class AutomaticJSONHandler:
             
             if include_metadata:
                 data['metadata'] = {
+                    'filename': filename,
                     'timestamp': datetime.now().isoformat(),
                     'version': '1.0',
                     'total_variables': len(data['variables'])
                 }
             
-            with open(filename, 'w') as f:
-                json.dump(data, f, indent=2, default=str)
-            
-            return True
+            return json.dumps(data, indent=2, default=str)
             
         except Exception as e:
-            st.error(f"Error saving to JSON: {str(e)}")
-            return False
+            st.error(f"Error creating JSON: {str(e)}")
+            return ""
     
-    def load_from_json(self, filename: str, merge_with_existing: bool = True) -> bool:
+    def save_to_folder(self, folder_path: str, filename: str, include_metadata: bool = True) -> bool:
         """
-        Load variables from JSON file into session state.
+        Save session state variables to a JSON file in a specified folder.
         
         Args:
-            filename: Path to the JSON file
-            merge_with_existing: If True, merge with existing session state.
-                               If False, replace existing session state.
+            folder_path: Path to the folder where the file should be saved
+            filename: Name of the JSON file
+            include_metadata: Whether to include metadata like timestamp
             
         Returns:
             bool: True if successful, False otherwise
         """
         try:
-            with open(filename, 'r') as f:
-                data = json.load(f)
+            # Create folder if it doesn't exist
+            os.makedirs(folder_path, exist_ok=True)
+            
+            full_path = os.path.join(folder_path, filename)
+            json_content = self.save_to_json(filename, include_metadata)
+            
+            if json_content:
+                with open(full_path, 'w') as f:
+                    f.write(json_content)
+                return True
+            return False
+            
+        except Exception as e:
+            st.error(f"Error saving to folder: {str(e)}")
+            return False
+    
+    def load_from_json(self, json_content: str) -> bool:
+        """
+        Load variables from JSON string into session state.
+        
+        Args:
+            json_content: JSON string content
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            data = json.loads(json_content)
             
             if 'variables' not in data:
                 st.error("Invalid JSON format: missing 'variables' key")
@@ -133,53 +161,20 @@ class AutomaticJSONHandler:
             # Display success message
             if 'metadata' in data:
                 metadata = data['metadata']
-                st.success(f"Loaded {metadata.get('total_variables', len(variables))} variables")
+                st.success(f"Loaded {metadata.get('total_variables', len(variables))} variables from {metadata.get('filename', 'file')}")
             else:
                 st.success(f"Loaded {len(variables)} variables successfully")
             
+            # Ensure checkbox states are properly handled
+            ensure_checkbox_states()
             return True
             
-        except FileNotFoundError:
-            st.error(f"File not found: {filename}")
-            return False
         except json.JSONDecodeError as e:
             st.error(f"Invalid JSON format: {str(e)}")
             return False
         except Exception as e:
             st.error(f"Error loading from JSON: {str(e)}")
             return False
-
-# Convenience functions for your wind load app
-def save_wind_load_config(filename: str = "wind_load_config.json") -> bool:
-    """
-    Save wind load application configuration including all checkboxes and inputs.
-    """
-    # Define any keys you want to exclude from saving
-    excluded_keys = [
-        'file_uploader_key',  # Example of keys to exclude
-        # Add other keys you don't want to save
-    ]
-    
-    handler = AutomaticJSONHandler(excluded_keys)
-    return handler.save_to_json(filename)
-
-def load_wind_load_config(filename: str = "wind_load_config.json") -> bool:
-    """
-    Load wind load application configuration.
-    """
-    excluded_keys = [
-        'file_uploader_key',
-        # Add other keys you don't want to load
-    ]
-    
-    handler = AutomaticJSONHandler(excluded_keys)
-    success = handler.load_from_json(filename)
-    
-    if success:
-        # Ensure checkbox states are properly handled
-        ensure_checkbox_states()
-    
-    return success
 
 def ensure_checkbox_states():
     """
@@ -204,13 +199,155 @@ def show_variable_summary():
     handler = AutomaticJSONHandler()
     variables = handler.get_all_session_variables()
     
-    st.subheader("Variable Summary")
-    st.write(f"Total variables: {len(variables)}")
+    st.subheader("Session Variables Summary")
+    st.write(f"**Total variables to be saved:** {len(variables)}")
     
-    boolean_vars = [k for k, v in variables.items() if isinstance(v, bool)]
-    if boolean_vars:
-        st.write("**Boolean Variables (Checkboxes):**")
-        st.write(", ".join(boolean_vars))
+    # Categorize variables
+    boolean_vars = {k: v for k, v in variables.items() if isinstance(v, bool)}
+    string_vars = {k: v for k, v in variables.items() if isinstance(v, str)}
+    numeric_vars = {k: v for k, v in variables.items() if isinstance(v, (int, float))}
+    other_vars = {k: v for k, v in variables.items() if not isinstance(v, (bool, str, int, float))}
     
-    if st.checkbox("Show all variables"):
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if boolean_vars:
+            st.write("**Boolean Variables:**")
+            for k, v in boolean_vars.items():
+                st.write(f"• {k}: {v}")
+        
+        if numeric_vars:
+            st.write("**Numeric Variables:**")
+            for k, v in numeric_vars.items():
+                st.write(f"• {k}: {v}")
+    
+    with col2:
+        if string_vars:
+            st.write("**String Variables:**")
+            for k, v in string_vars.items():
+                display_v = v[:50] + "..." if len(str(v)) > 50 else v
+                st.write(f"• {k}: {display_v}")
+        
+        if other_vars:
+            st.write("**Other Variables:**")
+            for k, v in other_vars.items():
+                st.write(f"• {k}: {type(v).__name__}")
+    
+    if st.checkbox("Show full JSON preview"):
         st.json(variables)
+
+# Sidebar UI functions (what you were trying to import)
+def add_sidebar_save_ui():
+    """
+    Add save functionality to sidebar with options for download and folder save.
+    """
+    st.sidebar.subheader("💾 Save Session")
+    
+    # Default filename with timestamp
+    default_filename = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    save_filename = st.sidebar.text_input("Filename:", value=default_filename)
+    
+    col1, col2 = st.sidebar.columns(2)
+    
+    with col1:
+        if st.button("📥 Download", help="Download JSON file"):
+            JSON_generator(save_filename)
+    
+    with col2:
+        if st.button("📁 Save to Folder", help="Save to local folder"):
+            save_folder = st.sidebar.text_input("Folder path:", value="./saved_sessions")
+            if save_folder:
+                handler = AutomaticJSONHandler()
+                if handler.save_to_folder(save_folder, save_filename):
+                    st.sidebar.success(f"Saved to {save_folder}")
+                else:
+                    st.sidebar.error("Failed to save to folder")
+    
+    # Show variable summary option
+    if st.sidebar.checkbox("Show variables to save"):
+        show_variable_summary()
+
+def add_sidebar_upload_ui():
+    """
+    Add upload functionality to sidebar.
+    """
+    st.sidebar.subheader("📂 Load Session")
+    
+    uploaded_file = st.sidebar.file_uploader(
+        "Choose JSON file",
+        type=['json'],
+        help="Upload a previously saved session file"
+    )
+    
+    if uploaded_file is not None:
+        if st.sidebar.button("Load Session"):
+            JSON_loader(uploaded_file)
+
+def JSON_generator(filename: str = "session_data.json"):
+    """
+    Generate and download JSON file with session data.
+    """
+    handler = AutomaticJSONHandler()
+    json_content = handler.save_to_json(filename)
+    
+    if json_content:
+        variables = handler.get_all_session_variables()
+        
+        # Create download button
+        st.sidebar.download_button(
+            label="⬇️ Download JSON",
+            data=json_content,
+            file_name=filename,
+            mime="application/json",
+            help=f"Download session data with {len(variables)} variables"
+        )
+        
+        st.sidebar.success(f"Ready to download {len(variables)} variables!")
+    else:
+        st.sidebar.error("Failed to generate JSON")
+
+def JSON_loader(uploaded_file):
+    """
+    Load JSON file and restore session state.
+    """
+    try:
+        # Read the uploaded file
+        json_content = uploaded_file.read().decode('utf-8')
+        
+        # Load into session state
+        handler = AutomaticJSONHandler()
+        success = handler.load_from_json(json_content)
+        
+        if success:
+            st.sidebar.success("Session loaded successfully!")
+            # Force a rerun to update the UI
+            st.rerun()
+        else:
+            st.sidebar.error("Failed to load session")
+            
+    except Exception as e:
+        st.sidebar.error(f"Error loading file: {str(e)}")
+
+# Legacy functions for backward compatibility
+def save_wind_load_config(filename: str = "wind_load_config.json") -> bool:
+    """
+    Save wind load application configuration including all checkboxes and inputs.
+    """
+    excluded_keys = ['file_uploader_key']
+    handler = AutomaticJSONHandler(excluded_keys)
+    return handler.save_to_folder("./", filename)
+
+def load_wind_load_config(filename: str = "wind_load_config.json") -> bool:
+    """
+    Load wind load application configuration.
+    """
+    try:
+        with open(filename, 'r') as f:
+            json_content = f.read()
+        
+        excluded_keys = ['file_uploader_key']
+        handler = AutomaticJSONHandler(excluded_keys)
+        return handler.load_from_json(json_content)
+    except FileNotFoundError:
+        st.error(f"File not found: {filename}")
+        return False
