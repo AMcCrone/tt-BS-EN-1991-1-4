@@ -569,7 +569,7 @@ def wind_velocity_section():
     store_session_value(st, "v_mean", v_mean)
  
     # Display the mean wind velocity result
-    st.markdown("#### Mean Wind Velocity")
+    st.markdown("#### Mean Wind Velocity $$v_m(z)$$")
     st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_oz:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
 
 wind_velocity_section()
