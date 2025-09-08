@@ -115,7 +115,7 @@ with col2:
     # Project number and region
     project_number = st.text_input("Project Number", 
                            value=st.session_state.inputs.get("project_number", ""))
-    region_options = ["United Kingdom", "Other European Country"]
+    region_options = ["United Kingdom", "Europe"]
     region = st.selectbox("Region", 
                   options=region_options,
                   index=region_options.index(st.session_state.inputs.get("region", "United Kingdom")) 
