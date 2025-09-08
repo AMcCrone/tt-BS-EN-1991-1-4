@@ -281,7 +281,7 @@ render_terrain_category()
 # Section 3: WIND VELOCITY
 st.markdown("---")
 st.header("Wind Velocity")
-st.subheader("Basic Wind Velocity")
+st.subheader("Basic Wind Velocity $$v_{b}$$")
 
 if region == "United Kingdom":
     # UK calculation - uses V_b,map with altitude correction
@@ -502,7 +502,7 @@ from calc_engine.common.util import get_session_value, store_session_value
 
 def wind_velocity_section():
     """Display the Mean Wind Velocity section."""
-    st.subheader("Mean Wind Velocity")
+    st.subheader("Mean Wind Velocity $$v_{m}$$")
     
     # Calculate displacement height
     h_dis = calculate_displacement_height(st)
@@ -577,7 +577,7 @@ wind_velocity_section()
 def peak_pressure_section():
     """Display the Peak Wind Pressure section."""
     st.markdown("---")
-    st.header("Peak Wind Pressure")
+    st.header("Peak Wind Pressure $$q_{p}$$")
     
     # Air density input
     rho_air = st.number_input(
@@ -779,7 +779,7 @@ if consider_funnelling == True:
     north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
 st.markdown("---")
-st.subheader("External Pressure Coefficients (cp,e)")
+st.write('### External Pressure Coefficients $$c_{p,e}$$')
 
 # Loaded area input. This will only appear when region is EU
 
