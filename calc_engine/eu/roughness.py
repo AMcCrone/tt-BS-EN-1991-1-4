@@ -111,7 +111,7 @@ def display_eu_roughness_calculation(st, z_minus_h_dis, terrain_category):
     st.write(f"Roughness length $z_0 = {z0:.3f}$ m")
     st.write(f"Minimum height $z_{{min}} = {z_min}$ m")
     st.write(f"Terrain factor $k_r = 0.19 \\cdot (\\frac{{z_0}}{{z_{{0,II}}}})^{{0.07}} = 0.19 \\cdot (\\frac{{{z0:.3f}}}{{{z0_II}}})^{{0.07}} = {kr:.3f}$")
-    st.write(f"The roughness factor, $c_r(z)$, for terrain category **{terrain_category}** and height **{z_minus_h_dis:.2f} m** is:")
+    st.write(f"For terrain category **{terrain_category}** and height **{z_minus_h_dis:.2f} m**")
     # Show appropriate formula based on height comparison
     if z_minus_h_dis < z_min:
         st.latex(f"c_r(z) = k_r \\cdot \\ln(\\frac{{z_{{min}}}}{{z_0}}) = {kr:.3f} \\cdot \\ln(\\frac{{{z_min}}}{{{z0:.3f}}}) = {c_rz:.3f}")
