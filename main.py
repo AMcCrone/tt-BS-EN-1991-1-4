@@ -347,7 +347,7 @@ if region == "United Kingdom":
                 max_value=10000,
                 value=50,
                 step=1,
-                help="Typical is 50 years."
+                help="Typically 50 years."
             )
         
         # Probability of exceedance
