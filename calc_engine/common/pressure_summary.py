@@ -320,12 +320,12 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
             width = NS_dimension
             height = h
             crosswind_dim = EW_dimension
-            title = f"{direction} Elevation - Wind Suction Zones ($$c_{dir}$$ = {c_dir:.2f})"
+            title = f"{direction} Elevation - Wind Suction Zones (c_dir = {c_dir:.2f})"
         else:  # East or West
             width = EW_dimension
             height = h
             crosswind_dim = NS_dimension
-            title = f"{direction} Elevation - Wind Suction Zones ($$c_{dir}$$ = {c_dir:.2f})"
+            title = f"{direction} Elevation - Wind Suction Zones (c_dir = {c_dir:.2f})"
         
         # Calculate parameter e according to Eurocode
         e = min(crosswind_dim, 2 * height)
