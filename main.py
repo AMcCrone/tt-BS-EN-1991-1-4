@@ -582,14 +582,11 @@ def peak_pressure_section():
     # determine region-specific default
     default_rho = 1.226 if region == "United Kingdom" else 1.25
     
-    # if region changed, overwrite stored rho_air with new default
-    last_region = get_session_value(st, "last_region", None)
-    if last_region != region:
-        store_session_value(st, "rho_air", default_rho)
-        store_session_value(st, "last_region", region)
-
-    initial_rho = get_session_value(st, "rho_air", default_rho)
+    # prefer value already in session, otherwise use region default
+    rho_from_session = get_session_value(st, "rho_air", None)
+    initial_rho = rho_from_session if rho_from_session is not None else default_rho
     
+    # Air density input
     rho_air = st.number_input(
         "Air Density (kg/m³)",
         min_value=1.0,
@@ -598,7 +595,8 @@ def peak_pressure_section():
         step=0.001,
         format="%.3f"
     )
-
+    
+    # store back to session
     store_session_value(st, "rho_air", rho_air)
     
     # Basic wind pressure calculation
