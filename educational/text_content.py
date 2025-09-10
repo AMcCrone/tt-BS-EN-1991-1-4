@@ -1,4 +1,4 @@
-how_to = """
+how_to = r"""
 
 - The app is laid out as one long, scrollable page.
 - Provide all required inputs; the app will include only the information needed for the wind load calculation.
@@ -10,7 +10,7 @@ how_to = """
 """
 
 
-region_help = """
+region_help = r"""
 
 By selecting **United Kindom**, this app follows the methodology set out in BS EN 1991-1-4 and the UK National Annex.
 
@@ -18,7 +18,7 @@ Otherwise, by selecting **Other European Country**, this app follow the methodol
 
 """
 
-terrain_help = """
+terrain_help = r"""
 
 **Terrain Categories (UK)**
 
@@ -59,14 +59,14 @@ Linear interpolation may be used for intermediate heights.
 > A building can be calculated in a lower terrain category if it lies within the limits defined in Table A.1.
 """
 
-basic_wind_help = """
+basic_wind_help = r"""
 
 Values for $V_{b,map}$ can be obtained from the National Annex.
 
 For projects in the UK, $V_{b,map}$ may be read from **Figure NA.1** (shown right). Typically, for projects in London, $V_{b,map}$ = 21.5 m/s
 """
 
-velocity_profile_help = """
+velocity_profile_help = r"""
 
 The reference heights, $ z_e $, for windward walls of rectangular plan buildings (zone D, see Figure 7.5) depend on the aspect ratio $ h/b $ and are always the upper heights of the different parts of the walls. They are given in Figure 7.4 for the following three cases:
 
@@ -80,7 +80,7 @@ NOTE The rules for the velocity pressure distribution for leeward wall and sidew
 
 """
 
-h_dis_help = """
+h_dis_help = r"""
 
 For buildings in terrain category IV, closely spaced buildings and other obstructions cause the wind to behave as if the ground level was raised to a displacement height, $h_{dis}$.
 
@@ -98,7 +98,7 @@ The displacement height $h_{dis}$ may be determined by Expression (A.15) (see Fi
 In the absence of more accurate information, the obstruction height may be taken as $h_{ave} = 15m$ for terrain category IV. These rules are direction-dependent: the values of $h_{ave}$ and $x$ should be established for each 30° sector as described in 4.3.2.
 """
 
-orography_help = """
+orography_help = r"""
 
 Numerical calculation of orography coefficients
 
@@ -150,7 +150,7 @@ Steep ($\Phi > 0.3$)              | $H / 0.3$
 NOTE Use $c_{oe}(z) = 1.0$ in valleys unless funneling effects apply.
 
 """
-net_pressure_help = """
+net_pressure_help = r"""
 Wind pressure on surfaces
 
 The wind pressure acting on the external surfaces, $w_e$, should be obtained from:
@@ -197,7 +197,7 @@ $$
   $$
 """
 
-funnelling_help = """
+funnelling_help = r"""
 
 **What Is Funnelling?**
 
@@ -222,7 +222,7 @@ The UK National Annex (NA) supplements this by providing:
 
 """
 
-map_help = """
+map_help = r"""
 
 1. Click on the map to place markers (up to 2 points)
 2. First click (red marker) = the project location, Second click (blue marker) = the closest sea location
@@ -231,7 +231,7 @@ map_help = """
 
 """
 
-inset_zone_help = """
+inset_zone_help = r"""
 
 **Inset Storey Zone Rules (PD 6688-1-4 §3.3.2)**
 
@@ -254,7 +254,7 @@ When calculating external pressure coefficients for walls of **inset storeys**:
 
 """
 
-wind_zone_help = """
+wind_zone_help = r"""
 
 Figure 7.5 from BS EN 1991-1-4.
 
