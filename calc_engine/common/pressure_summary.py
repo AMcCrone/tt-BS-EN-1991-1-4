@@ -4,6 +4,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.colors as pc
 from typing import List, Tuple
+from decimal import Decimal, ROUND_CEILING
 
 def get_direction_factor(rotation_angle, use_direction_factor=False):
     """
@@ -1165,6 +1166,9 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
         driver_kind = next(iter(signs))
     else:
         driver_kind = "wind suction/pressure"
+
+    recommended_decimal = Decimal(str(max_abs_val)).quantize(Decimal("0.1"), rounding=ROUND_CEILING)
+    recommended_str = f"{recommended_decimal:.1f}"
 
     paragraphs.append(
         f'**TT recommend a design value of {max_abs_val:.2f} kPa to be adopted for the building.** '
