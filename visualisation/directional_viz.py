@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import math
 
 # Define color palette
-TT_LightBlue = "rgba(136,219,223,0.5)"
+TT_LightBlue = "rgba(136,219,223,0.5)"  # Light blue with transparency
 TT_DarkBlue = "rgb(0,48,60)"  # Dark blue for labels
 TT_Orange = "rgb(211,69,29)"  # Orange for the 1.0 line
 TT_Building = "rgba(100,100,100,0.7)"  # Building color
@@ -22,9 +22,9 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
     rotation_angle : float
         Building rotation angle in degrees (clockwise from north)
     NS_dimension : float
-        North-South dimension of the building
+        North-South dimension of the building (width in east-west direction)
     EW_dimension : float
-        East-West dimension of the building
+        East-West dimension of the building (height in north-south direction)
     
     Returns:
     --------
@@ -57,6 +57,9 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
     # Scale factor for the plot
     scale = 5
     max_dim = scale * 1.1
+    
+    # Calculate nearest 30° increment for rotation
+    rotation_increment = round(rotation_angle / 30) * 30
     
     # Draw concentric circles at 0.1 intervals
     for radius in np.arange(0.1, 1.0, 0.1):
@@ -171,17 +174,17 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
         scaled_EW = EW_dimension * building_scale
         
         # Create building rectangle corners (before rotation)
-        # EW_dimension is width (east-west), NS_dimension is height (north-south)
+        # NS_dimension is width (east-west), EW_dimension is height (north-south)
         corners = [
-            [-scaled_EW/2, -scaled_NS/2],  # Bottom-left
-            [scaled_EW/2, -scaled_NS/2],   # Bottom-right
-            [scaled_EW/2, scaled_NS/2],    # Top-right
-            [-scaled_EW/2, scaled_NS/2],   # Top-left
-            [-scaled_EW/2, -scaled_NS/2]   # Close the shape
+            [-scaled_NS/2, -scaled_EW/2],  # Bottom-left
+            [scaled_NS/2, -scaled_EW/2],   # Bottom-right
+            [scaled_NS/2, scaled_EW/2],    # Top-right
+            [-scaled_NS/2, scaled_EW/2],   # Top-left
+            [-scaled_NS/2, -scaled_EW/2]   # Close the shape
         ]
         
-        # Rotate building corners
-        rotation_rad = math.radians(rotation_angle)
+        # Rotate building corners (clockwise rotation)
+        rotation_rad = math.radians(-rotation_angle)  # Negative for clockwise
         cos_rot = math.cos(rotation_rad)
         sin_rot = math.sin(rotation_rad)
         
@@ -206,62 +209,50 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
             hovertemplate=f"Building<br>Rotation: {rotation_angle}°<br>NS: {NS_dimension:.1f}<br>EW: {EW_dimension:.1f}<extra></extra>"
         ))
     
-    # Add rotated cardinal directions at the edges
-    cardinals = [
-        {"dir": "N", "base_angle": 0},
-        {"dir": "NE", "base_angle": 45}, 
-        {"dir": "E", "base_angle": 90},
-        {"dir": "SE", "base_angle": 135},
-        {"dir": "S", "base_angle": 180},
-        {"dir": "SW", "base_angle": 225},
-        {"dir": "W", "base_angle": 270},
-        {"dir": "NW", "base_angle": 315}
+    # Add main cardinal directions (N, E, S, W) - these are the global wind directions
+    # These stay fixed and are shown in light gray
+    fixed_cardinals = [
+        {"dir": "N", "angle": 0},
+        {"dir": "E", "angle": 90}, 
+        {"dir": "S", "angle": 180},
+        {"dir": "W", "angle": 270}
     ]
     
-    # Determine which directions are primary based on building orientation
-    building_angle_norm = rotation_angle % 90  # Normalize to 0-90 range
-    primary_directions = []
-    
-    # Find the closest cardinal/intercardinal directions to building orientation
-    for cardinal in cardinals:
-        angle_diff = abs((cardinal["base_angle"] - rotation_angle) % 360)
-        angle_diff = min(angle_diff, 360 - angle_diff)  # Get minimum angle difference
-        if angle_diff <= 22.5:  # Within 22.5 degrees
-            primary_directions.append(cardinal["dir"])
-    
-    for cardinal in cardinals:
-        angle_rad = math.radians(cardinal["base_angle"])
+    for cardinal in fixed_cardinals:
+        angle_rad = math.radians(cardinal["angle"])
         x = max_dim * math.sin(angle_rad)
         y = max_dim * math.cos(angle_rad)
-        
-        # Determine if this is a primary direction
-        is_primary = cardinal["dir"] in primary_directions
-        
-        font_props = {
-            "size": 14 if is_primary else 10,
-            "color": TT_DarkBlue if is_primary else "rgba(0,48,60,0.5)",
-            "weight": "bold" if is_primary else "normal"
-        }
         
         fig.add_annotation(
             x=x,
             y=y,
             text=cardinal["dir"],
             showarrow=False,
-            font=font_props
+            font=dict(size=12, color="rgba(0,48,60,0.4)", weight="normal")
         )
     
-    # Add building orientation indicator
-    if rotation_angle != 0:
+    # Add building-specific cardinal directions (NE, SE, SW, NW)
+    # These rotate with the building and show local building orientation
+    building_cardinals = [
+        {"dir": "NE", "angle_offset": 45},   # Building northeast
+        {"dir": "SE", "angle_offset": 135},  # Building southeast  
+        {"dir": "SW", "angle_offset": 225},  # Building southwest
+        {"dir": "NW", "angle_offset": 315}   # Building northwest
+    ]
+    
+    for cardinal in building_cardinals:
+        # Apply rotation to building cardinal direction position
+        actual_angle = cardinal["angle_offset"] + rotation_increment
+        angle_rad = math.radians(actual_angle)
+        x = max_dim * 0.85 * math.sin(angle_rad)  # Slightly closer to center
+        y = max_dim * 0.85 * math.cos(angle_rad)
+        
         fig.add_annotation(
-            x=0,
-            y=-max_dim * 0.85,
-            text=f"Building Rotation: {rotation_angle}° (Cardinals at {rotation_increment}°)",
+            x=x,
+            y=y,
+            text=cardinal["dir"],
             showarrow=False,
-            font=dict(size=10, color=TT_DarkBlue),
-            bgcolor="rgba(255,255,255,0.8)",
-            bordercolor=TT_DarkBlue,
-            borderwidth=1
+            font=dict(size=10, color=TT_DarkBlue, weight="bold")
         )
     
     # Set layout with equal aspect ratio
@@ -300,9 +291,9 @@ def create_direction_viz(rotation_angle=0, NS_dimension=1.0, EW_dimension=1.0, h
     rotation_angle : float
         Building rotation angle in degrees (clockwise from north)
     NS_dimension : float
-        North-South dimension of the building
+        North-South dimension of the building (width in east-west direction)
     EW_dimension : float
-        East-West dimension of the building
+        East-West dimension of the building (height in north-south direction)
     height : int
         Height of the plot in pixels
     width : int
