@@ -18,7 +18,7 @@ from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_sidebar_
 
 authenticate_user()
 
-# Setup page configuration with a favicon
+# Setup page configuration
 st.set_page_config(
     page_title="Wind Load Calculator",
     page_icon="🌪️"
