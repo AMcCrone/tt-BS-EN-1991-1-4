@@ -256,7 +256,7 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
         fig.add_annotation(
             x=0,
             y=-max_dim * 0.85,
-            text=f"Building Rotation: {rotation_angle}°",
+            text=f"Building Rotation: {rotation_angle}° (Cardinals at {rotation_increment}°)",
             showarrow=False,
             font=dict(size=10, color=TT_DarkBlue),
             bgcolor="rgba(255,255,255,0.8)",
