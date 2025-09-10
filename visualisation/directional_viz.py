@@ -254,6 +254,7 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
 
         # Keep text vertical irrespective of rotation. Set to False to keep horizontal instead.
         vertical_labels = True
+        fixed_text_angle = 0  # vertical text
 
         for dir_label, info in face_local.items():
             cx_local, cy_local = info["centre"]
