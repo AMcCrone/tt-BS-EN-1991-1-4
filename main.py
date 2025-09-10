@@ -575,28 +575,28 @@ def wind_velocity_section():
 wind_velocity_section()
 
 def peak_pressure_section():
-    """Display the Peak Wind Pressure section."""
-    st.markdown("---")
     st.header("Peak Wind Pressure $$q_{p}$$")
-    
+
+    # --- get region safely from session state (default to UK if not present) ---
+    # use the same helper you used elsewhere
+    region = get_session_value(st, "region", "United Kingdom")
+
     # determine region-specific default
     default_rho = 1.226 if region == "United Kingdom" else 1.25
-    
+
     # prefer value already in session, otherwise use region default
     rho_from_session = get_session_value(st, "rho_air", None)
     initial_rho = rho_from_session if rho_from_session is not None else default_rho
-    
+
     # Air density input
     rho_air = st.number_input(
         "Air Density (kg/m³)",
         min_value=1.0,
         max_value=2.0,
-        value=initial_rho,
+        value=float(initial_rho),
         step=0.001,
         format="%.3f"
     )
-    
-    # store back to session
     store_session_value(st, "rho_air", rho_air)
     
     # Basic wind pressure calculation
