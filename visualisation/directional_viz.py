@@ -231,29 +231,38 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
             font=dict(size=12, color="rgba(0,48,60,0.4)", weight="normal")
         )
     
-    # Add building-specific cardinal directions (NE, SE, SW, NW)
-    # These rotate with the building and show local building orientation
-    building_cardinals = [
-        {"dir": "NE", "angle_offset": 45},   # Building northeast
-        {"dir": "SE", "angle_offset": 135},  # Building southeast  
-        {"dir": "SW", "angle_offset": 225},  # Building southwest
-        {"dir": "NW", "angle_offset": 315}   # Building northwest
-    ]
-    
-    for cardinal in building_cardinals:
-        # Apply rotation to building cardinal direction position
-        actual_angle = cardinal["angle_offset"] + rotation_increment
-        angle_rad = math.radians(actual_angle)
-        x = max_dim * 0.85 * math.sin(angle_rad)  # Slightly closer to center
-        y = max_dim * 0.85 * math.cos(angle_rad)
+    # Add building-specific NE-SW axes labels on the building faces
+    # These are positioned near the building edges and rotate with the building
+    if NS_dimension and EW_dimension:
+        # Calculate the building edge positions (10% offset from face centers)
+        edge_offset = 1.1  # 10% beyond the building edge
         
-        fig.add_annotation(
-            x=x,
-            y=y,
-            text=cardinal["dir"],
-            showarrow=False,
-            font=dict(size=10, color=TT_DarkBlue, weight="bold")
-        )
+        # Building NE-SW axis labels
+        building_axes = [
+            {"dir": "NE", "corner_offset": [1, 1]},   # Northeast corner direction
+            {"dir": "SW", "corner_offset": [-1, -1]}  # Southwest corner direction
+        ]
+        
+        for axis in building_axes:
+            # Calculate position based on building dimensions and rotation
+            base_x = (scaled_NS/2) * axis["corner_offset"][0] * edge_offset
+            base_y = (scaled_EW/2) * axis["corner_offset"][1] * edge_offset
+            
+            # Apply building rotation
+            rotation_rad = math.radians(-rotation_angle)
+            cos_rot = math.cos(rotation_rad)
+            sin_rot = math.sin(rotation_rad)
+            
+            x = base_x * cos_rot - base_y * sin_rot
+            y = base_x * sin_rot + base_y * cos_rot
+            
+            fig.add_annotation(
+                x=x,
+                y=y,
+                text=axis["dir"],
+                showarrow=False,
+                font=dict(size=10, color=TT_DarkBlue, weight="bold")
+            )
     
     # Set layout with equal aspect ratio
     fig.update_layout(
