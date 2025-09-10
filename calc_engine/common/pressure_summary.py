@@ -1171,7 +1171,7 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
     recommended_str = f"{recommended_decimal:.1f}"
 
     paragraphs.append(
-        f'**TT recommend a design value of {max_abs_val:.2f} kPa to be adopted for the building.** '
+        f'**TT recommend a design value of {recommended_str} kPa to be adopted for the building.** '
         f'**This is driven by {driver_kind} from {zone_phrase} on {elev_phrase}.**'
     )
 
