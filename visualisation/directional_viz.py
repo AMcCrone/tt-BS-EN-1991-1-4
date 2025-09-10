@@ -231,37 +231,61 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
             font=dict(size=12, color="rgba(0,48,60,0.4)", weight="normal")
         )
     
-    # Add building-specific NE-SW axes labels on the building faces
-    # These are positioned near the building edges and rotate with the building
+    # Add building-specific local axes labels on the building faces (N,E,S,W)
     if NS_dimension and EW_dimension:
-        # Calculate the building edge positions (10% offset from face centers)
-        edge_offset = 1.1  # 10% beyond the building edge
-        
-        # Building NE-SW axis labels
-        building_axes = [
-            {"dir": "NE", "corner_offset": [1, 1]},   # Northeast corner direction
-            {"dir": "SW", "corner_offset": [-1, -1]}  # Southwest corner direction
+        # how far from the face centers to place the labels (1.0 = exactly on face center)
+        edge_offset = 1.12  # slightly outside building face
+
+        # face centers in building-local coordinates (before rotation)
+        # Note: local coords assume x = east-west axis (positive to the right),
+        #       y = north-south axis (positive to the top).
+        face_centres_local = [
+            {"dir": "N", "pos": (0.0,  (scaled_EW / 2.0) * edge_offset)},
+            {"dir": "E", "pos": ((scaled_NS / 2.0) * edge_offset, 0.0)},
+            {"dir": "S", "pos": (0.0, -(scaled_EW / 2.0) * edge_offset)},
+            {"dir": "W", "pos": (-(scaled_NS / 2.0) * edge_offset, 0.0)},
         ]
-        
-        for axis in building_axes:
-            # Calculate position based on building dimensions and rotation
-            base_x = (scaled_NS/2) * axis["corner_offset"][0] * edge_offset
-            base_y = (scaled_EW/2) * axis["corner_offset"][1] * edge_offset
-            
-            # Apply building rotation
-            rotation_rad = math.radians(-rotation_angle)
-            cos_rot = math.cos(rotation_rad)
-            sin_rot = math.sin(rotation_rad)
-            
-            x = base_x * cos_rot - base_y * sin_rot
-            y = base_x * sin_rot + base_y * cos_rot
-            
+
+        # choose whether labels should rotate with the building (True)
+        # or remain horizontal (False). Default here is False for readability.
+        rotate_text = False
+
+        # rotation (same as used for rectangle)
+        rot_rad = math.radians(-rotation_angle)
+        cos_r = math.cos(rot_rad)
+        sin_r = math.sin(rot_rad)
+
+        # anchoring so the label sits outside the edge nicely
+        anchor_map = {
+            "N": {"yanchor": "bottom", "xanchor": "center"},
+            "E": {"yanchor": "middle", "xanchor": "left"},
+            "S": {"yanchor": "top", "xanchor": "center"},
+            "W": {"yanchor": "middle", "xanchor": "right"},
+        }
+
+        for face in face_centres_local:
+            lx_local, ly_local = face["pos"]
+            # rotate the local point to plot coordinates (same as rectangle rotation)
+            lx = lx_local * cos_r - ly_local * sin_r
+            ly = lx_local * sin_r + ly_local * cos_r
+
+            # determine textangle if we want the label to follow building rotation
+            if rotate_text:
+                # Plotly textangle rotates counter-clockwise positive, but rotation_angle is clockwise
+                # so we negate rotation_angle to get a ccw equivalent.
+                text_angle = -rotation_angle
+            else:
+                text_angle = 0
+
             fig.add_annotation(
-                x=x,
-                y=y,
-                text=axis["dir"],
+                x=lx,
+                y=ly,
+                text=face["dir"],
                 showarrow=False,
-                font=dict(size=10, color=TT_DarkBlue, weight="bold")
+                font=dict(size=12, color=TT_DarkBlue),
+                xanchor=anchor_map[face["dir"]]["xanchor"],
+                yanchor=anchor_map[face["dir"]]["yanchor"],
+                textangle=text_angle
             )
     
     # Set layout with equal aspect ratio
