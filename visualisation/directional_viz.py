@@ -233,8 +233,8 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
     
     # Add building-specific local axes labels on the building faces (N,E,S,W)
     if NS_dimension and EW_dimension:
-        # --- Local cardinals on building faces: place them along the face normal so they stay "normal" to edges ---
-        # Local face centres (before rotation) in same coords used for rectangle:
+        # --- Local cardinals on building faces but KEEP THE TEXT VERTICAL INDEPENDENT OF ROTATION ---
+        # face centres and normals in local (unrotated) coordinates
         face_local = {
             "N": {"centre": (0.0,  scaled_EW / 2.0), "normal": (0.0,  1.0)},
             "E": {"centre": ( scaled_NS / 2.0, 0.0), "normal": (1.0,  0.0)},
@@ -242,15 +242,22 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
             "W": {"centre": (-scaled_NS / 2.0, 0.0), "normal": (-1.0, 0.0)},
         }
 
-        # How far out from the face centre to place label: fraction of the bigger building half-dimension
-        offset_factor_fraction = 0.25  # 0.25 * half-dimension; tweak to move labels in/out
+        # offset distance from face centre outwards (tweak if labels are too close/far)
+        offset_factor_fraction = 0.25
         half_max = max(scaled_NS, scaled_EW) / 2.0
-        offset_distance = half_max * offset_factor_fraction + 0.02 * scale  # add a small absolute margin
+        offset_distance = half_max * offset_factor_fraction + 0.02 * scale
 
-        # rotation (same as used for rectangle)
+        # rotation (same as rectangle)
         rot_rad = math.radians(-rotation_angle)
         cos_r = math.cos(rot_rad)
         sin_r = math.sin(rot_rad)
+
+        # Keep text vertical irrespective of rotation. Set to False to keep horizontal instead.
+        vertical_labels = True
+        if vertical_labels:
+            fixed_text_angle = 90  # vertical text (rotate 90° CCW)
+        else:
+            fixed_text_angle = 0   # horizontal text
 
         for dir_label, info in face_local.items():
             cx_local, cy_local = info["centre"]
@@ -263,7 +270,7 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
             nx = nx_local * cos_r - ny_local * sin_r
             ny = nx_local * sin_r + ny_local * cos_r
 
-            # Normalise normal (should already be unit but do to be safe)
+            # Normalise normal (safety)
             norm = math.hypot(nx, ny) or 1.0
             nx_u, ny_u = nx / norm, ny / norm
 
@@ -271,28 +278,15 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
             lx = cx + nx_u * offset_distance
             ly = cy + ny_u * offset_distance
 
-            # Compute angle for label text so text baseline aligns with the normal direction
-            # atan2 returns radians CCW from +x; convert to degrees
-            text_angle = math.degrees(math.atan2(ny_u, nx_u))
-            # Plotly textangle is degrees counter-clockwise. We want the label to "face outward".
-            # Keep text upright: if angle would make text upside-down, flip 180 degrees
-            if text_angle > 90:
-                text_angle -= 180
-            elif text_angle < -90:
-                text_angle += 180
-
             # Choose anchors from normal direction so label is placed outside the face nicely
-            # If normal is mostly vertical, anchor vertically; if mostly horizontal, anchor horizontally.
             if abs(ny_u) >= abs(nx_u):
-                # vertical normal dominates -> center horizontally, attach top/bottom depending on sign
                 xanchor = "center"
                 yanchor = "bottom" if ny_u > 0 else "top"
             else:
-                # horizontal normal dominates -> center vertically, attach left/right depending on sign
                 yanchor = "middle"
                 xanchor = "left" if nx_u > 0 else "right"
 
-            # Add annotation for the face label
+            # Add annotation with fixed vertical/horizontal angle
             fig.add_annotation(
                 x=lx,
                 y=ly,
@@ -301,7 +295,7 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
                 font=dict(size=12, color=TT_DarkBlue),
                 xanchor=xanchor,
                 yanchor=yanchor,
-                textangle=text_angle
+                textangle=fixed_text_angle
             )
     
     # Set layout with equal aspect ratio
