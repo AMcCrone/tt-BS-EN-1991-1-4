@@ -577,18 +577,22 @@ wind_velocity_section()
 def peak_pressure_section():
     st.header("Peak Wind Pressure $$q_{p}$$")
 
-    # --- get region safely from session state (default to UK if not present) ---
-    # use the same helper you used elsewhere
+    # --- read region from session (default to "United Kingdom" if not set) ---
     region = get_session_value(st, "region", "United Kingdom")
 
-    # determine region-specific default
+    # --- determine region-specific default rho ---
     default_rho = 1.226 if region == "United Kingdom" else 1.25
 
-    # prefer value already in session, otherwise use region default
-    rho_from_session = get_session_value(st, "rho_air", None)
-    initial_rho = rho_from_session if rho_from_session is not None else default_rho
+    # --- if the user changed region since last run, reset rho_air to the region default ---
+    last_region = get_session_value(st, "last_region", None)
+    if last_region != region:
+        store_session_value(st, "rho_air", float(default_rho))
+        store_session_value(st, "last_region", region)
 
-    # Air density input
+    # --- now get the current rho_air (either previously stored or the default we just set) ---
+    initial_rho = get_session_value(st, "rho_air", float(default_rho))
+
+    # Air density input (shows region-appropriate default; user can override)
     rho_air = st.number_input(
         "Air Density (kg/m³)",
         min_value=1.0,
@@ -597,7 +601,9 @@ def peak_pressure_section():
         step=0.001,
         format="%.3f"
     )
-    store_session_value(st, "rho_air", rho_air)
+
+    # store the (possibly user-edited) value back to session
+    store_session_value(st, "rho_air", float(rho_air))
     
     # Basic wind pressure calculation
     v_b = get_session_value(st, "V_b", 0.0)
