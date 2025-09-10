@@ -599,7 +599,7 @@ def peak_pressure_section():
         format="%.3f"
     )
 
-store_session_value(st, "rho_air", rho_air)
+    store_session_value(st, "rho_air", rho_air)
     
     # Basic wind pressure calculation
     v_b = get_session_value(st, "V_b", 0.0)
