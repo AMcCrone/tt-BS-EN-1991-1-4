@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import math
 
 # Define color palette
-TT_LightBlue = "rgba(136,219,223,0.5)"  # Light blue with transparency
+TT_LightBlue = "rgba(136,219,223,0.5)"
 TT_DarkBlue = "rgb(0,48,60)"  # Dark blue for labels
 TT_Orange = "rgb(211,69,29)"  # Orange for the 1.0 line
 TT_Building = "rgba(100,100,100,0.7)"  # Building color
