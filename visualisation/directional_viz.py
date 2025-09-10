@@ -233,58 +233,74 @@ def create_cdir_radial_plot(height=400, width=400, rotation_angle=0, NS_dimensio
     
     # Add building-specific local axes labels on the building faces (N,E,S,W)
     if NS_dimension and EW_dimension:
-        # how far from the face centers to place the labels (1.0 = exactly on face center)
-        edge_offset = 1.12  # slightly outside building face
+        # --- Local cardinals on building faces: place them along the face normal so they stay "normal" to edges ---
+        # Local face centres (before rotation) in same coords used for rectangle:
+        face_local = {
+            "N": {"centre": (0.0,  scaled_EW / 2.0), "normal": (0.0,  1.0)},
+            "E": {"centre": ( scaled_NS / 2.0, 0.0), "normal": (1.0,  0.0)},
+            "S": {"centre": (0.0, -scaled_EW / 2.0), "normal": (0.0, -1.0)},
+            "W": {"centre": (-scaled_NS / 2.0, 0.0), "normal": (-1.0, 0.0)},
+        }
 
-        # face centers in building-local coordinates (before rotation)
-        # Note: local coords assume x = east-west axis (positive to the right),
-        #       y = north-south axis (positive to the top).
-        face_centres_local = [
-            {"dir": "N", "pos": (0.0,  (scaled_EW / 2.0) * edge_offset)},
-            {"dir": "E", "pos": ((scaled_NS / 2.0) * edge_offset, 0.0)},
-            {"dir": "S", "pos": (0.0, -(scaled_EW / 2.0) * edge_offset)},
-            {"dir": "W", "pos": (-(scaled_NS / 2.0) * edge_offset, 0.0)},
-        ]
-
-        # choose whether labels should rotate with the building (True)
-        # or remain horizontal (False). Default here is False for readability.
-        rotate_text = False
+        # How far out from the face centre to place label: fraction of the bigger building half-dimension
+        offset_factor_fraction = 0.25  # 0.25 * half-dimension; tweak to move labels in/out
+        half_max = max(scaled_NS, scaled_EW) / 2.0
+        offset_distance = half_max * offset_factor_fraction + 0.02 * scale  # add a small absolute margin
 
         # rotation (same as used for rectangle)
         rot_rad = math.radians(-rotation_angle)
         cos_r = math.cos(rot_rad)
         sin_r = math.sin(rot_rad)
 
-        # anchoring so the label sits outside the edge nicely
-        anchor_map = {
-            "N": {"yanchor": "bottom", "xanchor": "center"},
-            "E": {"yanchor": "middle", "xanchor": "left"},
-            "S": {"yanchor": "top", "xanchor": "center"},
-            "W": {"yanchor": "middle", "xanchor": "right"},
-        }
+        for dir_label, info in face_local.items():
+            cx_local, cy_local = info["centre"]
+            nx_local, ny_local = info["normal"]
 
-        for face in face_centres_local:
-            lx_local, ly_local = face["pos"]
-            # rotate the local point to plot coordinates (same as rectangle rotation)
-            lx = lx_local * cos_r - ly_local * sin_r
-            ly = lx_local * sin_r + ly_local * cos_r
+            # Rotate centre and normal using same rotation matrix
+            cx = cx_local * cos_r - cy_local * sin_r
+            cy = cx_local * sin_r + cy_local * cos_r
 
-            # determine textangle if we want the label to follow building rotation
-            if rotate_text:
-                # Plotly textangle rotates counter-clockwise positive, but rotation_angle is clockwise
-                # so we negate rotation_angle to get a ccw equivalent.
-                text_angle = -rotation_angle
+            nx = nx_local * cos_r - ny_local * sin_r
+            ny = nx_local * sin_r + ny_local * cos_r
+
+            # Normalise normal (should already be unit but do to be safe)
+            norm = math.hypot(nx, ny) or 1.0
+            nx_u, ny_u = nx / norm, ny / norm
+
+            # Label position = face centre + outward normal * offset_distance
+            lx = cx + nx_u * offset_distance
+            ly = cy + ny_u * offset_distance
+
+            # Compute angle for label text so text baseline aligns with the normal direction
+            # atan2 returns radians CCW from +x; convert to degrees
+            text_angle = math.degrees(math.atan2(ny_u, nx_u))
+            # Plotly textangle is degrees counter-clockwise. We want the label to "face outward".
+            # Keep text upright: if angle would make text upside-down, flip 180 degrees
+            if text_angle > 90:
+                text_angle -= 180
+            elif text_angle < -90:
+                text_angle += 180
+
+            # Choose anchors from normal direction so label is placed outside the face nicely
+            # If normal is mostly vertical, anchor vertically; if mostly horizontal, anchor horizontally.
+            if abs(ny_u) >= abs(nx_u):
+                # vertical normal dominates -> center horizontally, attach top/bottom depending on sign
+                xanchor = "center"
+                yanchor = "bottom" if ny_u > 0 else "top"
             else:
-                text_angle = 0
+                # horizontal normal dominates -> center vertically, attach left/right depending on sign
+                yanchor = "middle"
+                xanchor = "left" if nx_u > 0 else "right"
 
+            # Add annotation for the face label
             fig.add_annotation(
                 x=lx,
                 y=ly,
-                text=face["dir"],
+                text=dir_label,
                 showarrow=False,
                 font=dict(size=12, color=TT_DarkBlue),
-                xanchor=anchor_map[face["dir"]]["xanchor"],
-                yanchor=anchor_map[face["dir"]]["yanchor"],
+                xanchor=xanchor,
+                yanchor=yanchor,
                 textangle=text_angle
             )
     
