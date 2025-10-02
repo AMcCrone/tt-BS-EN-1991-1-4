@@ -753,7 +753,7 @@ if add_inset:
     st.session_state["inset_results"] = results
     st.session_state["inset_fig"] = fig
 
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
         
     # Display styled dataframe
     styled_df = create_styled_inset_dataframe(results)
