@@ -186,7 +186,7 @@ building_fig = create_building_visualisation(
     EW_dimension,
     z
 )
-st.plotly_chart(building_fig, width="stretch")
+st.plotly_chart(building_fig, use_container_width=True)
 
 st.markdown("---")
 st.header("Terrain")
@@ -852,9 +852,9 @@ if st.session_state.get("show_educational", False):
 # Display wind zone plots (using your existing function)
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
 # Display North-South Elevation
-st.plotly_chart(ns_elevation_fig, width="stretch")
+st.plotly_chart(ns_elevation_fig, use_container_width=True)
 # Display East-West Elevation
-st.plotly_chart(ew_elevation_fig, width="stretch")
+st.plotly_chart(ew_elevation_fig, use_container_width=True)
 
 # Wind pressure parameters
 st.markdown("---")
