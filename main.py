@@ -101,7 +101,7 @@ if st.session_state.get("show_educational", False):
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Section 1: Project Information
-st.header("Project Information")
+st.header("Project Info")
 col1, col2 = st.columns(2)
 
 with col1:
