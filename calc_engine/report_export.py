@@ -210,7 +210,7 @@ class ReportExporter:
 
 def add_sidebar_report_export_ui():
     """
-    Add report export UI to Streamlit sidebar.
+    Add report export UI to Streamlit sidebar with download functionality.
     This should be called in main.py after calculations are complete.
     """
     st.sidebar.markdown("---")  # Separator from save/load section
@@ -233,6 +233,11 @@ def add_sidebar_report_export_ui():
         - All calculated values
         """)
     
+    # Validate that we have results to export
+    if not hasattr(st.session_state, 'cp_results') or st.session_state.cp_results is None:
+        st.sidebar.warning("⚠️ No calculation results found. Please complete the calculations first.")
+        return
+    
     # Custom filename option
     use_custom_filename = st.sidebar.checkbox(
         "Custom filename",
@@ -250,36 +255,75 @@ def add_sidebar_report_export_ui():
         if custom_filename and not custom_filename.endswith('.json'):
             custom_filename += '.json'
     
-    # Export button
-    if st.sidebar.button("📄 Export Report Data", help="Export inputs and results for LaTeX report"):
-        try:
-            exporter = ReportExporter()
+    # Generate export data
+    try:
+        exporter = ReportExporter()
+        export_data = exporter.create_export_data()
+        
+        # Convert to JSON string
+        json_string = json.dumps(export_data, indent=2, ensure_ascii=False)
+        
+        # Generate filename for download
+        if custom_filename:
+            download_filename = custom_filename
+        else:
+            project_name = st.session_state.inputs.get("project_name", "Untitled")
+            timestamp = datetime.now().strftime("%d.%m.%Y_%H.%M")
+            safe_name = "".join(c if c.isalnum() or c in (' ', '_', '-') else '_' for c in project_name)
+            download_filename = f"{safe_name}_Wind Load Analysis_{timestamp}.json"
+        
+        # Create two columns for the buttons
+        col1, col2 = st.sidebar.columns([1, 1])
+        
+        with col1:
+            # Download button (browser download)
+            st.download_button(
+                label="⬇️ Download",
+                data=json_string,
+                file_name=download_filename,
+                mime="application/json",
+                help="Download JSON file to your browser's download folder",
+                use_container_width=True
+            )
+        
+        with col2:
+            # Save to folder button (saves to streamlit_output/)
+            if st.button("💾 Save Local", help="Save to streamlit_output/ folder", use_container_width=True):
+                try:
+                    # Create output folder if it doesn't exist
+                    output_folder = "streamlit_output"
+                    os.makedirs(output_folder, exist_ok=True)
+                    
+                    # Save to file
+                    filepath = os.path.join(output_folder, download_filename)
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write(json_string)
+                    
+                    # Get file info
+                    file_size = os.path.getsize(filepath)
+                    file_size_kb = file_size / 1024
+                    
+                    # Success message
+                    st.sidebar.success(f"✅ Saved to `{filepath}`")
+                    st.sidebar.info(f"📦 Size: {file_size_kb:.1f} KB")
+                    
+                except Exception as e:
+                    st.sidebar.error(f"❌ Save failed: {str(e)}")
+        
+        # Show preview of what will be exported
+        preview = exporter.get_export_preview()
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("**Export includes:**")
+        st.sidebar.markdown(f"- {preview['Input Variables']} input variables")
+        st.sidebar.markdown(f"- {preview['Calculated Results']['Pressure Summary Rows']} pressure results")
+        if preview['Calculated Results']['Inset Results'] == "Yes":
+            st.sidebar.markdown(f"- Inset zone analysis")
+        if preview['Calculated Results']['Direction Factors'] == "Yes":
+            st.sidebar.markdown(f"- Directional factors")
             
-            # Validate that we have results to export
-            if not hasattr(st.session_state, 'cp_results') or st.session_state.cp_results is None:
-                st.sidebar.warning("⚠️ No calculation results found. Please complete the calculations first.")
-                return
-            
-            # Save to file
-            filepath = exporter.save_to_file(custom_filename)
-            
-            # Get file info
-            file_size = os.path.getsize(filepath)
-            file_size_kb = file_size / 1024
-            
-            # Success message
-            st.sidebar.success(f"✅ Exported successfully!")
-            st.sidebar.info(f"📁 **File:** `{os.path.basename(filepath)}`\n\n📦 **Size:** {file_size_kb:.1f} KB")
-            
-            # Show preview of what was exported
-            preview = exporter.get_export_preview()
-            st.sidebar.markdown("**Exported:**")
-            st.sidebar.markdown(f"- {preview['Input Variables']} input variables")
-            st.sidebar.markdown(f"- {preview['Calculated Results']['Pressure Summary Rows']} pressure results")
-            
-        except Exception as e:
-            st.sidebar.error(f"❌ Export failed: {str(e)}")
-            st.sidebar.exception(e)
+    except Exception as e:
+        st.sidebar.error(f"❌ Export preparation failed: {str(e)}")
+        st.sidebar.exception(e)
 
 
 def show_export_statistics():
