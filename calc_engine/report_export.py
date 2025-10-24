@@ -1,7 +1,7 @@
 """
 Report Export Module for LaTeX Report Generation
-Exports complete calculation results (inputs + outputs) to JSON for use with LaTeX helper script.
-This is separate from JSON_save_load.py which is for session state persistence.
+Exports essential calculation results (inputs + key outputs) to JSON for LaTeX reports.
+Focuses on core variables that are always needed in the report.
 """
 
 import json
@@ -10,13 +10,12 @@ import pandas as pd
 import os
 from datetime import datetime
 from typing import Any, Dict, Optional
-import plotly.graph_objects as go
 
 
 class ReportExporter:
     """
-    Handles export of complete wind load calculation results for report generation.
-    Includes both inputs and calculated results (DataFrames, figures, etc.)
+    Handles export of essential wind load calculation results for report generation.
+    Only exports the core variables needed for the LaTeX report.
     """
     
     def __init__(self, output_folder: str = "streamlit_output"):
@@ -24,13 +23,13 @@ class ReportExporter:
         Initialize the report exporter.
         
         Args:
-            output_folder: Folder where JSON files will be saved (same level as main.py)
+            output_folder: Folder where JSON files will be saved
         """
         self.output_folder = output_folder
         
     def serialize_dataframe(self, df: pd.DataFrame) -> Dict:
         """
-        Convert DataFrame to JSON-serializable format with type information.
+        Convert DataFrame to JSON-serializable format.
         """
         if df is None or df.empty:
             return None
@@ -38,120 +37,81 @@ class ReportExporter:
         return {
             "type": "dataframe",
             "data": df.to_dict(orient='records'),
-            "columns": list(df.columns),
-            "index": list(df.index) if not isinstance(df.index, pd.RangeIndex) else None
+            "columns": list(df.columns)
         }
     
-    def serialize_plotly_figure(self, fig: go.Figure) -> Dict:
+    def extract_essential_inputs(self) -> Dict:
         """
-        Convert Plotly figure to JSON-serializable format.
-        """
-        if fig is None:
-            return None
-            
-        return {
-            "type": "plotly_figure",
-            "data": fig.to_dict()
-        }
-    
-    def extract_inputs(self) -> Dict:
-        """
-        Extract all input variables from session state.
-        These are the user-entered values.
+        Extract only the essential input variables needed for LaTeX report.
+        These match the core variables that should always be in the report.
         """
         inputs = {}
         
-        # Get the inputs dictionary if it exists
-        if hasattr(st.session_state, 'inputs'):
-            inputs = st.session_state.inputs.copy()
+        # Get the inputs dictionary
+        session_inputs = st.session_state.inputs if hasattr(st.session_state, 'inputs') else {}
+        
+        # Core project information
+        inputs["project_name"] = session_inputs.get("project_name", "N/A")
+        inputs["project_number"] = session_inputs.get("project_number", "N/A")
+        inputs["location"] = session_inputs.get("location", "N/A")
+        inputs["region"] = session_inputs.get("region", "N/A")
+        
+        # Building geometry
+        inputs["NS_dimension"] = session_inputs.get("NS_dimension", 0.0)
+        inputs["EW_dimension"] = session_inputs.get("EW_dimension", 0.0)
+        inputs["z"] = session_inputs.get("z", 0.0)  # Building height
+        
+        # Site parameters
+        inputs["altitude_factor"] = session_inputs.get("altitude_factor", 0.0)
+        inputs["d_sea"] = session_inputs.get("d_sea", 0.0)
+        inputs["terrain_category"] = session_inputs.get("terrain_category", "N/A")
+        
+        # Wind parameters
+        inputs["V_bmap"] = session_inputs.get("V_bmap", 0.0)  # Basic wind speed
+        inputs["V_b"] = session_inputs.get("V_b", 0.0)  # Adjusted basic wind speed
         
         return inputs
     
-    def extract_results(self) -> Dict:
+    def extract_essential_results(self) -> Dict:
         """
-        Extract all calculated results from session state.
-        These are the outputs of the calculations.
+        Extract only the essential calculated results needed for LaTeX report.
         """
         results = {}
         
-        # 1. Pressure Summary DataFrame (summary_df)
-        if hasattr(st.session_state, 'summary_df') and st.session_state.summary_df is not None:
-            results["pressure_summary"] = self.serialize_dataframe(st.session_state.summary_df)
+        # Get session inputs for calculated values
+        session_inputs = st.session_state.inputs if hasattr(st.session_state, 'inputs') else {}
         
-        # 2. External Pressure Coefficients (cp_results) - combined all directions
+        # Displacement height and adjusted height
+        results["h_dis"] = session_inputs.get("h_dis", 0.0)
+        results["z_minus_h_dis"] = session_inputs.get("z_minus_h_dis", 0.0)
+        
+        # Wind velocities and pressures
+        results["v_mean"] = session_inputs.get("v_mean", 0.0)  # Mean wind velocity
+        results["q_b"] = session_inputs.get("q_b", 0.0)  # Basic wind pressure
+        results["q_p"] = session_inputs.get("q_p", 0.0)  # Peak wind pressure
+        
+        # External pressure coefficient table (cp_results)
         if hasattr(st.session_state, 'cp_results') and st.session_state.cp_results is not None:
             results["cp_results"] = self.serialize_dataframe(st.session_state.cp_results)
         
-        # 3. External Pressure Coefficients per elevation (cp_results_by_elevation)
-        if hasattr(st.session_state, 'cp_results_by_elevation'):
-            results["cp_results_by_elevation"] = {}
-            for direction, df in st.session_state.cp_results_by_elevation.items():
-                results["cp_results_by_elevation"][direction] = self.serialize_dataframe(df)
-        
-        # 4. Inset zone results
-        if hasattr(st.session_state, 'inset_results') and st.session_state.inset_results is not None:
-            results["inset_results"] = st.session_state.inset_results
-        
-        # 5. Inset figure (3D visualization)
-        if hasattr(st.session_state, 'inset_fig') and st.session_state.inset_fig is not None:
-            results["inset_fig"] = self.serialize_plotly_figure(st.session_state.inset_fig)
-        
-        # 6. Direction factors (if applicable)
-        if st.session_state.inputs.get("use_direction_factor", False):
-            from calc_engine.common.pressure_summary import get_direction_factor
-            rotation = st.session_state.inputs.get("building_rotation", 0)
-            direction_factors = get_direction_factor(rotation, True)
-            results["direction_factors"] = direction_factors
-        
-        # 7. Key calculated intermediate values
-        results["calculated_values"] = {
-            "q_b": st.session_state.inputs.get("q_b"),
-            "v_mean": st.session_state.inputs.get("v_mean"),
-            "c_rz": st.session_state.inputs.get("c_rz"),
-            "c_oz": st.session_state.inputs.get("c_oz"),
-            "c_rT": st.session_state.inputs.get("c_rT"),
-        }
+        # Pressure summary table (summary_df)
+        if hasattr(st.session_state, 'summary_df') and st.session_state.summary_df is not None:
+            results["pressure_summary"] = self.serialize_dataframe(st.session_state.summary_df)
         
         return results
     
-    def extract_app_state(self) -> Dict:
-        """
-        Extract application state (settings, toggles, etc.)
-        """
-        return {
-            "region": st.session_state.inputs.get("region"),
-            "inset_enabled": st.session_state.inputs.get("inset_enabled", False),
-            "consider_funnelling": st.session_state.inputs.get("consider_funnelling", False),
-            "use_direction_factor": st.session_state.inputs.get("use_direction_factor", False),
-            "building_rotation": st.session_state.inputs.get("building_rotation", 0),
-            "use_custom_values": st.session_state.inputs.get("use_custom_values", False),
-            "use_map": st.session_state.inputs.get("use_map", False),
-            "orography_significant": st.session_state.inputs.get("orography_significant", False),
-            "terrain_category": st.session_state.inputs.get("terrain_category", ""),
-            "show_educational": st.session_state.get("show_educational", False)
-        }
-    
     def create_export_data(self) -> Dict:
         """
-        Create complete export data structure.
+        Create complete export data structure with only essential variables.
         """
         return {
-            "inputs": self.extract_inputs(),
-            "session_state": {
-                "show_educational": st.session_state.get("show_educational", False),
-                "markers": st.session_state.get("markers", []),
-                "inset_results": st.session_state.get("inset_results"),
-                "inset_fig": self.serialize_plotly_figure(st.session_state.get("inset_fig")),
-                "inset_fig_type": "dataframe",  # metadata
-                "cp_results": self.serialize_dataframe(st.session_state.get("cp_results")),
-                "cp_results_type": "dataframe"  # metadata
-            },
-            "app_state": self.extract_app_state(),
+            "inputs": self.extract_essential_inputs(),
+            "results": self.extract_essential_results(),
             "_metadata": {
-                "saved_at": datetime.now().isoformat(),
+                "exported_at": datetime.now().isoformat(),
                 "app_version": "1.0",
                 "calculator_type": "wind_load_bs_en_1991",
-                "total_variables": len(self.extract_inputs())
+                "export_type": "essential_report_data"
             }
         }
     
@@ -190,17 +150,27 @@ class ReportExporter:
     
     def get_export_preview(self) -> Dict:
         """
-        Get a preview of what will be exported (for debugging/display).
+        Get a preview of what will be exported.
         """
         data = self.create_export_data()
         
+        # Count available results
+        cp_rows = 0
+        pressure_rows = 0
+        
+        if data["results"].get("cp_results"):
+            cp_rows = len(data["results"]["cp_results"]["data"])
+        
+        if data["results"].get("pressure_summary"):
+            pressure_rows = len(data["results"]["pressure_summary"]["data"])
+        
         preview = {
-            "Input Variables": len(data["inputs"]),
+            "Input Variables": len([v for v in data["inputs"].values() if v not in ["N/A", 0.0]]),
             "Calculated Results": {
-                "Pressure Summary Rows": len(data["session_state"]["cp_results"]["data"]) if data["session_state"]["cp_results"] else 0,
-                "CP Results Rows": len(data["session_state"]["cp_results"]["data"]) if data["session_state"]["cp_results"] else 0,
-                "Inset Results": "Yes" if data["session_state"]["inset_results"] else "No",
-                "Direction Factors": "Yes" if "direction_factors" in data.get("results", {}) else "No"
+                "CP Results Rows": cp_rows,
+                "Pressure Summary Rows": pressure_rows,
+                "Has h_dis": data["results"].get("h_dis", 0.0) > 0,
+                "Has Peak Pressure": data["results"].get("q_p", 0.0) > 0
             },
             "Metadata": data["_metadata"]
         }
@@ -219,18 +189,19 @@ def add_sidebar_report_export_ui():
     # Show info about what will be exported
     with st.sidebar.expander("ℹ️ What gets exported?", expanded=False):
         st.markdown("""
-        **Inputs:**
-        - Project details
-        - Building geometry
-        - Wind parameters
-        - All calculation inputs
+        **Essential Inputs:**
+        - Project name, number, location
+        - Building dimensions (NS, EW, height)
+        - Altitude, distance to sea
+        - Terrain category
+        - Basic wind speed
         
-        **Results:**
+        **Essential Results:**
+        - h_dis, z-h_dis
+        - Mean wind velocity
+        - Basic & peak wind pressure
+        - CP coefficient table
         - Pressure summary table
-        - CP coefficients per elevation
-        - Inset zone results
-        - Direction factors (if used)
-        - All calculated values
         """)
     
     # Validate that we have results to export
@@ -314,12 +285,9 @@ def add_sidebar_report_export_ui():
         preview = exporter.get_export_preview()
         st.sidebar.markdown("---")
         st.sidebar.markdown("**Export includes:**")
-        st.sidebar.markdown(f"- {preview['Input Variables']} input variables")
+        st.sidebar.markdown(f"- {preview['Input Variables']} essential inputs")
+        st.sidebar.markdown(f"- {preview['Calculated Results']['CP Results Rows']} CP coefficients")
         st.sidebar.markdown(f"- {preview['Calculated Results']['Pressure Summary Rows']} pressure results")
-        if preview['Calculated Results']['Inset Results'] == "Yes":
-            st.sidebar.markdown(f"- Inset zone analysis")
-        if preview['Calculated Results']['Direction Factors'] == "Yes":
-            st.sidebar.markdown(f"- Directional factors")
             
     except Exception as e:
         st.sidebar.error(f"❌ Export preparation failed: {str(e)}")
@@ -343,7 +311,7 @@ def show_export_statistics():
     
     with col2:
         st.metric("Pressure Results", preview["Calculated Results"]["Pressure Summary Rows"])
-        st.write(f"**Inset Results:** {preview['Calculated Results']['Inset Results']}")
+        st.write(f"**Has Peak Pressure:** {preview['Calculated Results']['Has Peak Pressure']}")
     
     # Show full preview
     if st.checkbox("Show detailed preview"):
