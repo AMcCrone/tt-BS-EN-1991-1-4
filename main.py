@@ -15,6 +15,7 @@ from visualisation.building_viz import create_building_visualisation
 from visualisation.map import render_map_with_markers, get_elevation, compute_distance, interactive_map_ui
 from educational import text_content
 from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_sidebar_save_ui, add_sidebar_upload_ui
+from calc_engine.report_export import add_sidebar_report_export_ui
 
 authenticate_user()
 
@@ -42,6 +43,7 @@ show_educational = st.sidebar.checkbox(
 add_sidebar_upload_ui()
 # Save session data to JSON file
 add_sidebar_save_ui()
+add_sidebar_report_export_ui()
 st.session_state.show_educational = show_educational
 
 # Display company logo
@@ -814,6 +816,9 @@ if region != "United Kingdom":  # Show for EU region
 
 # Automatically calculate cp,e values with or without funnelling based on checkbox
 cp_results_by_elevation = calculate_cpe(consider_funnelling=consider_funnelling)
+
+# Store for report export
+st.session_state.cp_results_by_elevation = cp_results_by_elevation
     
 # Get building dimensions from session state
 h = st.session_state.inputs.get("z", 10.0)  # Building height
@@ -957,6 +962,7 @@ if st.session_state.get("show_educational", False):
 from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures
 results_by_direction = calculate_cpe()  # Make sure this function exists
 summary_df = create_pressure_summary(st.session_state, results_by_direction)
+st.session_state.summary_df = summary_df
 elevation_figures = plot_elevation_with_pressures(st.session_state, results_by_direction)
 # Display results manually
 st.subheader("Pressure Summary")
