@@ -65,6 +65,7 @@ class ReportExporter:
         inputs["altitude_factor"] = session_inputs.get("altitude_factor", 0.0)
         inputs["d_sea"] = session_inputs.get("d_sea", 0.0)
         inputs["terrain_category"] = session_inputs.get("terrain_category", "N/A")
+        inputs["rho_air"] = session_inputs.get("rho_air", 0.0)
         
         # Wind parameters
         inputs["V_bmap"] = session_inputs.get("V_bmap", 0.0)  # Basic wind speed
