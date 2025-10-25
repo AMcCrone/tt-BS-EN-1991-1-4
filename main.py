@@ -630,6 +630,7 @@ def peak_pressure_section():
         
         # Calculate UK peak pressure
         qp_value = calculate_uk_peak_pressure(st, datasets, q_b)
+        store_session_value(st, "qp_value", qp_value)
     else:
         from calc_engine.eu.peak_pressure import display_eu_peak_pressure_calculation
         
@@ -641,8 +642,8 @@ def peak_pressure_section():
         qp_value = display_eu_peak_pressure_calculation(
             st, z_minus_h_dis, terrain_category, v_b, rho_air, c_o
         )
+        store_session_value(st, "qp_value", qp_value)
 peak_pressure_section()
-store_session_value(st, "qp_value", qp_value)
 
 # Section 5: WIND ZONES
 st.markdown("---")
