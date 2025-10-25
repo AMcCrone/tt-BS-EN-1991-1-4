@@ -503,6 +503,7 @@ def wind_velocity_section():
     # Calculate displacement height
     h_dis = calculate_displacement_height(st)
     display_displacement_results(st, h_dis)
+    store_session_value(st, "h_dis", h_dis)
     
     # Educational text on h_dis calculation
     if st.session_state.get("show_educational", False):
