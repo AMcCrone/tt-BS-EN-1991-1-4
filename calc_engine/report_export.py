@@ -72,172 +72,49 @@ class ReportExporter:
         
         return inputs
     
-def extract_essential_results(self) -> Dict:
-    """
-    Extract only the essential calculated results needed for LaTeX report.
-    """
-    results = {}
-    
-    # Get session inputs for calculated values
-    session_inputs = st.session_state.inputs if hasattr(st.session_state, 'inputs') else {}
-    
-    # Displacement height and adjusted height
-    results["h_dis"] = session_inputs.get("h_dis", 0.0)
-    results["z_minus_h_dis"] = session_inputs.get("z_minus_h_dis", 0.0)
-    
-    # Wind velocities and pressures
-    results["v_mean"] = session_inputs.get("v_mean", 0.0)  # Mean wind velocity
-    results["q_b"] = session_inputs.get("q_b", 0.0)  # Basic wind pressure
-    results["q_p"] = session_inputs.get("q_p", 0.0)  # Peak wind pressure
-    
-    # External pressure coefficient table (cp_results)
-    # Check multiple possible locations
-    cp_results = None
-    if hasattr(st.session_state, 'cp_results') and st.session_state.cp_results is not None:
-        cp_results = st.session_state.cp_results
-    elif 'cp_results' in session_inputs:
-        cp_results = session_inputs['cp_results']
-    
-    if cp_results is not None:
-        results["cp_results"] = self.serialize_dataframe(cp_results)
-    
-    # Pressure summary table (summary_df)
-    # Check all possible locations where this might be stored
-    summary_df = None
-    if hasattr(st.session_state, 'summary_df') and st.session_state.summary_df is not None:
-        summary_df = st.session_state.summary_df
-    elif 'summary_df' in session_inputs and session_inputs['summary_df'] is not None:
-        summary_df = session_inputs['summary_df']
-    elif 'pressure_summary' in session_inputs:
-        summary_df = session_inputs['pressure_summary']
-    
-    if summary_df is not None:
-        results["pressure_summary"] = self.serialize_dataframe(summary_df)
-    
-    return results
-
-
-    def add_sidebar_report_export_ui():
+    def extract_essential_results(self) -> Dict:
         """
-        Add report export UI to Streamlit sidebar with download functionality.
-        This should be called in main.py AFTER calculations are complete and
-        st.session_state.summary_df has been set.
+        Extract only the essential calculated results needed for LaTeX report.
         """
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("📊 Export for Report")
+        results = {}
         
-        # Show info about what will be exported
-        with st.sidebar.expander("ℹ️ What gets exported?", expanded=False):
-            st.markdown("""
-            **Essential Inputs:**
-            - Project name, number, location
-            - Building dimensions (NS, EW, height)
-            - Altitude, distance to sea
-            - Terrain category
-            - Basic wind speed
-            
-            **Essential Results:**
-            - h_dis, z-h_dis
-            - Mean wind velocity
-            - Basic & peak wind pressure
-            - CP coefficient table
-            - **Pressure summary table**
-            """)
+        # Get session inputs for calculated values
+        session_inputs = st.session_state.inputs if hasattr(st.session_state, 'inputs') else {}
         
-        # Validate that we have results to export
-        missing_items = []
-        if not hasattr(st.session_state, 'cp_results') or st.session_state.cp_results is None:
-            missing_items.append("CP results")
-        if not hasattr(st.session_state, 'summary_df') or st.session_state.summary_df is None:
-            missing_items.append("Pressure summary")
+        # Displacement height and adjusted height
+        results["h_dis"] = session_inputs.get("h_dis", 0.0)
+        results["z_minus_h_dis"] = session_inputs.get("z_minus_h_dis", 0.0)
         
-        if missing_items:
-            st.sidebar.warning(f"⚠️ Missing: {', '.join(missing_items)}. Complete calculations first.")
-            return
+        # Wind velocities and pressures
+        results["v_mean"] = session_inputs.get("v_mean", 0.0)  # Mean wind velocity
+        results["q_b"] = session_inputs.get("q_b", 0.0)  # Basic wind pressure
+        results["q_p"] = session_inputs.get("q_p", 0.0)  # Peak wind pressure
         
-        # Custom filename option
-        use_custom_filename = st.sidebar.checkbox(
-            "Custom filename",
-            value=False,
-            help="Check to specify a custom filename"
-        )
+        # External pressure coefficient table (cp_results)
+        # Check multiple possible locations
+        cp_results = None
+        if hasattr(st.session_state, 'cp_results') and st.session_state.cp_results is not None:
+            cp_results = st.session_state.cp_results
+        elif 'cp_results' in session_inputs:
+            cp_results = session_inputs['cp_results']
         
-        custom_filename = None
-        if use_custom_filename:
-            custom_filename = st.sidebar.text_input(
-                "Filename",
-                value="",
-                placeholder="my_report.json"
-            )
-            if custom_filename and not custom_filename.endswith('.json'):
-                custom_filename += '.json'
+        if cp_results is not None:
+            results["cp_results"] = self.serialize_dataframe(cp_results)
         
-        # Generate export data
-        try:
-            exporter = ReportExporter()
-            export_data = exporter.create_export_data()
-            
-            # Convert to JSON string
-            json_string = json.dumps(export_data, indent=2, ensure_ascii=False)
-            
-            # Generate filename for download
-            if custom_filename:
-                download_filename = custom_filename
-            else:
-                project_name = st.session_state.inputs.get("project_name", "Untitled")
-                timestamp = datetime.now().strftime("%d.%m.%Y_%H.%M")
-                safe_name = "".join(c if c.isalnum() or c in (' ', '_', '-') else '_' for c in project_name)
-                download_filename = f"{safe_name}_Wind Load Analysis_{timestamp}.json"
-            
-            # Create two columns for the buttons
-            col1, col2 = st.sidebar.columns([1, 1])
-            
-            with col1:
-                st.download_button(
-                    label="⬇️ Download",
-                    data=json_string,
-                    file_name=download_filename,
-                    mime="application/json",
-                    help="Download JSON file to your browser's download folder",
-                    use_container_width=True
-                )
-            
-            with col2:
-                if st.button("💾 Save Local", help="Save to streamlit_output/ folder", use_container_width=True):
-                    try:
-                        output_folder = "streamlit_output"
-                        os.makedirs(output_folder, exist_ok=True)
-                        
-                        filepath = os.path.join(output_folder, download_filename)
-                        with open(filepath, 'w', encoding='utf-8') as f:
-                            f.write(json_string)
-                        
-                        file_size = os.path.getsize(filepath)
-                        file_size_kb = file_size / 1024
-                        
-                        st.sidebar.success(f"✅ Saved to `{filepath}`")
-                        st.sidebar.info(f"📦 Size: {file_size_kb:.1f} KB")
-                        
-                    except Exception as e:
-                        st.sidebar.error(f"❌ Save failed: {str(e)}")
-            
-            # Show preview with pressure_summary status
-            preview = exporter.get_export_preview()
-            st.sidebar.markdown("---")
-            st.sidebar.markdown("**Export includes:**")
-            st.sidebar.markdown(f"- {preview['Input Variables']} essential inputs")
-            st.sidebar.markdown(f"- {preview['Calculated Results']['CP Results Rows']} CP coefficients")
-            
-            # Highlight pressure summary status
-            pressure_rows = preview['Calculated Results']['Pressure Summary Rows']
-            if pressure_rows > 0:
-                st.sidebar.markdown(f"- ✅ {pressure_rows} pressure summary rows")
-            else:
-                st.sidebar.markdown(f"- ⚠️ No pressure summary data")
-                
-        except Exception as e:
-            st.sidebar.error(f"❌ Export preparation failed: {str(e)}")
-            st.sidebar.exception(e)
+        # Pressure summary table (summary_df)
+        # Check all possible locations where this might be stored
+        summary_df = None
+        if hasattr(st.session_state, 'summary_df') and st.session_state.summary_df is not None:
+            summary_df = st.session_state.summary_df
+        elif 'summary_df' in session_inputs and session_inputs['summary_df'] is not None:
+            summary_df = session_inputs['summary_df']
+        elif 'pressure_summary' in session_inputs:
+            summary_df = session_inputs['pressure_summary']
+        
+        if summary_df is not None:
+            results["pressure_summary"] = self.serialize_dataframe(summary_df)
+        
+        return results
     
     def create_export_data(self) -> Dict:
         """
@@ -320,9 +197,10 @@ def extract_essential_results(self) -> Dict:
 def add_sidebar_report_export_ui():
     """
     Add report export UI to Streamlit sidebar with download functionality.
-    This should be called in main.py after calculations are complete.
+    This should be called in main.py AFTER calculations are complete and
+    st.session_state.summary_df has been set.
     """
-    st.sidebar.markdown("---")  # Separator from save/load section
+    st.sidebar.markdown("---")
     st.sidebar.subheader("📊 Export for Report")
     
     # Show info about what will be exported
@@ -340,12 +218,18 @@ def add_sidebar_report_export_ui():
         - Mean wind velocity
         - Basic & peak wind pressure
         - CP coefficient table
-        - Pressure summary table
+        - **Pressure summary table**
         """)
     
     # Validate that we have results to export
+    missing_items = []
     if not hasattr(st.session_state, 'cp_results') or st.session_state.cp_results is None:
-        st.sidebar.warning("⚠️ No calculation results found. Please complete the calculations first.")
+        missing_items.append("CP results")
+    if not hasattr(st.session_state, 'summary_df') or st.session_state.summary_df is None:
+        missing_items.append("Pressure summary")
+    
+    if missing_items:
+        st.sidebar.warning(f"⚠️ Missing: {', '.join(missing_items)}. Complete calculations first.")
         return
     
     # Custom filename option
@@ -386,7 +270,6 @@ def add_sidebar_report_export_ui():
         col1, col2 = st.sidebar.columns([1, 1])
         
         with col1:
-            # Download button (browser download)
             st.download_button(
                 label="⬇️ Download",
                 data=json_string,
@@ -397,36 +280,37 @@ def add_sidebar_report_export_ui():
             )
         
         with col2:
-            # Save to folder button (saves to streamlit_output/)
             if st.button("💾 Save Local", help="Save to streamlit_output/ folder", use_container_width=True):
                 try:
-                    # Create output folder if it doesn't exist
                     output_folder = "streamlit_output"
                     os.makedirs(output_folder, exist_ok=True)
                     
-                    # Save to file
                     filepath = os.path.join(output_folder, download_filename)
                     with open(filepath, 'w', encoding='utf-8') as f:
                         f.write(json_string)
                     
-                    # Get file info
                     file_size = os.path.getsize(filepath)
                     file_size_kb = file_size / 1024
                     
-                    # Success message
                     st.sidebar.success(f"✅ Saved to `{filepath}`")
                     st.sidebar.info(f"📦 Size: {file_size_kb:.1f} KB")
                     
                 except Exception as e:
                     st.sidebar.error(f"❌ Save failed: {str(e)}")
         
-        # Show preview of what will be exported
+        # Show preview with pressure_summary status
         preview = exporter.get_export_preview()
         st.sidebar.markdown("---")
         st.sidebar.markdown("**Export includes:**")
         st.sidebar.markdown(f"- {preview['Input Variables']} essential inputs")
         st.sidebar.markdown(f"- {preview['Calculated Results']['CP Results Rows']} CP coefficients")
-        st.sidebar.markdown(f"- {preview['Calculated Results']['Pressure Summary Rows']} pressure results")
+        
+        # Highlight pressure summary status
+        pressure_rows = preview['Calculated Results']['Pressure Summary Rows']
+        if pressure_rows > 0:
+            st.sidebar.markdown(f"- ✅ {pressure_rows} pressure summary rows")
+        else:
+            st.sidebar.markdown(f"- ⚠️ No pressure summary data")
             
     except Exception as e:
         st.sidebar.error(f"❌ Export preparation failed: {str(e)}")
