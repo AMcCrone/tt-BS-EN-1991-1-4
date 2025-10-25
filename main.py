@@ -642,6 +642,7 @@ def peak_pressure_section():
             st, z_minus_h_dis, terrain_category, v_b, rho_air, c_o
         )
 peak_pressure_section()
+store_session_value(st, "qp_value", qp_value)
 
 # Section 5: WIND ZONES
 st.markdown("---")
