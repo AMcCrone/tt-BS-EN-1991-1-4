@@ -88,7 +88,7 @@ class ReportExporter:
         # Wind velocities and pressures
         results["v_mean"] = session_inputs.get("v_mean", 0.0)  # Mean wind velocity
         results["q_b"] = session_inputs.get("q_b", 0.0)  # Basic wind pressure
-        results["q_p"] = session_inputs.get("q_p", 0.0)  # Peak wind pressure
+        results["qp_value"] = session_inputs.get("qp_value", 0.0)  # Peak wind pressure
         
         # External pressure coefficient table (cp_results)
         # Check multiple possible locations
