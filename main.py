@@ -44,6 +44,8 @@ show_educational = st.sidebar.checkbox(
 add_sidebar_upload_ui()
 # Save session data to JSON file
 add_sidebar_save_ui()
+add_sidebar_report_export_ui()
+st.session_state.show_educational = show_educational
 
 # Display company logo
 st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG")
@@ -982,6 +984,3 @@ st.header("Conclusion")
 paragraphs = generate_pressure_summary_paragraphs(st.session_state, results_by_direction)
 for p in paragraphs:
     st.markdown(p)
-
-add_sidebar_report_export_ui()
-st.session_state.show_educational = show_educational
