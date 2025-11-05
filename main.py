@@ -1,3 +1,4 @@
+# Import packages for main.py
 import streamlit as st
 import datetime
 import math
@@ -6,6 +7,8 @@ import openpyxl
 import requests
 from streamlit_folium import st_folium
 from geopy.distance import geodesic
+
+# Import functions from modules
 from auth import authenticate_user
 from calc_engine.uk.terrain import get_terrain_categories as get_uk_terrain
 from calc_engine.eu.terrain import get_terrain_categories as get_eu_terrain
@@ -17,20 +20,18 @@ from educational import text_content
 from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_sidebar_save_ui, add_sidebar_upload_ui
 from calc_engine.report_export import add_sidebar_report_export_ui
 
+# Set authentication from auth.py
 authenticate_user()
 
 # Setup page configuration
-st.set_page_config(
-    page_title="Wind Load Calculator",
-    page_icon="🌪️"
-)
+st.set_page_config(page_title="Wind Load Calculator",page_icon="🌪️")
 
 # Initialize session state
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
-    st.session_state.inputs = {}
-    st.session_state.results = {}
-    st.session_state.show_educational = True
+    st.session_state.inputs = {}                # session state for inputs
+    st.session_state.results = {}               # session state for results
+    st.session_state.show_educational = True    # session state for educational content
 
 # Sidebar with usage instructions and educational content toggle
 st.sidebar.title("Help ℹ️")
@@ -40,10 +41,9 @@ show_educational = st.sidebar.checkbox(
     value=st.session_state.get("show_educational", False)
 )
 
-# Display company logo
+# Display TT logo
 st.image("educational/images/TT_Logo_Colour.png", width=450, output_format="PNG")
 
-# Simple title and subtitle using Streamlit's built-in functions
 st.title("Wind Load Calculator")
 st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
 
@@ -102,20 +102,14 @@ col1, col2 = st.columns(2)
 
 with col1:
     # Project details
-    project_name = st.text_input("Project Name", 
-                          value=st.session_state.inputs.get("project_name", ""))
-    location = st.text_input("Location (City/Country)", 
-                      value=st.session_state.inputs.get("location", ""))
+    project_name = st.text_input("Project Name", value=st.session_state.inputs.get("project_name", ""))
+    location = st.text_input("Location (City/Country)", value=st.session_state.inputs.get("location", ""))
 
 with col2:
     # Project number and region
-    project_number = st.text_input("Project Number", 
-                           value=st.session_state.inputs.get("project_number", ""))
+    project_number = st.text_input("Project Number", value=st.session_state.inputs.get("project_number", ""))
     region_options = ["United Kingdom", "Europe"]
-    region = st.selectbox("Region", 
-                  options=region_options,
-                  index=region_options.index(st.session_state.inputs.get("region", "United Kingdom")) 
-                  if st.session_state.inputs.get("region") in region_options else 0)
+    region = st.selectbox("Region", options=region_options,  index=region_options.index(st.session_state.inputs.get("region", "United Kingdom")) if st.session_state.inputs.get("region") in region_options else 0)
 
 # Save project info inputs to session state
 if project_name:
@@ -138,38 +132,19 @@ if st.session_state.get("show_educational", False):
 st.markdown("---")
 # Section 2: GEOMETRY AND TERRAIN
 st.header("Geometry")
-# Create three equal-width columns for inputs
 col1, col2, col3 = st.columns(3)
 
 # North-South Dimension input
 with col1:
-    NS_dimension = st.number_input(
-        "North-South Dimension (m)",
-        min_value=1.0,
-        max_value=500.0,
-        value=float(st.session_state.inputs.get("NS_dimension", 30.0)),
-        step=1.0
-    )
+    NS_dimension = st.number_input("North-South Dimension (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("NS_dimension", 30.0)), step=1.0)
 
 # East-West Dimension input
 with col2:
-    EW_dimension = st.number_input(
-        "East-West Dimension (m)",
-        min_value=1.0,
-        max_value=500.0,
-        value=float(st.session_state.inputs.get("EW_dimension", 30.0)),
-        step=1.0
-    )
+    EW_dimension = st.number_input("East-West Dimension (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("EW_dimension", 30.0)),step=1.0)
 
 # Building Height input
 with col3:
-    z = st.number_input(
-        "Building Height (m)",
-        min_value=1.0,
-        max_value=500.0,
-        value=float(st.session_state.inputs.get("z", 30.0)),
-        step=1.0
-    )
+    z = st.number_input("Building Height (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("z", 30.0)), step=1.0)
 
 # Save geometry inputs to session state
 st.session_state.inputs["NS_dimension"] = NS_dimension
@@ -177,11 +152,7 @@ st.session_state.inputs["EW_dimension"] = EW_dimension
 st.session_state.inputs["z"] = z
 
 # 3D visualization of the building
-building_fig = create_building_visualisation(
-    NS_dimension,
-    EW_dimension,
-    z
-)
+building_fig = create_building_visualisation(NS_dimension, EW_dimension, z)
 st.plotly_chart(building_fig, use_container_width=True)
 
 st.markdown("---")
@@ -205,33 +176,18 @@ if region == "United Kingdom":
     else:
         col1, col2 = st.columns(2)
         with col1:
-            altitude_factor = st.number_input(
-                "Altitude Above Sea Level (m)",
-                min_value=1.0, max_value=500.0,
-                value=float(st.session_state.inputs.get("altitude_factor", 20.0)),
-                step=1.0
-            )
+            altitude_factor = st.number_input("Altitude Above Sea Level (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("altitude_factor", 20.0)), step=1.0)
             st.session_state.inputs["altitude_factor"] = altitude_factor
         with col2:
-            d_sea = st.number_input(
-                "Distance to Sea (km)",
-                min_value=1.0, max_value=1000.0,
-                value=float(st.session_state.inputs.get("d_sea", 60.0)),
-                step=1.0
-            )
+            d_sea = st.number_input("Distance to Sea (km)", min_value=1.0, max_value=1000.0, value=float(st.session_state.inputs.get("d_sea", 60.0)), step=1.0)
             st.session_state.inputs["d_sea"] = d_sea
 else:
     # Non-UK: only altitude
-    altitude_factor = st.number_input(
-        "Altitude Above Sea Level (m)",
-        min_value=1.0, max_value=500.0,
-        value=float(st.session_state.inputs.get("altitude_factor", 20.0)),
-        step=1.0
-    )
+    altitude_factor = st.number_input("Altitude Above Sea Level (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("altitude_factor", 20.0)), step=1.0)
     st.session_state.inputs["altitude_factor"] = altitude_factor
 
 def render_terrain_category():
-    # Import correct terrain module based on region from session state
+    # Import terrain module based on region from session state
     region = st.session_state.inputs.get("region")
     if region == "United Kingdom":
         from calc_engine.uk import terrain as terrain_module
@@ -253,25 +209,16 @@ def render_terrain_category():
 
     if region == "United Kingdom" and selected_code.lower() == "town":
         d_default = float(st.session_state.inputs.get("d_town_terrain", 5.0))
-        d_town_terrain = st.number_input(
-            "Distance inside Town Terrain (km)",
-            min_value=0.1,
-            max_value=50.0,
-            value=d_default,
-            step=0.1,
-        )
+        d_town_terrain = st.number_input("Distance inside Town Terrain (km)", min_value=0.1, max_value=50.0, value=d_default, step=0.1)
         st.session_state.inputs["d_town_terrain"] = d_town_terrain
 
     if st.session_state.get("show_educational", False):
-        # open a div with your special class
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-        
-        # inside that div, render a normal Streamlit expander
         with st.expander("Which Terrain Type Should I Use?", expanded=False):
             st.image("educational/images/Terrain_Cats.png", caption="Terrain Types")
             st.markdown(f'<div class="educational-content">{text_content.terrain_help}</div>', unsafe_allow_html=True)
-        # close the wrapper div
         st.markdown('</div>', unsafe_allow_html=True)
+# Display the terrain category dropdown list
 render_terrain_category()
 
 # Section 3: WIND VELOCITY
@@ -281,14 +228,7 @@ st.subheader("Basic Wind Velocity $$v_{b}$$")
 
 if region == "United Kingdom":
     # UK calculation - uses V_b,map with altitude correction
-    V_bmap = st.number_input(
-        "$$v_{b,map}$$ (m/s)",
-        min_value=0.1,
-        max_value=100.0,
-        value=float(st.session_state.inputs.get("V_bmap", 21.5)),
-        step=0.1,
-        help="Fundamental wind velocity from Figure 3.2"
-    )
+    V_bmap = st.number_input("$$v_{b,map}$$ (m/s)", min_value=0.1, max_value=100.0, value=float(st.session_state.inputs.get("V_bmap", 21.5)), step=0.1, help="Fundamental wind velocity from Figure 3.2")
     st.session_state.inputs["V_bmap"] = V_bmap
 
     if st.session_state.get("show_educational", False):
@@ -299,16 +239,9 @@ if region == "United Kingdom":
             # two columns: text (wide) on left, image (narrow) on right
             col1, col2 = st.columns([0.7, 0.3])
             with col1:
-                st.markdown(
-                    f'<div class="educational-content">{text_content.basic_wind_help}</div>',
-                    unsafe_allow_html=True
-                )
+                st.markdown(f'<div class="educational-content">{text_content.basic_wind_help}</div>', unsafe_allow_html=True)
             with col2:
-                st.image(
-                    "educational/images/Basic_Wind_Map.png",
-                    caption="Basic Wind Map",
-                    width="stretch"
-                )
+                st.image("educational/images/Basic_Wind_Map.png", caption="Basic Wind Map", width="stretch")
 
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -319,38 +252,14 @@ if region == "United Kingdom":
         # Create three columns for input
         shape_column, exponent_column, period_column = st.columns(3)
         with shape_column:
-            K = st.number_input(
-                "Shape parameter (K)",
-                min_value=0.0,
-                max_value=5.0,
-                value=0.2,
-                step=0.1,
-                help="Typically 0.2 if unspecified."
-            )
+            K = st.number_input("Shape parameter (K)", min_value=0.0, max_value=5.0, value=0.2, step=0.1, help="Typically 0.2 if unspecified.")
         with exponent_column:
-            n = st.number_input(
-                "Exponent (n)",
-                min_value=0.0,
-                max_value=5.0,
-                value=0.5,
-                step=0.1,
-                help="Typically 0.5 if unspecified."
-            )
+            n = st.number_input("Exponent (n)", min_value=0.0, max_value=5.0, value=0.5, step=0.1, help="Typically 0.5 if unspecified.")
         with period_column:
-            return_period = st.number_input(
-                "Return Period (years)",
-                min_value=1,
-                max_value=10000,
-                value=50,
-                step=1,
-                help="Typically 50 years."
-            )
+            return_period = st.number_input("Return Period (years)", min_value=1, max_value=10000, value=50, step=1, help="Typically 50 years.")
         
         # Probability of exceedance
         p = 1.0 / return_period
-        
-        # Equation (4.2):
-        # c_prob = [ (1 - K * ln(-ln(1 - p))) / (1 - K * ln(-ln(0.98))) ]^n
         numerator = 1.0 - K * math.log(-math.log(1.0 - p))
         denominator = 1.0 - K * math.log(-math.log(0.98))
         # Guard against division by zero
@@ -402,14 +311,7 @@ if region == "United Kingdom":
 
 else:
     # EU calculation - uses V_b,0 directly without altitude correction
-    V_b0 = st.number_input(
-        "$v_{b,0}$ (m/s)",
-        min_value=0.1,
-        max_value=100.0,
-        value=float(st.session_state.inputs.get("V_b0", 21.5)),
-        step=0.1,
-        help="Basic wind velocity for EU calculation"
-    )
+    V_b0 = st.number_input("$v_{b,0}$ (m/s)", min_value=0.1, max_value=100.0, value=float(st.session_state.inputs.get("V_b0", 21.5)), step=0.1, help="Basic wind velocity for EU calculation")
     st.session_state.inputs["V_b0"] = V_b0
 
     if st.session_state.get("show_educational", False):
@@ -417,10 +319,7 @@ else:
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
 
         with st.expander("What $v_{b,0}$ Value Should I Use?", expanded=False):
-            st.markdown(
-                '<div class="educational-content">For EU calculations, use the basic wind velocity value directly from the relevant wind map or standards.</div>',
-                unsafe_allow_html=True
-            )
+            st.markdown('<div class="educational-content">For EU calculations, use the basic wind velocity value directly from the relevant wind map or standards.</div>', unsafe_allow_html=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -431,32 +330,11 @@ else:
         # Create three columns for input
         shape_column, exponent_column, period_column = st.columns(3)
         with shape_column:
-            K = st.number_input(
-                "Shape parameter (K)",
-                min_value=0.0,
-                max_value=5.0,
-                value=0.2,
-                step=0.1,
-                help="Typically 0.2 if unspecified."
-            )
+            K = st.number_input("Shape parameter (K)", min_value=0.0, max_value=5.0, value=0.2, step=0.1, help="Typically 0.2 if unspecified.")
         with exponent_column:
-            n = st.number_input(
-                "Exponent (n)",
-                min_value=0.0,
-                max_value=5.0,
-                value=0.5,
-                step=0.1,
-                help="Typically 0.5 if unspecified."
-            )
+            n = st.number_input("Exponent (n)", min_value=0.0, max_value=5.0, value=0.5, step=0.1, help="Typically 0.5 if unspecified.")
         with period_column:
-            return_period = st.number_input(
-                "Return Period (years)",
-                min_value=1,
-                max_value=10000,
-                value=50,
-                step=1,
-                help="Typical is 50 years."
-            )
+            return_period = st.number_input("Return Period (years)", min_value=1, max_value=10000, value=50, step=1, help="Typically 50 years.")
         
         # Probability of exceedance
         p = 1.0 / return_period
