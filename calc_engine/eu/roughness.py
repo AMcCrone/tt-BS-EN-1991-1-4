@@ -20,12 +20,12 @@ def calculate_crz(z, terrain_category):
 
     Equations and definitions:
       For z_min ≤ z ≤ z_max (with z_max = 200 m):
-          c_r(z) = k_t · ln(z / z0)
+          c_r(z) = k_r · ln(z / z0)
       For z < z_min:
           c_r(z) = c_r(z_min)
 
-      The terrain factor k_t is calculated as:
-          k_t = 0.19 · (z0 / z0_II)^0.07
+      The terrain factor k_r is calculated as:
+          k_r = 0.19 · (z0 / z0_II)^0.07
       where the reference roughness length for Terrain Category II is:
           z0_II = 0.05 m
 
@@ -61,17 +61,17 @@ def calculate_crz(z, terrain_category):
     z_min = terrain_params[terrain_category]['z_min']
     z_max = 200.0  # maximum height to which the formula applies
 
-    # Calculate the terrain factor k_t using Equation (4.5)
+    # Calculate the terrain factor k_r using Equation 4.5
     z0_II = 0.05  # roughness length for terrain category II as reference
-    k_t = 0.19 * (z0 / z0_II) ** 0.07
+    k_r = 0.19 * (z0 / z0_II) ** 0.07
 
-    # Calculate c_r(z)
+    # Calculate c_r(z) using Equation 4.4
     if z < z_min:
         # For z below the minimum height, use the value at z_min
-        c_rz = k_t * math.log(z_min / z0)
+        c_rz = k_r * math.log(z_min / z0)
     else:
         # For z between z_min and z_max (and above), use the logarithmic formula.
-        c_rz = k_t * math.log(z / z0)
+        c_rz = k_r * math.log(z / z0)
 
     return c_rz
 
