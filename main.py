@@ -554,60 +554,25 @@ if add_inset:
     c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
 
     with c1:
-        north_offset = st.number_input(
-            "North offset (m)",
-            min_value=0.0,
-            max_value=1000.0,
-            value=float(st.session_state.inputs.get("north_offset", 0.0)),
-            step=0.1,
-            key="ui_north_offset"
-        )
+        north_offset = st.number_input("North offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("north_offset", 0.0)), step=0.1, key="ui_north_offset")
         st.session_state.inputs["north_offset"] = float(north_offset)
 
     with c2:
-        south_offset = st.number_input(
-            "South offset (m)",
-            min_value=0.0,
-            max_value=1000.0,
-            value=float(st.session_state.inputs.get("south_offset", 4.0)),
-            step=0.1,
-            key="ui_south_offset"
-        )
+        south_offset = st.number_input("South offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("south_offset", 4.0)), step=0.1, key="ui_south_offset")
         st.session_state.inputs["south_offset"] = float(south_offset)
 
     with c3:
-        east_offset = st.number_input(
-            "East offset (m)",
-            min_value=0.0,
-            max_value=1000.0,
-            value=float(st.session_state.inputs.get("east_offset", 0.0)),
-            step=0.1,
-            key="ui_east_offset"
-        )
+        east_offset = st.number_input("East offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("east_offset", 0.0)), step=0.1, key="ui_east_offset")
         st.session_state.inputs["east_offset"] = float(east_offset)
 
     with c4:
-        west_offset = st.number_input(
-            "West offset (m)",
-            min_value=0.0,
-            max_value=1000.0,
-            value=float(st.session_state.inputs.get("west_offset", 4.0)),
-            step=0.1,
-            key="ui_west_offset"
-        )
+        west_offset = st.number_input("West offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("west_offset", 4.0)), step=0.1, key="ui_west_offset")
         st.session_state.inputs["west_offset"] = float(west_offset)
 
     # Inset (upper storey) vertical height
     inset_col1, inset_col2 = st.columns([1, 2])
     with inset_col1:
-        inset_height = st.number_input(
-            "Inset height H1 (m)",
-            min_value=0.0,
-            max_value=500.0,
-            value=float(st.session_state.inputs.get("inset_height", 10.0)),
-            step=0.1,
-            key="ui_inset_height"
-        )
+        inset_height = st.number_input("Inset height H1 (m)", min_value=0.0, max_value=500.0, value=float(st.session_state.inputs.get("inset_height", 10.0)), step=0.1, key="ui_inset_height")
         st.session_state.inputs["inset_height"] = float(inset_height)
 
     # Call the visualiser with the stored values
@@ -678,15 +643,7 @@ st.write('### External Pressure Coefficients $$c_{p,e}$$')
 region = st.session_state.inputs.get("region", "United Kingdom")
 
 if region != "United Kingdom":  # Show for EU region
-    loaded_area = st.number_input(
-        "Loaded Area (m²)",
-        min_value=0.1,
-        max_value=100.0,
-        value=10.0,
-        step=0.1,
-        help="Area over which the wind load is applied. Used for interpolating between Cpe,1 and Cpe,10 values.",
-        key="loaded_area_input"
-    )
+    loaded_area = st.number_input("Loaded Area (m²)", min_value=0.1, max_value=100.0, value=10.0, step=0.1, help="Area over which the wind load is applied. Used for interpolating between Cpe,1 and Cpe,10 values.", key="loaded_area_input")
     st.session_state.inputs["loaded_area"] = loaded_area
 
 # Automatically calculate cp,e values with or without funnelling based on checkbox
@@ -703,13 +660,7 @@ EW_dimension = st.session_state.inputs.get("EW_dimension", 40.0)
 # Display results for each elevation using our new function
 elevations = ["North", "East", "South", "West"]
 for elevation in elevations:
-    display_elevation_results(
-        elevation=elevation,
-        cp_results=cp_results_by_elevation,
-        h=h,
-        NS_dimension=NS_dimension,
-        EW_dimension=EW_dimension
-    )
+    display_elevation_results(elevation=elevation, cp_results=cp_results_by_elevation, h=h, NS_dimension=NS_dimension, EW_dimension=EW_dimension)
 
 # Store overall results for later use (combine all directions)
 all_results = []
