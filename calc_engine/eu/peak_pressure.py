@@ -94,6 +94,30 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
     Returns:
         float: The calculated peak velocity pressure
     """
+    # Check for significant orography - display this first
+    is_orography_significant = st.checkbox(
+        "Orography is significant", 
+        value=False,
+        help="Check this if the site has significant topographical features (hills, cliffs, ridges, escarpments)"
+    )
+    
+    # Initialize orography factor
+    c_o = 1.0  # Default value when orography is not significant
+    
+    if is_orography_significant:
+        # Number input for orography factor
+        c_o = st.number_input(
+            "Orography factor $c_o(z)$",
+            min_value=0.0,
+            max_value=5.0,
+            value=get_session_value(st, "c_o", 1.0),
+            step=0.1,
+            format="%.2f",
+            help="Enter the orography factor according to EN 1991-1-4 Annex A.3"
+        )
+        # Store the value in session state
+        store_session_value(st, "c_o", c_o)
+        
     # Calculate basic wind pressure
     q_b = 0.5 * rho_air * (v_b ** 2)
     st.session_state.inputs["q_b"] = q_b
