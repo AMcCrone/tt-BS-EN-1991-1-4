@@ -438,14 +438,14 @@ def wind_velocity_section():
     
     # Calculate mean wind velocity
     v_b = get_session_value(st, "V_b", 0.0)
-    c_oz = get_session_value(st, "c_oz", 1.0)
+    c_o = get_session_value(st, "c_o", 1.0)
     
-    v_mean = v_b * c_rz * c_oz
+    v_mean = v_b * c_rz * c_o
     store_session_value(st, "v_mean", v_mean)
  
     # Display the mean wind velocity result
     st.markdown("#### Mean Wind Velocity $$v_m(z)$$")
-    st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_oz:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
+    st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_o:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
 
 wind_velocity_section()
 
@@ -515,7 +515,7 @@ def peak_pressure_section():
         
         # Get parameters
         terrain_category = get_session_value(st, "terrain_category", "II")
-        c_o = get_session_value(st, "c_oz", 1.0)
+        c_o = get_session_value(st, "c_o", 1.0)
         
         # Calculate EU peak pressure
         qp_value = display_eu_peak_pressure_calculation(
