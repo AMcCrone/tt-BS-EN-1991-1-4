@@ -1140,7 +1140,7 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
         e_dirs = {ent['Direction'] for ent in zone_e_entries}
         e_elevation_text = format_elevations(e_dirs)
         
-        paragraphs.append(f"{inset_phrase} Zone E is present on {e_elevation_text}: {entries_txt}. Note: Zone E is excluded from design value calculations as it typically represents a small localized area.")
+        paragraphs.append(f"{inset_phrase} Zone E is present on {e_elevation_text}: {entries_txt}. Note: Zone E is excluded from design value calculations as it typically represents a small localised area.")
     else:
         if inset_enabled:
             paragraphs.append("Inset zone has been considered. Zone E was not present on any elevation.")
