@@ -113,7 +113,6 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
             value=get_session_value(st, "c_o", 1.0),
             step=0.1,
             format="%.2f",
-            help="Enter the orography factor according to EN 1991-1-4 Annex A.3"
         )
         # Store the value in session state
         store_session_value(st, "c_o", c_o)
