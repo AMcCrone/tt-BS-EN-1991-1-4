@@ -1035,6 +1035,10 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
     """
     Generate human-readable summary paragraphs from the pressure results.
     Returns a list of paragraphs (strings).
+    
+    Note: Zone E is excluded from design value calculations as it typically represents
+    a small localized area that does not govern overall design. Zone E presence is 
+    reported separately for information purposes only.
     """
     summary_data, _, zone_pressures_by_direction = calculate_pressure_data(session_state, results_by_direction)
     summary_df = pd.DataFrame(summary_data)
@@ -1067,8 +1071,11 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
             else:
                 return f"the {', '.join(sorted_elevs)} elevations"
 
+    # Filter out Zone E from design calculations (only consider A, B, C, D)
+    design_df = summary_df[summary_df["Zone"] != "E"].copy()
+
     # -------- Maximum positive wind pressure (pressure is always zone D) --------
-    pos_df = summary_df[summary_df["Net (kPa)"] > 0]
+    pos_df = design_df[design_df["Net (kPa)"] > 0]
     if not pos_df.empty:
         max_pos_val = pos_df["Net (kPa)"].max()
         max_pos_rows = pos_df[pos_df["Net (kPa)"] == max_pos_val]
@@ -1080,7 +1087,7 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
         paragraphs.append("No positive wind pressure (net > 0) was found in the results.")
 
     # -------- Maximum wind suction (most negative) --------
-    neg_df = summary_df[summary_df["Net (kPa)"] < 0]
+    neg_df = design_df[design_df["Net (kPa)"] < 0]
     if not neg_df.empty:
         min_neg_val = neg_df["Net (kPa)"].min()  # most negative
         min_neg_rows = neg_df[neg_df["Net (kPa)"] == min_neg_val]
@@ -1106,11 +1113,11 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
     else:
         paragraphs.append("Funnelling has not been considered.")
 
-    # -------- Inset zone and Zone E presence --------
+    # -------- Inset zone and Zone E presence (informational only) --------
     inset_enabled = (bool(session_state.inputs.get("inset_enabled", False))
                      if hasattr(session_state, "inputs") else bool(session_state.get("inset_enabled", False)))
 
-    # Collect Zone E entries (direction + value)
+    # Collect Zone E entries (direction + value) - for informational purposes only
     zone_e_entries = []
     for direction, zd in zone_pressures_by_direction.items():
         e = zd.get("E")
@@ -1118,7 +1125,7 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
             zone_e_entries.append({
                 "Direction": direction,
                 "Net (kPa)": e.get("net_pressure_kpa"),
-                "cp,e": e.get("cp_e")
+                "cp_e": e.get("cp_e")
             })
 
     if zone_e_entries:
@@ -1133,18 +1140,22 @@ def generate_pressure_summary_paragraphs(session_state, results_by_direction) ->
         e_dirs = {ent['Direction'] for ent in zone_e_entries}
         e_elevation_text = format_elevations(e_dirs)
         
-        paragraphs.append(f"{inset_phrase} Zone E is present on {e_elevation_text}: {entries_txt}.")
+        paragraphs.append(f"{inset_phrase} Zone E is present on {e_elevation_text}: {entries_txt}. Note: Zone E is excluded from design value calculations as it typically represents a small localized area.")
     else:
         if inset_enabled:
             paragraphs.append("Inset zone has been considered. Zone E was not present on any elevation.")
         else:
             paragraphs.append("Inset zone has not been considered. Zone E was not present on any elevation.")
 
-    # -------- Final design recommendation --------
-    # design value = maximum absolute net pressure across all rows (kPa)
-    summary_df["abs_Net"] = summary_df["Net (kPa)"].abs()
-    max_abs_val = summary_df["abs_Net"].max()
-    max_abs_rows = summary_df[summary_df["abs_Net"] == max_abs_val]
+    # -------- Final design recommendation (excluding Zone E) --------
+    # design value = maximum absolute net pressure across zones A, B, C, D only (kPa)
+    if design_df.empty:
+        paragraphs.append("No design value can be recommended because no results are present for Zones A, B, C, or D.")
+        return paragraphs
+    
+    design_df["abs_Net"] = design_df["Net (kPa)"].abs()
+    max_abs_val = design_df["abs_Net"].max()
+    max_abs_rows = design_df[design_df["abs_Net"] == max_abs_val]
 
     # Determine whether driver is pressure or suction (use Net (kPa) sign)
     # If there are multiple driver rows, try to present concisely
