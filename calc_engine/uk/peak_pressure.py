@@ -25,6 +25,20 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
     z = st.session_state.inputs.get("z", 30.0)
     
     if is_orography_significant:
+
+        # Number input for orography factor
+        c_o = st.number_input(
+            "Orography factor $c_o(z)$",
+            min_value=0.0,
+            max_value=5.0,
+            value=get_session_value(st, "c_o", 1.0),
+            step=0.1,
+            format="%.2f",
+            help="Enter the orography factor for the site"
+        )
+        # Store the value in session state
+        store_session_value(st, "c_o", c_o)
+        
         # Get NA.7 - Exposure Factor - Used in calculations for z ≤ 50m
         c_ez = display_contour_plot_with_override(
             st, 
@@ -36,9 +50,6 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             "c_e(z)", 
             "c_ez"
         )
-        
-        # Get orography factor from session state
-        c_oz = get_session_value(st, "c_oz", 1.0)
         
         if z > 50:
             # For z > 50m, we need turbulence intensity
@@ -89,7 +100,7 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             # Calculate peak pressure with different formulas based on height
             if z <= 50:
                 # Calculate with formula for z <= 50 with town correction
-                qp_value = c_ez * c_eT * q_b * ((c_oz + 0.6) / 1.6) ** 2
+                qp_value = c_ez * c_eT * q_b * ((c_o + 0.6) / 1.6) ** 2
                 
                 # Display result with equation
                 st.write(f"z ≤ 50m: $q_p(z) = c_e(z) \\cdot c_{{e,T}} \\cdot q_b \\cdot ((c_o(z) + 0.6) / 1.6)^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
@@ -111,7 +122,7 @@ def calculate_uk_peak_pressure(st, datasets, q_b):
             # For non-town terrain with significant orography
             if z <= 50:
                 # Calculate with formula for z <= 50
-                qp_value = c_ez * q_b * ((c_oz + 0.6) / 1.6) ** 2
+                qp_value = c_ez * q_b * ((c_o + 0.6) / 1.6) ** 2
                 
                 # Display result with equation
                 st.write(f"z ≤ 50m: $q_p(z) = c_e(z) \\cdot q_b \\cdot ((c_o(z) + 0.6) / 1.6)^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
