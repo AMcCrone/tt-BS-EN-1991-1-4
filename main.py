@@ -153,7 +153,7 @@ st.session_state.inputs["z"] = z
 
 # 3D visualization of the building
 building_fig = create_building_visualisation(NS_dimension, EW_dimension, z)
-st.plotly_chart(building_fig, use_container_width=True)
+st.plotly_chart(building_fig, width="stretch")
 
 st.markdown("---")
 st.header("Terrain")
@@ -595,7 +595,7 @@ if add_inset:
     st.session_state["inset_results"] = results
     st.session_state["inset_fig"] = fig
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
         
     # Display styled dataframe
     styled_df = create_styled_inset_dataframe(results)
@@ -683,9 +683,9 @@ if st.session_state.get("show_educational", False):
 # Display wind zone plots (using your existing function)
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
 # Display North-South Elevation
-st.plotly_chart(ns_elevation_fig, use_container_width=True)
+st.plotly_chart(ns_elevation_fig, width="stretch")
 # Display East-West Elevation
-st.plotly_chart(ew_elevation_fig, use_container_width=True)
+st.plotly_chart(ew_elevation_fig, width="stretch")
 
 # Results Summary section
 st.markdown("---")
