@@ -729,5 +729,5 @@ for p in paragraphs:
 add_sidebar_upload_ui()
 # Save session data to JSON file
 add_sidebar_save_ui()
-add_sidebar_report_export_ui()
+# add_sidebar_report_export_ui()
 st.session_state.show_educational = show_educational
