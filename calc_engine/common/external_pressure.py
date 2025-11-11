@@ -435,10 +435,17 @@ def calculate_cpe(consider_funnelling=True):
         if consider_funnelling and e/4 < gap < e:
             has_funnelling = True
             
-            # Define the funnelling peak values
-            max_funnel_cp_A = -1.6
-            max_funnel_cp_B = -0.9
-            max_funnel_cp_C = -0.9
+            # Define the funnelling approach based on region
+            if region == "United Kingdom":
+                # UK: Use fixed maximum values
+                max_funnel_cp_A = -1.6
+                max_funnel_cp_B = -0.9
+                max_funnel_cp_C = -0.9
+            else:
+                # EU: Apply ratios to the base Cpe values
+                max_funnel_cp_A = base_cp_A * (1.6 / 1.2)
+                max_funnel_cp_B = base_cp_B * (0.9 / 0.8)
+                max_funnel_cp_C = base_cp_C * (0.9 / 0.5)
             
             if gap <= e/2:
                 # Interpolate between e/4 and e/2 (increasing effect)
