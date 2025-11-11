@@ -267,37 +267,14 @@ def add_sidebar_report_export_ui():
             safe_name = "".join(c if c.isalnum() or c in (' ', '_', '-') else '_' for c in project_name)
             download_filename = f"{safe_name}_Wind Load Analysis_{timestamp}.json"
         
-        # Create two columns for the buttons
-        col1, col2 = st.sidebar.columns([1, 1])
-        
-        with col1:
-            st.download_button(
-                label="⬇️ Download",
-                data=json_string,
-                file_name=download_filename,
-                mime="application/json",
-                help="Download JSON file to your browser's download folder",
-                use_container_width=True
-            )
-        
-        with col2:
-            if st.button("💾 Save Local", help="Save to streamlit_output/ folder", use_container_width=True):
-                try:
-                    output_folder = "streamlit_output"
-                    os.makedirs(output_folder, exist_ok=True)
-                    
-                    filepath = os.path.join(output_folder, download_filename)
-                    with open(filepath, 'w', encoding='utf-8') as f:
-                        f.write(json_string)
-                    
-                    file_size = os.path.getsize(filepath)
-                    file_size_kb = file_size / 1024
-                    
-                    st.sidebar.success(f"✅ Saved to `{filepath}`")
-                    st.sidebar.info(f"📦 Size: {file_size_kb:.1f} KB")
-                    
-                except Exception as e:
-                    st.sidebar.error(f"❌ Save failed: {str(e)}")
+        st.download_button(
+            label="⬇️ Download",
+            data=json_string,
+            file_name=download_filename,
+            mime="application/json",
+            help="Download JSON file to your browser's download folder",
+            use_container_width=True
+        )
         
         # Show preview with pressure_summary status
         preview = exporter.get_export_preview()
