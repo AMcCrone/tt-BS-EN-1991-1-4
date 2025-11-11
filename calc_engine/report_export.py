@@ -273,7 +273,7 @@ def add_sidebar_report_export_ui():
             file_name=download_filename,
             mime="application/json",
             help="Download JSON file to your browser's download folder",
-            use_container_width=True
+           width="stretch"
         )
         
         # Show preview with pressure_summary status
