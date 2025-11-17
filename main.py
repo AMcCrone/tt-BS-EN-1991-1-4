@@ -36,7 +36,7 @@ if 'initialized' not in st.session_state:
 
 # Sidebar with usage instructions and educational content toggle
 st.sidebar.image("educational/images/TT_Logo_Colour.svg", width=180, output_format="PNG")
-st.sidebar.title("Help ℹ️")
+st.sidebar.title("Options")
 
 show_educational = st.sidebar.checkbox(
     "Show Educational Content", 
