@@ -7,7 +7,8 @@ font="Raleway:https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..
 # default (light) colors
 primaryColor = "#db451d"
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#e7f8f9"
+# secondaryBackgroundColor = "#e7f8f9"
+secondaryBackgroundColor = #e9e8e0
 textColor = "#00303c"
 
 [theme.light]
