@@ -34,10 +34,10 @@ from calc_engine.common.util import get_session_value, store_session_value
 #         </style>
 #         """, unsafe_allow_html=True)
 
+# apply_custom_font()
+
 # Set authentication from auth.py
 authenticate_user()
-
-apply_custom_font()
 
 # Setup page configuration
 st.set_page_config(page_title="Wind Load Calculator",page_icon="🌪️")
