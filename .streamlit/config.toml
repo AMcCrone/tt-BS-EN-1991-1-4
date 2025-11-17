@@ -2,7 +2,7 @@
 [theme]
 # keep the app default base as light
 base = "light"
-font = "sans serif"
+font="Raleway:https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap, sans-serif"
 
 # default (light) colors
 primaryColor = "#db451d"
