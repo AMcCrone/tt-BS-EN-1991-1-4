@@ -8,6 +8,17 @@ def calculate_uk_peak_pressure_no_orography(st, datasets, q_b, d_sea, z_minus_h_
     """Calculate peak pressure when orography is NOT significant.
     
     This follows the 'N' path in the flowchart - simple calculation.
+    
+    Args:
+        st: Streamlit object
+        datasets: Loaded contour data
+        q_b: Basic wind pressure
+        d_sea: Distance from sea
+        z_minus_h_dis: Height above displacement height
+        terrain: Terrain category ("town", "country", or "sea")
+        
+    Returns:
+        float: The calculated peak pressure
     """
     # Get NA.7 - Exposure Factor (always needed)
     c_ez = display_contour_plot_with_override(
@@ -51,23 +62,24 @@ def calculate_uk_peak_pressure_no_orography(st, datasets, q_b, d_sea, z_minus_h_
     return qp_value
 
 
-def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z):
+def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z, c_o):
     """Calculate peak pressure when orography IS significant.
     
     This follows the 'Y' path in the flowchart - more complex calculation.
-    """
-    # Number input for orography factor (from Annex A of EN)
-    c_o = st.number_input(
-        "Orography factor $c_o(z)$",
-        min_value=0.0,
-        max_value=5.0,
-        value=get_session_value(st, "c_o", 1.0),
-        step=0.1,
-        format="%.2f",
-        help="Enter the orography factor for the site (from Annex A of EN 1991-1-4)"
-    )
-    store_session_value(st, "c_o", c_o)
     
+    Args:
+        st: Streamlit object
+        datasets: Loaded contour data
+        q_b: Basic wind pressure
+        d_sea: Distance from sea
+        z_minus_h_dis: Height above displacement height
+        terrain: Terrain category ("town", "country", or "sea")
+        z: Height above ground
+        c_o: Orography factor (already obtained from user in main.py)
+        
+    Returns:
+        float: The calculated peak pressure
+    """
     # Check height to determine which formula to use
     if z <= 50:
         # z ≤ 50m: Use simplified formula with c_e(z)
