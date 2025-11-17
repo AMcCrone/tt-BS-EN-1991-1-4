@@ -1,6 +1,25 @@
+# .streamlit/config.toml
 [theme]
-base="light"
-primaryColor="#db451d"
-backgroundColor="#FFFFFF"
-secondaryBackgroundColor="#e7f8f9"
-textColor="#00303c"
+# keep the app default base as light
+base = "light"
+font = "sans serif"
+
+# default (light) colors
+primaryColor = "#db451d"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#e7f8f9"
+textColor = "#00303c"
+
+# explicit presets for the UI theme switcher (menu → Settings → Theme)
+[theme.light]
+primaryColor = "#db451d"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#e7f8f9"
+textColor = "#00303c"
+
+[theme.dark]
+# primaryColor stays recognisable but choose a slightly lighter tint if needed
+primaryColor = "#ff8a70"
+backgroundColor = "#0b1220"
+secondaryBackgroundColor = "#0f1720"
+textColor = "#e6eef2"
