@@ -43,7 +43,7 @@ show_educational = st.sidebar.checkbox(
     value=st.session_state.get("show_educational", False)
 )
 
-col1, col2, col3 = st.columns([1, 3.4, 1])
+col1, col2, col3 = st.columns([1, 3.5, 1])
 with col2:
     st.image("educational/images/TT_Logo_Colour.svg", width=450)
     st.title("Wind Load Calculator")
