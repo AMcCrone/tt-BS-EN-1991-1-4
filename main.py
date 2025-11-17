@@ -24,6 +24,21 @@ from calc_engine.common.util import get_session_value, store_session_value
 # Set authentication from auth.py
 authenticate_user()
 
+# Add custom CSS to use Raleway font
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Raleway', sans-serif;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Raleway', sans-serif;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # Setup page configuration
 st.set_page_config(page_title="Wind Load Calculator",page_icon="🌪️")
 
