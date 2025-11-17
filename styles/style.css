@@ -1,45 +1,70 @@
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');
+import streamlit as st
 
-html, body, [class*="css"], [class*="st-"], div, span, p, article, section {
-    font-family: 'Raleway', sans-serif !important;
-}
-
-h1, h2, h3, h4, h5, h6 {
-    font-family: 'Raleway', sans-serif !important;
-}
-
-.stMarkdown, .stText, .stCaption {
-    font-family: 'Raleway', sans-serif !important;
-}
-
-.stButton > button {
-    font-family: 'Raleway', sans-serif !important;
-}
-
-.stTextInput > div > div > input,
-.stTextArea > div > div > textarea,
-.stSelectbox > div > div,
-.stMultiSelect > div > div {
-    font-family: 'Raleway', sans-serif !important;
-}
-
-.dataframe, table {
-    font-family: 'Raleway', sans-serif !important;
-}
-
-[data-testid="stSidebar"] * {
-    font-family: 'Raleway', sans-serif !important;
-}
-
-[data-testid="stMetricValue"],
-[data-testid="stMetricLabel"] {
-    font-family: 'Raleway', sans-serif !important;
-}
-
-.material-icons, [class*="Icon"], svg {
-    font-family: 'Material Icons', system-ui !important;
-}
-
-.katex, .katex *, mjx-container, mjx-container *, .stCodeBlock, .stCodeBlock * {
-    font-family: inherit !important;
-}
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');
+    
+    /* Apply Raleway to specific text elements only */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    p, span:not([class*="icon"]):not([class*="Icon"]) {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Streamlit specific text elements */
+    .stMarkdown p, .stMarkdown span, .stText, .stCaption {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Buttons text only */
+    .stButton > button p, .stButton > button span:not([class*="icon"]) {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Input fields text */
+    .stTextInput input,
+    .stTextArea textarea,
+    .stSelectbox label,
+    .stMultiSelect label {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Dataframes */
+    .dataframe {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Sidebar text */
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] p {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"],
+    [data-testid="stMetricLabel"] {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Explicitly preserve all icons and special characters */
+    [class*="icon" i], [class*="Icon" i], 
+    svg, svg *, 
+    [role="img"],
+    .material-icons,
+    span[data-baseweb="icon"] {
+        font-family: inherit !important;
+    }
+    
+    /* Preserve LaTeX, code, and math */
+    .katex, .katex *, 
+    mjx-container, mjx-container *, 
+    .stCodeBlock, .stCodeBlock *,
+    code, pre {
+        font-family: inherit !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
