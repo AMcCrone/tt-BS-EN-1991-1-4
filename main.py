@@ -533,12 +533,10 @@ def peak_pressure_section():
         
         # Branch based on orography significance
         if is_orography_significant:
-            st.info("📊 **Complex calculation path**: Using orography factors and terrain corrections")
             qp_value = calculate_uk_peak_pressure_with_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z
             )
         else:
-            st.info("📊 **Simplified calculation path**: No orography corrections needed")
             qp_value = calculate_uk_peak_pressure_no_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain
             )
