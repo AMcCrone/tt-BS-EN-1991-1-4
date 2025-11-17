@@ -10,7 +10,6 @@ backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#e7f8f9"
 textColor = "#00303c"
 
-# explicit presets for the UI theme switcher (menu → Settings → Theme)
 [theme.light]
 primaryColor = "#db451d"
 backgroundColor = "#FFFFFF"
@@ -18,8 +17,8 @@ secondaryBackgroundColor = "#e7f8f9"
 textColor = "#00303c"
 
 [theme.dark]
-# primaryColor stays recognisable but choose a slightly lighter tint if needed
-primaryColor = "#ff8a70"
+[theme.dark]
+primaryColor = "#ff7a3d"
 backgroundColor = "#0b1220"
-secondaryBackgroundColor = "#0f1720"
-textColor = "#e6eef2"
+secondaryBackgroundColor = "#0f1724"
+textColor = "#E6EEF2"
