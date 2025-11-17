@@ -46,18 +46,8 @@ show_educational = st.sidebar.checkbox(
 col1, col2, col3 = st.columns([1, 4, 1])
 with col2:
     st.image("educational/images/TT_Logo_Colour.svg", width=450)
-
-st.markdown(
-    """
-    <div style="text-align:center; margin-top: 2rem;">
-      <h1 style="margin: .25rem 0 0 .0rem;">Wind Load Calculator</h1>
-      <p style="margin: .25rem 0 0 .0rem; color: #6c6c6c;">
-        Wind Load Calculation to BS EN 1991-1-4 and UK National Annex
-      </p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    st.title("Wind Load Calculator")
+    st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
 
 TT_Grey = "rgb(99,102,105)"
 st.markdown("""
