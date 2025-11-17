@@ -24,17 +24,53 @@ from calc_engine.common.util import get_session_value, store_session_value
 # Set authentication from auth.py
 authenticate_user()
 
-# Add custom CSS to use Raleway font
+# Comprehensive custom CSS to apply Raleway font to all elements
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');
     
-    html, body, [class*="css"] {
-        font-family: 'Raleway', sans-serif;
+    /* Apply to all text elements */
+    html, body, [class*="css"], [class*="st-"], div, span, p, article, section {
+        font-family: 'Raleway', sans-serif !important;
     }
     
+    /* Headers */
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'Raleway', sans-serif;
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Streamlit specific elements */
+    .stMarkdown, .stText, .stCaption, .stCodeBlock {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Input fields */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stSelectbox > div > div,
+    .stMultiSelect > div > div {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Dataframes and tables */
+    .dataframe, table {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] * {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"],
+    [data-testid="stMetricLabel"] {
+        font-family: 'Raleway', sans-serif !important;
     }
     </style>
     """, unsafe_allow_html=True)
