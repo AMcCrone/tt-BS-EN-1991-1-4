@@ -323,7 +323,7 @@ def display_single_plot(st_container, datasets, sheet_name, x_input, y_input):
     
     with col1:
         fig, interpolated_z = create_contour_plot(df, sheet_name, x_input, y_input)
-        st_container.plotly_chart(fig, use_container_width=True)
+        st_container.plotly_chart(fig, width="stretch")
         
     with col2:
         st_container.write(f"X: **{x_input:.1f}** {x_name}")
