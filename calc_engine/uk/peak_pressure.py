@@ -177,12 +177,12 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             # Calculate peak pressure
             qp_base = (1 + 3 * i_vz_corrected) ** 2 * 0.5 * rho * (v_m ** 2)
             
-            st.write(f"z > 50m: $q_p(z)_{{flat}} = (1 + 3 \\cdot I_v(z))^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2$")
-            st.write(f"$q_p(z)_{{flat}} = (1 + 3 \\cdot {i_vz_corrected:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {qp_base:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"z > 50m: $q_p(z) = (1 + 3 \\cdot I_v(z))^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2$")
+            st.write(f"$q_p(z) = (1 + 3 \\cdot {i_vz_corrected:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {qp_base:.2f}\\;\\mathrm{{N/m^2}}$")
             
             # Apply town correction
             qp_value = qp_base * c_eT
-            st.write(f"With town correction: $q_p(z) = q_p(z)_{{flat}} \\cdot c_{{e,T}} = {qp_base:.2f} \\cdot {c_eT:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"With town correction: $q_p(z) = q_p(z) \\cdot c_{{e,T}} = {qp_base:.2f} \\cdot {c_eT:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
         else:
             # Country/Sea: use turbulence intensity directly
             
