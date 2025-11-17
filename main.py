@@ -232,24 +232,19 @@ if region == "United Kingdom":
     st.session_state.inputs["V_bmap"] = V_bmap
 
     if st.session_state.get("show_educational", False):
-        # wrap in your educational-expander container
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-
         with st.expander("What $$v_{b,map}$$ Value Should I Use?", expanded=False):
-            # two columns: text (wide) on left, image (narrow) on right
             col1, col2 = st.columns([0.7, 0.3])
             with col1:
                 st.markdown(f'<div class="educational-content">{text_content.basic_wind_help}</div>', unsafe_allow_html=True)
             with col2:
                 st.image("educational/images/Basic_Wind_Map.png", caption="Basic Wind Map", width="stretch")
-
         st.markdown('</div>', unsafe_allow_html=True)
         
     # Let the user choose whether they want to override standard K, n, return period
     use_custom_values = st.checkbox("Use custom K, n, and return period?")
 
     if use_custom_values:
-        # Create three columns for input
         shape_column, exponent_column, period_column = st.columns(3)
         with shape_column:
             K = st.number_input("Shape parameter (K)", min_value=0.0, max_value=5.0, value=0.2, step=0.1, help="Typically 0.2 if unspecified.")
@@ -258,25 +253,21 @@ if region == "United Kingdom":
         with period_column:
             return_period = st.number_input("Return Period (years)", min_value=1, max_value=10000, value=50, step=1, help="Typically 50 years.")
         
-        # Probability of exceedance
         p = 1.0 / return_period
         numerator = 1.0 - K * math.log(-math.log(1.0 - p))
         denominator = 1.0 - K * math.log(-math.log(0.98))
-        # Guard against division by zero
         if abs(denominator) < 1e-9:
             st.warning("Denominator is close to zero; check K and standard reference. Setting c_prob = 1.")
             c_prob = 1.0
         else:
             c_prob = (numerator / denominator) ** n
     else:
-        # If user doesn't override, c_prob = 1.0
         c_prob = 1.0
 
-    # Display the probability factor
     st.write(f"Probability factor $c_{{prob}}$: {c_prob:.3f}")
 
     altitude_factor = st.session_state.inputs.get("altitude_factor", 20.0)
-    # Altitude correction - display the case and working
+    # Altitude correction
     if z <= 10:
         case = "z ≤ 10m"
         altitude_equation = "c_{alt} = 1 + 0.001 × A"
@@ -304,6 +295,7 @@ if region == "United Kingdom":
     # Basic Wind Speed with c_prob included (UK)
     V_b = V_b0 * c_dir * c_season * c_prob
     st.session_state.inputs["V_b"] = V_b
+    store_session_value(st, "V_b", V_b)
         
     # Display the final result
     st.markdown("**Basic Wind Speed**")
@@ -315,19 +307,14 @@ else:
     st.session_state.inputs["V_b0"] = V_b0
 
     if st.session_state.get("show_educational", False):
-        # wrap in your educational-expander container
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-
         with st.expander("What $v_{b,0}$ Value Should I Use?", expanded=False):
             st.markdown('<div class="educational-content">For EU calculations, use the basic wind velocity value directly from the relevant wind map or standards.</div>', unsafe_allow_html=True)
-
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Let the user choose whether they want to override standard K, n, return period
     use_custom_values = st.checkbox("Use custom K, n, and return period?")
 
     if use_custom_values:
-        # Create three columns for input
         shape_column, exponent_column, period_column = st.columns(3)
         with shape_column:
             K = st.number_input("Shape parameter (K)", min_value=0.0, max_value=5.0, value=0.2, step=0.1, help="Typically 0.2 if unspecified.")
@@ -336,138 +323,76 @@ else:
         with period_column:
             return_period = st.number_input("Return Period (years)", min_value=1, max_value=10000, value=50, step=1, help="Typically 50 years.")
         
-        # Probability of exceedance
         p = 1.0 / return_period
-        
-        # Equation (4.2):
-        # c_prob = [ (1 - K * ln(-ln(1 - p))) / (1 - K * ln(-ln(0.98))) ]^n
         numerator = 1.0 - K * math.log(-math.log(1.0 - p))
         denominator = 1.0 - K * math.log(-math.log(0.98))
-        # Guard against division by zero
         if abs(denominator) < 1e-9:
             st.warning("Denominator is close to zero; check K and standard reference. Setting c_prob = 1.")
             c_prob = 1.0
         else:
             c_prob = (numerator / denominator) ** n
     else:
-        # If user doesn't override, c_prob = 1.0
         c_prob = 1.0
 
-    # Display the probability factor
     st.write(f"Probability factor $c_{{prob}}$: {c_prob:.3f}")
     
-    # Directional & seasonal factors
     c_dir = 1.0
     c_season = 1.0
     st.write(f"Directional factor $c_{{dir}}$: {c_dir}")
     st.write(f"Seasonal factor $c_{{season}}$: {c_season}")
     
-    # Basic Wind Speed (EU - no altitude correction, but includes probability factor)
     V_b = c_dir * c_season * c_prob * V_b0
     st.session_state.inputs["V_b"] = V_b
+    store_session_value(st, "V_b", V_b)
     
-    # Display the final result
     st.markdown("**Basic Wind Speed**")
     st.latex(f"V_b = c_{{dir}} × c_{{season}} × c_{{prob}} × V_{{b,0}} = {V_b:.2f}\\; m/s")
 
-# Import needed modules
+# ============================================================================
+# DISPLACEMENT HEIGHT - Always needed for both UK and EU
+# ============================================================================
 from calc_engine.common.displacement import calculate_displacement_height, display_displacement_results
 from calc_engine.common.util import get_session_value, store_session_value
 
-def wind_velocity_section():
-    """Display the Mean Wind Velocity section."""
-    st.subheader("Mean Wind Velocity $$v_{m}$$")
-    
-    # Calculate displacement height
-    h_dis = calculate_displacement_height(st)
-    display_displacement_results(st, h_dis)
-    store_session_value(st, "h_dis", h_dis)
-    
-    # Educational text on h_dis calculation
-    if st.session_state.get("show_educational", False):
-        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-    
-        with st.expander("What Is All $$h_{dis}$$ About?", expanded=False):
-            st.image("educational/images/h_dis_diagram.png", width="stretch")
-            st.markdown(f'<div class="educational-content">{text_content.h_dis_help}</div>', unsafe_allow_html=True)
-    
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Check the region selection
-    region = get_session_value(st, "region")
-    z_minus_h_dis = get_session_value(st, "z_minus_h_dis")
-    
-    # Calculate roughness factor based on region
-    if region == "United Kingdom":
-        st.markdown("#### Roughness Factor $C_r(z)$")
-        
-        # Import the UK contour plot functions
-        from calc_engine.uk.contour_plots import load_contour_data
-        from calc_engine.uk.roughness import calculate_uk_roughness
-        
-        # Load the contour data
-        contour_data_path = "calc_engine/uk/contour_data.xlsx"
-        datasets = load_contour_data(contour_data_path)
-        
-        # Calculate UK roughness factor
-        c_rz = calculate_uk_roughness(st, datasets)
-        
-        # Get terrain type for UK calculation
-        terrain_type = get_session_value(st, "terrain_type", "")
-        
-        # Initialize terrain factor
-        c_rT = 1.0
-        
-        # Check if terrain is "Town" for UK region
-        if terrain_type == "Town":
-            # Get the terrain factor c_rT from session state or use default 1.0
-            c_rT = get_session_value(st, "c_rT", 1.0)
-            store_session_value(st, "c_rT", c_rT)
-    else:
-        # Use EU roughness calculation
-        from calc_engine.eu.roughness import display_eu_roughness_calculation
-        
-        # Get terrain category from session state
-        terrain_category = get_session_value(st, "terrain_category", "II")
-        
-        # Calculate and display EU roughness factor
-        c_rz = display_eu_roughness_calculation(st, z_minus_h_dis, terrain_category)
-        
-        # No terrain factor for EU calculation
-        c_rT = 1.0
-    
-    # Calculate mean wind velocity
-    v_b = get_session_value(st, "V_b", 0.0)
-    c_o = get_session_value(st, "c_o", 1.0)
-    
-    v_mean = v_b * c_rz * c_o
-    store_session_value(st, "v_mean", v_mean)
- 
-    # Display the mean wind velocity result
-    st.markdown("#### Mean Wind Velocity $$v_m(z)$$")
-    st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_o:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
+st.markdown("---")
+st.subheader("Displacement Height $$h_{dis}$$")
 
-wind_velocity_section()
+# Calculate displacement height
+h_dis = calculate_displacement_height(st)
+display_displacement_results(st, h_dis)
+store_session_value(st, "h_dis", h_dis)
+
+# Educational text on h_dis calculation
+if st.session_state.get("show_educational", False):
+    st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+    with st.expander("What Is All $$h_{dis}$$ About?", expanded=False):
+        st.image("educational/images/h_dis_diagram.png", width="stretch")
+        st.markdown(f'<div class="educational-content">{text_content.h_dis_help}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ============================================================================
+# PEAK WIND PRESSURE SECTION - Main calculation logic
+# ============================================================================
 
 def peak_pressure_section():
+    st.markdown("---")
     st.header("Peak Wind Pressure $$q_{p}$$")
 
-    # --- read region from session (default to "United Kingdom" if not set) ---
+    # Get region
     region = get_session_value(st, "region", "United Kingdom")
 
-    # --- determine region-specific default rho ---
+    # Determine region-specific default rho
     default_rho = 1.226 if region == "United Kingdom" else 1.25
 
-    # --- if the user changed region since last run, reset rho_air to the region default ---
+    # If the user changed region since last run, reset rho_air to the region default
     last_region = get_session_value(st, "last_region", None)
     if last_region != region:
         store_session_value(st, "rho_air", float(default_rho))
         store_session_value(st, "last_region", region)
 
-    # --- now get the current rho_air (either previously stored or the default we just set) ---
     initial_rho = get_session_value(st, "rho_air", float(default_rho))
 
-    # Air density input (shows region-appropriate default; user can override)
+    # Air density input
     rho_air = st.number_input(
         "Air Density (kg/m³)",
         min_value=1.0,
@@ -476,8 +401,6 @@ def peak_pressure_section():
         step=0.001,
         format="%.3f"
     )
-
-    # store the (possibly user-edited) value back to session
     store_session_value(st, "rho_air", float(rho_air))
     
     # Basic wind pressure calculation
@@ -487,26 +410,21 @@ def peak_pressure_section():
     
     st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdot {rho_air:.3f} \\cdot {v_b:.2f}^2 = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
     
-    # --- CRITICAL DECISION POINT: Is orography significant? ---
-    # This should come RIGHT AFTER q_b calculation per the flowchart
-    
-    # Get region to determine which calculation path to use
-    region = get_session_value(st, "region")
-    
+    # ========================================================================
+    # UK CALCULATION PATH
+    # ========================================================================
     if region == "United Kingdom":
         st.markdown("---")
-        st.subheader("Peak Velocity Pressure Calculation")
         
         # Educational text on Orography Significance
         if st.session_state.get("show_educational", False):
             st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-        
             with st.expander("Is Orography Significant?", expanded=False):
                 st.image("educational/images/Orography_Diagram.png", width="stretch")
                 st.markdown(f'<div class="educational-content">{text_content.orography_help}</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
         
-        # OROGRAPHY CHECKBOX - Ask early per flowchart
+        # CRITICAL DECISION POINT: Is orography significant?
         is_orography_significant = st.checkbox(
             "Orography is significant", 
             value=get_session_value(st, "is_orography_significant", False),
@@ -531,42 +449,136 @@ def peak_pressure_section():
         terrain = get_session_value(st, "terrain_category", "").lower()
         z = st.session_state.inputs.get("z", 30.0)
         
-        # Branch based on orography significance
+        # ====================================================================
+        # PATH 1: OROGRAPHY IS SIGNIFICANT
+        # ====================================================================
         if is_orography_significant:
+            st.info("📊 **Complex calculation path**: Using orography factors and terrain corrections")
+            
+            # Get orography factor from Annex A
+            c_o = st.number_input(
+                "Orography factor $c_o(z)$",
+                min_value=0.0,
+                max_value=5.0,
+                value=get_session_value(st, "c_o", 1.0),
+                step=0.1,
+                format="%.2f",
+                help="Enter the orography factor for the site (from Annex A of EN 1991-1-4)"
+            )
+            store_session_value(st, "c_o", c_o)
+            
+            # Check if we need mean wind velocity (only for z > 50m)
+            if z > 50:
+                st.markdown("---")
+                st.subheader("Mean Wind Velocity $$v_{m}$$")
+                st.info("ℹ️ Mean wind velocity is required for z > 50m with significant orography")
+                
+                # Calculate roughness factor for UK
+                st.markdown("#### Roughness Factor $C_r(z)$")
+                
+                from calc_engine.uk.roughness import calculate_uk_roughness
+                
+                # Calculate UK roughness factor
+                c_rz = calculate_uk_roughness(st, datasets)
+                
+                # Get terrain type for UK calculation
+                terrain_type = get_session_value(st, "terrain_type", "")
+                
+                # Initialize terrain factor
+                c_rT = 1.0
+                
+                # Check if terrain is "Town" for UK region
+                if terrain_type == "Town":
+                    c_rT = get_session_value(st, "c_rT", 1.0)
+                    store_session_value(st, "c_rT", c_rT)
+                
+                # Calculate mean wind velocity
+                v_mean = v_b * c_rz * c_o
+                store_session_value(st, "v_mean", v_mean)
+                
+                # Display the mean wind velocity result
+                st.markdown("#### Mean Wind Velocity $$v_m(z)$$")
+                st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.3f} \\cdot {c_o:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
+            else:
+                # For z ≤ 50m, we don't need v_m, but store a placeholder
+                store_session_value(st, "v_mean", 0.0)
+            
+            # Now calculate peak pressure with orography
+            st.markdown("---")
+            st.subheader("Peak Velocity Pressure $$q_p(z)$$")
+            
             qp_value = calculate_uk_peak_pressure_with_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z
             )
+            store_session_value(st, "qp_value", qp_value)
+        
+        # ====================================================================
+        # PATH 2: OROGRAPHY IS NOT SIGNIFICANT
+        # ====================================================================
         else:
+            st.info("📊 **Simplified calculation path**: No orography corrections needed")
+            
+            # Set c_o to 1.0 for consistency (not used in calculation)
+            store_session_value(st, "c_o", 1.0)
+            
+            # No mean wind velocity needed - go straight to peak pressure
+            store_session_value(st, "v_mean", 0.0)
+            
+            st.markdown("---")
+            st.subheader("Peak Velocity Pressure $$q_p(z)$$")
+            
             qp_value = calculate_uk_peak_pressure_no_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain
             )
-        
-        # Store the result
-        store_session_value(st, "qp_value", qp_value)
-        
+            store_session_value(st, "qp_value", qp_value)
+    
+    # ========================================================================
+    # EU CALCULATION PATH - Keep existing logic
+    # ========================================================================
     else:
-        # EU calculation - unchanged
-        from calc_engine.eu.peak_pressure import display_eu_peak_pressure_calculation
+        # EU always calculates mean wind velocity
+        st.markdown("---")
+        st.subheader("Mean Wind Velocity $$v_{m}$$")
         
-        # Educational text on Orography Significance (EU version if you have it)
+        from calc_engine.eu.roughness import display_eu_roughness_calculation
+        
+        z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
+        terrain_category = get_session_value(st, "terrain_category", "II")
+        
+        # Calculate and display EU roughness factor
+        c_rz = display_eu_roughness_calculation(st, z_minus_h_dis, terrain_category)
+        
+        # Get orography factor
+        c_o = get_session_value(st, "c_o", 1.0)
+        
+        # Calculate mean wind velocity
+        v_mean = v_b * c_rz * c_o
+        store_session_value(st, "v_mean", v_mean)
+        
+        # Display the mean wind velocity result
+        st.markdown("#### Mean Wind Velocity $$v_m(z)$$")
+        st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.2f} \\cdot {c_o:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
+        
+        # Educational text on Orography Significance (EU version)
         if st.session_state.get("show_educational", False):
             st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-        
             with st.expander("Is Orography Significant?", expanded=False):
                 st.image("educational/images/Orography_Diagram.png", width="stretch")
                 st.markdown(f'<div class="educational-content">{text_content.orography_help}</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
         
-        # Get parameters
-        z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
-        terrain_category = get_session_value(st, "terrain_category", "II")
-        c_o = get_session_value(st, "c_o", 1.0)
-        
         # Calculate EU peak pressure
+        st.markdown("---")
+        st.subheader("Peak Velocity Pressure $$q_p(z)$$")
+        
+        from calc_engine.eu.peak_pressure import display_eu_peak_pressure_calculation
+        
         qp_value = display_eu_peak_pressure_calculation(
             st, z_minus_h_dis, terrain_category, v_b, rho_air, c_o
         )
         store_session_value(st, "qp_value", qp_value)
+
+# Call the peak pressure section
 peak_pressure_section()
 
 # Section 5: WIND ZONES
