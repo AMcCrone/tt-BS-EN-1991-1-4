@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');
+
+html, body, [class*="css"], [class*="st-"], div, span, p, article, section {
+    font-family: 'Raleway', sans-serif !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Raleway', sans-serif !important;
+}
+
+.stMarkdown, .stText, .stCaption {
+    font-family: 'Raleway', sans-serif !important;
+}
+
+.stButton > button {
+    font-family: 'Raleway', sans-serif !important;
+}
+
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea,
+.stSelectbox > div > div,
+.stMultiSelect > div > div {
+    font-family: 'Raleway', sans-serif !important;
+}
+
+.dataframe, table {
+    font-family: 'Raleway', sans-serif !important;
+}
+
+[data-testid="stSidebar"] * {
+    font-family: 'Raleway', sans-serif !important;
+}
+
+[data-testid="stMetricValue"],
+[data-testid="stMetricLabel"] {
+    font-family: 'Raleway', sans-serif !important;
+}
+
+.material-icons, [class*="Icon"], svg {
+    font-family: 'Material Icons', system-ui !important;
+}
+
+.katex, .katex *, mjx-container, mjx-container *, .stCodeBlock, .stCodeBlock * {
+    font-family: inherit !important;
+}
