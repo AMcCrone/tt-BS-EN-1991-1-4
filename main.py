@@ -35,15 +35,15 @@ if 'initialized' not in st.session_state:
     st.session_state.show_educational = True    # session state for educational content
 
 # Sidebar with usage instructions and educational content toggle
-st.sidebar.title("Help ℹ️")
 st.sidebar.image("educational/images/TT_Logo_Colour.svg", width=180, output_format="PNG")
+st.sidebar.title("Help ℹ️")
 
 show_educational = st.sidebar.checkbox(
     "Show Educational Content", 
     value=st.session_state.get("show_educational", False)
 )
 
-col1, col2, col3 = st.columns([1, 3.6, 1])
+col1, col2, col3 = st.columns([1, 3.7, 1])
 with col2:
     st.image("educational/images/TT_Logo_Colour.svg", width=450)
     st.title("Wind Load Calculator")
