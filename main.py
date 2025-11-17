@@ -98,7 +98,7 @@ if st.session_state.get("show_educational", False):
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Section 1: Project Information
-st.header("Project Information")
+st.subheader("Project Information")
 col1, col2 = st.columns(2)
 
 with col1:
@@ -132,7 +132,7 @@ if st.session_state.get("show_educational", False):
 # Divider between sections
 st.markdown("---")
 # Section 2: GEOMETRY AND TERRAIN
-st.header("Geometry")
+st.subheader("Geometry")
 col1, col2, col3 = st.columns(3)
 
 # North-South Dimension input
@@ -157,7 +157,7 @@ building_fig = create_building_visualisation(NS_dimension, EW_dimension, z)
 st.plotly_chart(building_fig, width="stretch")
 
 st.markdown("---")
-st.header("Terrain")
+st.subheader("Terrain")
 
 # Init session defaults
 if "markers" not in st.session_state:
@@ -579,7 +579,7 @@ peak_pressure_section()
 
 # Section 5: WIND ZONES
 st.markdown("---")
-st.header("Wind Zones")
+st.subheader("Wind Zones")
 
 st.write("#### Inset Storey")
 
@@ -743,7 +743,7 @@ st.plotly_chart(ew_elevation_fig, width="stretch")
 # Results Summary section
 st.markdown("---")
 st.markdown('<div class="pagebreak"></div>', unsafe_allow_html=True)
-st.header("Net Pressures")
+st.subheader("Net Pressures")
 # Educational text on Wind Pressure Profile
 if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
@@ -765,14 +765,14 @@ st.dataframe(summary_df, hide_index=True, height=35*len(summary_df)+38)
 for direction, fig in elevation_figures.items():
     st.plotly_chart(fig)
 if st.session_state.get("show_educational", False):
-    st.header("3D Wind Visualization") 
+    st.subheader("3D Wind Visualization") 
     # Call the create_wind_visualization_ui function
     from calc_engine.common.pressure_summary import create_wind_visualization_ui
     create_wind_visualization_ui(st.session_state, results_by_direction)
 
 # Results Summary section
 st.markdown("---")
-st.header("Conclusion")
+st.subheader("Conclusion")
 
 paragraphs = generate_pressure_summary_paragraphs(st.session_state, results_by_direction)
 for p in paragraphs:
