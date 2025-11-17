@@ -42,11 +42,11 @@ show_educational = st.sidebar.checkbox(
     value=st.session_state.get("show_educational", False)
 )
 
-# Display TT logo
-st.image("educational/images/TT_Logo_Colour.svg", width=450, output_format="PNG")
-
-st.title("Wind Load Calculator")
-st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image("educational/images/TT_Logo_Colour.svg", width=450)
+    st.title("Wind Load Calculator")
+    st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
 
 TT_Grey = "rgb(99,102,105)"
 st.markdown("""
