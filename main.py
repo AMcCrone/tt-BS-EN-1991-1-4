@@ -365,7 +365,7 @@ store_session_value(st, "h_dis", h_dis)
 # Educational text on h_dis calculation
 if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-    with st.expander("What Is All $$h_{dis}$$ About?", expanded=False):
+    with st.expander("What Is $$h_{dis}$$ All About?", expanded=False):
         st.image("educational/images/h_dis_diagram.png", width="stretch")
         st.markdown(f'<div class="educational-content">{text_content.h_dis_help}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
