@@ -453,9 +453,7 @@ def peak_pressure_section():
         # ====================================================================
         # PATH 1: OROGRAPHY IS SIGNIFICANT
         # ====================================================================
-        if is_orography_significant:
-            st.info("📊 **Complex calculation path**: Using orography factors and terrain corrections")
-            
+        if is_orography_significant:           
             # Get orography factor from Annex A
             c_o = st.number_input(
                 "Orography factor $c_o(z)$",
@@ -472,7 +470,6 @@ def peak_pressure_section():
             if z > 50:
                 st.markdown("---")
                 st.subheader("Mean Wind Velocity $$v_{m}$$")
-                st.info("ℹ️ Mean wind velocity is required for z > 50m with significant orography")
                 
                 # Calculate roughness factor for UK
                 st.markdown("#### Roughness Factor $C_r(z)$")
@@ -506,10 +503,10 @@ def peak_pressure_section():
             
             # Now calculate peak pressure with orography
             st.markdown("---")
-            st.subheader("Peak Velocity Pressure $$q_p(z)$$")
+            st.subheader("Peak Velocity Pressure $q_p(z)$")
             
             qp_value = calculate_uk_peak_pressure_with_orography(
-                st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z
+                st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z, c_o
             )
             store_session_value(st, "qp_value", qp_value)
         
@@ -517,8 +514,7 @@ def peak_pressure_section():
         # PATH 2: OROGRAPHY IS NOT SIGNIFICANT
         # ====================================================================
         else:
-            st.info("📊 **Simplified calculation path**: No orography corrections needed")
-            
+           
             # Set c_o to 1.0 for consistency (not used in calculation)
             store_session_value(st, "c_o", 1.0)
             
