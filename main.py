@@ -486,34 +486,81 @@ def peak_pressure_section():
     store_session_value(st, "q_b", q_b)
     
     st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdot {rho_air:.3f} \\cdot {v_b:.2f}^2 = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
-    # Educational text on Orography Significance
-    if st.session_state.get("show_educational", False):
-        st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
     
-        with st.expander("Is Orography Significant?", expanded=False):
-            st.image("educational/images/Orography_Diagram.png", width="stretch")
-            st.markdown(f'<div class="educational-content">{text_content.orography_help}</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    # --- CRITICAL DECISION POINT: Is orography significant? ---
+    # This should come RIGHT AFTER q_b calculation per the flowchart
     
-    # Check the region selection for peak pressure calculation
+    # Get region to determine which calculation path to use
     region = get_session_value(st, "region")
-    z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
     
     if region == "United Kingdom":
+        st.markdown("---")
+        st.subheader("Peak Velocity Pressure Calculation")
+        
+        # Educational text on Orography Significance
+        if st.session_state.get("show_educational", False):
+            st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+        
+            with st.expander("Is Orography Significant?", expanded=False):
+                st.image("educational/images/Orography_Diagram.png", width="stretch")
+                st.markdown(f'<div class="educational-content">{text_content.orography_help}</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        # OROGRAPHY CHECKBOX - Ask early per flowchart
+        is_orography_significant = st.checkbox(
+            "Orography is significant", 
+            value=get_session_value(st, "is_orography_significant", False),
+            help="Check if the site has significant terrain features (hills, cliffs, ridges) per Figure NA.2"
+        )
+        store_session_value(st, "is_orography_significant", is_orography_significant)
+        
+        # Get common parameters
         from calc_engine.uk.contour_plots import load_contour_data
-        from calc_engine.uk.peak_pressure import calculate_uk_peak_pressure
+        from calc_engine.uk.peak_pressure import (
+            calculate_uk_peak_pressure_no_orography,
+            calculate_uk_peak_pressure_with_orography
+        )
         
         # Load the contour data
         contour_data_path = "calc_engine/uk/contour_data.xlsx"
         datasets = load_contour_data(contour_data_path)
         
-        # Calculate UK peak pressure
-        qp_value = calculate_uk_peak_pressure(st, datasets, q_b)
+        # Get parameters from session state
+        d_sea = get_session_value(st, "d_sea", 60.0)
+        z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
+        terrain = get_session_value(st, "terrain_category", "").lower()
+        z = st.session_state.inputs.get("z", 30.0)
+        
+        # Branch based on orography significance
+        if is_orography_significant:
+            st.info("📊 **Complex calculation path**: Using orography factors and terrain corrections")
+            qp_value = calculate_uk_peak_pressure_with_orography(
+                st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z
+            )
+        else:
+            st.info("📊 **Simplified calculation path**: No orography corrections needed")
+            qp_value = calculate_uk_peak_pressure_no_orography(
+                st, datasets, q_b, d_sea, z_minus_h_dis, terrain
+            )
+        
+        # Store the result
         store_session_value(st, "qp_value", qp_value)
+        
     else:
+        # EU calculation - unchanged
         from calc_engine.eu.peak_pressure import display_eu_peak_pressure_calculation
         
+        # Educational text on Orography Significance (EU version if you have it)
+        if st.session_state.get("show_educational", False):
+            st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
+        
+            with st.expander("Is Orography Significant?", expanded=False):
+                st.image("educational/images/Orography_Diagram.png", width="stretch")
+                st.markdown(f'<div class="educational-content">{text_content.orography_help}</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        
         # Get parameters
+        z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
         terrain_category = get_session_value(st, "terrain_category", "II")
         c_o = get_session_value(st, "c_o", 1.0)
         
