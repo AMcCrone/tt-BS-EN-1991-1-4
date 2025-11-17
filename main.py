@@ -21,18 +21,18 @@ from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_sidebar_
 from calc_engine.report_export import add_sidebar_report_export_ui
 from calc_engine.common.util import get_session_value, store_session_value
 
-def apply_custom_font():
-    st.markdown("""
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');
+# def apply_custom_font():
+#     st.markdown("""
+#         <style>
+#         @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');
         
-        /* All your CSS here */
-        html, body, [class*="css"], [class*="st-"], div, span, p, article, section {
-            font-family: 'Raleway', sans-serif !important;
-        }
-        /* ... rest of CSS ... */
-        </style>
-        """, unsafe_allow_html=True)
+#         /* All your CSS here */
+#         html, body, [class*="css"], [class*="st-"], div, span, p, article, section {
+#             font-family: 'Raleway', sans-serif !important;
+#         }
+#         /* ... rest of CSS ... */
+#         </style>
+#         """, unsafe_allow_html=True)
 
 # Set authentication from auth.py
 authenticate_user()
