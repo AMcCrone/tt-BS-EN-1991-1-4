@@ -224,7 +224,6 @@ render_terrain_category()
 
 # Section 3: WIND VELOCITY
 st.markdown("---")
-st.header("Wind Velocity")
 st.subheader("Basic Wind Velocity $$v_{b}$$")
 
 if region == "United Kingdom":
@@ -377,7 +376,7 @@ if st.session_state.get("show_educational", False):
 
 def peak_pressure_section():
     st.markdown("---")
-    st.header("Peak Wind Pressure $$q_{p}$$")
+    st.subheader("Basic Wind Pressure $$q_{b}$$")
 
     # Get region
     region = get_session_value(st, "region", "United Kingdom")
@@ -503,7 +502,7 @@ def peak_pressure_section():
             
             # Now calculate peak pressure with orography
             st.markdown("---")
-            st.subheader("Peak Velocity Pressure $q_p(z)$")
+            st.subheader("Peak Velocity Pressure $q_p$")
             
             qp_value = calculate_uk_peak_pressure_with_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z, c_o
