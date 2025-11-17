@@ -19,6 +19,7 @@ from visualisation.map import render_map_with_markers, get_elevation, compute_di
 from educational import text_content
 from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_sidebar_save_ui, add_sidebar_upload_ui
 from calc_engine.report_export import add_sidebar_report_export_ui
+from calc_engine.common.util import get_session_value, store_session_value
 
 # Set authentication from auth.py
 authenticate_user()
