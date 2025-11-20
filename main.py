@@ -773,7 +773,7 @@ if st.session_state.get("show_educational", False):
 
 # Results Summary section
 st.markdown("---")
-st.subheader("Conclusion")
+st.subheader("Summary")
 
 paragraphs = generate_pressure_summary_paragraphs(st.session_state, results_by_direction)
 for p in paragraphs:
