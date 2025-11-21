@@ -158,25 +158,29 @@ class WindLoadReport:
         canvas.setFont(self.font_regular, 8)
         canvas.setFillColor(colors.grey)
         
-        # Try to add logo
-        logo_path = "images/TT_Logo_Colour.svg"
-        if os.path.exists(logo_path):
-            try:
-                from svglib.svglib import svg2rlg
-                from reportlab.graphics import renderPDF
-                
-                logo = svg2rlg(logo_path)
-                if logo:
-                    scale = 0.15
-                    logo.width *= scale
-                    logo.height *= scale
-                    logo.scale(scale, scale)
-                    renderPDF.draw(logo, canvas, self.left_margin, 22)
-                else:
-                    canvas.drawString(self.left_margin, 30, "Thornton Tomasetti")
-            except:
-                canvas.drawString(self.left_margin, 30, "Thornton Tomasetti")
-        else:
+        # Try to add logo - prefer PNG/JPG over SVG
+        logo_added = False
+        
+        # Try PNG first (most compatible)
+        for logo_path in ["educational/images/TT_Logo_Colour.png", 
+                          "images/TT_Logo_Colour.png"]:
+            if os.path.exists(logo_path):
+                try:
+                    from reportlab.platypus import Image as RLImage
+                    # Add logo with appropriate sizing
+                    logo_height = 15  # mm - adjust as needed
+                    logo = RLImage(logo_path, height=logo_height*mm)
+                    # Maintain aspect ratio
+                    logo.drawHeight = logo_height * mm
+                    logo.drawWidth = logo.imageWidth * (logo_height * mm / logo.imageHeight)
+                    logo.drawOn(canvas, self.left_margin, 20)
+                    logo_added = True
+                    break
+                except Exception as e:
+                    print(f"Warning: Could not add logo from {logo_path}: {e}")
+        
+        # Fallback to text if no logo found
+        if not logo_added:
             canvas.drawString(self.left_margin, 30, "Thornton Tomasetti")
         
         canvas.drawCentredString(self.page_width / 2, 30, f"Page {doc.page}")
