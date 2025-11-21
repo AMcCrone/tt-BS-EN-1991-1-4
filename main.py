@@ -690,6 +690,12 @@ if st.session_state.get("show_educational", False):
 if consider_funnelling == True:
     north_gap, south_gap, east_gap, west_gap = display_funnelling_inputs()
 
+    # Store gap values in session state
+    st.session_state.inputs["north_gap"] = float(north_gap)
+    st.session_state.inputs["south_gap"] = float(south_gap)
+    st.session_state.inputs["east_gap"] = float(east_gap)
+    st.session_state.inputs["west_gap"] = float(west_gap)
+
 st.markdown("---")
 st.write('### External Pressure Coefficients $$c_{p,e}$$')
 
