@@ -650,6 +650,9 @@ if add_inset:
     st.session_state["inset_results"] = results
     st.session_state["inset_fig"] = fig
 
+    # Store inset results in inputs for export
+    st.session_state.inputs["inset_results"] = results
+
     st.plotly_chart(fig, width="stretch")
         
     # Display styled dataframe
