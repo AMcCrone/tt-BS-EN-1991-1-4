@@ -70,10 +70,29 @@ class ReportExporter:
         # Wind parameters
         inputs["V_bmap"] = session_inputs.get("V_bmap", 0.0)  # Basic wind speed
         inputs["V_b"] = session_inputs.get("V_b", 0.0)  # Adjusted basic wind speed
-
+        
         # Funnelling and Inset Zone
-        inputs["inset_enabled"] = session_inputs.get("inset_enabled", False)
         inputs["consider_funnelling"] = session_inputs.get("consider_funnelling", False)
+        inputs["inset_enabled"] = session_inputs.get("inset_enabled", False)
+        
+        # Funnelling gap data
+        if inputs["consider_funnelling"]:
+            inputs["north_gap"] = session_inputs.get("north_gap", 0.0)
+            inputs["south_gap"] = session_inputs.get("south_gap", 0.0)
+            inputs["east_gap"] = session_inputs.get("east_gap", 0.0)
+            inputs["west_gap"] = session_inputs.get("west_gap", 0.0)
+        
+        # Inset zone data
+        if inputs["inset_enabled"]:
+            inputs["inset_height"] = session_inputs.get("inset_height", 0.0)
+            inputs["north_offset"] = session_inputs.get("north_offset", 0.0)
+            inputs["south_offset"] = session_inputs.get("south_offset", 0.0)
+            inputs["east_offset"] = session_inputs.get("east_offset", 0.0)
+            inputs["west_offset"] = session_inputs.get("west_offset", 0.0)
+            
+            # Store inset results if available
+            if hasattr(st.session_state, 'inset_results') and st.session_state.inset_results:
+                inputs["inset_results"] = st.session_state.inset_results
         
         return inputs
     
