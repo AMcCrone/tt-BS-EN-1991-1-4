@@ -200,9 +200,9 @@ class WindLoadReport:
             ('TOPPADDING', (0, 0), (-1, 0), 8),
             ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
             ('TOPPADDING', (0, 1), (-1, -1), 6),
-            ('LINEABOVE', (0, 0), (-1, 0), 1.0, colors.black),
-            ('LINEBELOW', (0, 0), (-1, 0), 0.7, colors.black),
-            ('LINEBELOW', (0, -1), (-1, -1), 1.0, colors.black),
+            ('LINEABOVE', (0, 0), (-1, 0), 1.0, colors.HexColor('#8b9064')),
+            ('LINEBELOW', (0, 0), (-1, 0), 0.7, colors.HexColor('#8b9064')),
+            ('LINEBELOW', (0, -1), (-1, -1), 1.0, colors.HexColor('#8b9064')),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f4ed')])
         ]
         
@@ -304,29 +304,109 @@ class WindLoadReport:
         story.append(Spacer(1, 12))
     
     def _add_cp_coefficients_section(self, story):
-        """Add external pressure coefficients section."""
+        """Add external pressure coefficients section with direction headers."""
         story.append(Paragraph("6. External Pressure Coefficients", self.styles['SectionHeading']))
         
         results = self.data.get('results', {})
         cp_results = results.get('cp_results')
         
         if cp_results and cp_results.get('data'):
-            # Get column headers
             columns = cp_results.get('columns', [])
             
-            # Create header row
-            header_row = columns
+            # Remove Wind Direction column and keep other columns
+            filtered_columns = [col for col in columns if col.lower() != 'wind direction']
             
-            # Create data rows
+            # Create header row (without Wind Direction)
+            header_row = filtered_columns
             data_rows = [header_row]
-            for row_dict in cp_results['data']:
-                data_rows.append([str(row_dict.get(col, '')) for col in columns])
             
-            # Calculate column widths dynamically
-            num_cols = len(columns)
-            col_widths = [self.content_width / num_cols] * num_cols
+            # Track current direction for grouping
+            current_direction = None
             
-            table = self._create_table(data_rows, col_widths=col_widths)
+            for i, row_dict in enumerate(cp_results['data']):
+                wind_direction = row_dict.get('Wind Direction', row_dict.get('wind direction', ''))
+                
+                # If direction changed, add direction header row
+                if wind_direction != current_direction:
+                    # Add midrule before new direction (except first)
+                    if current_direction is not None:
+                        data_rows.append([''] * len(filtered_columns))  # Placeholder for midrule
+                    
+                    current_direction = wind_direction
+                    # Add direction header spanning all columns
+                    direction_header = [f"{wind_direction} Elevation"] + [''] * (len(filtered_columns) - 1)
+                    data_rows.append(direction_header)
+                
+                # Add data row (format cpe to 2 decimal places)
+                row_data = []
+                for col in filtered_columns:
+                    value = row_dict.get(col, '')
+                    # Format cpe values to 2 decimal places
+                    if col.lower() == 'cpe' or col.lower() == 'cp,e':
+                        try:
+                            row_data.append(f"{float(value):.2f}")
+                        except:
+                            row_data.append(str(value))
+                    else:
+                        row_data.append(str(value))
+                data_rows.append(row_data)
+            
+            # Adjust column widths - give extra width from Wind Direction to Description
+            # Assuming Description is typically the first or second column
+            desc_idx = next((i for i, col in enumerate(filtered_columns) 
+                           if 'description' in col.lower()), 0)
+            
+            num_cols = len(filtered_columns)
+            base_width = self.content_width / (num_cols + 0.5)  # +0.5 accounts for removed column
+            col_widths = [base_width] * num_cols
+            col_widths[desc_idx] = base_width * 1.5  # Give extra width to Description
+            
+            # Create table with custom styling for direction headers and midrules
+            table = Table(data_rows, colWidths=col_widths)
+            
+            style_commands = [
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e9e8e0')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), self.font_bold),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTNAME', (0, 1), (-1, -1), self.font_regular),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('TOPPADDING', (0, 0), (-1, 0), 8),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+                ('LINEABOVE', (0, 0), (-1, 0), 1.0, colors.HexColor('#8b9064')),
+                ('LINEBELOW', (0, 0), (-1, 0), 0.7, colors.HexColor('#8b9064')),
+                ('LINEBELOW', (0, -1), (-1, -1), 1.0, colors.HexColor('#8b9064')),
+            ]
+            
+            # Add styling for direction headers and midrules
+            for row_idx, row in enumerate(data_rows):
+                if row_idx > 0:  # Skip header row
+                    # Check if this is a direction header (first cell ends with "Elevation")
+                    if isinstance(row[0], str) and row[0].endswith('Elevation'):
+                        style_commands.extend([
+                            ('SPAN', (0, row_idx), (-1, row_idx)),  # Span across all columns
+                            ('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#f5f4ed')),
+                            ('FONTNAME', (0, row_idx), (-1, row_idx), self.font_semibold),
+                            ('FONTSIZE', (0, row_idx), (-1, row_idx), 10),
+                            ('TOPPADDING', (0, row_idx), (-1, row_idx), 4),
+                            ('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 4),
+                        ])
+                    # Check if this is a midrule placeholder (all empty strings)
+                    elif all(cell == '' for cell in row):
+                        style_commands.extend([
+                            ('LINEABOVE', (0, row_idx), (-1, row_idx), 0.75, colors.HexColor('#8b9064')),
+                            ('TOPPADDING', (0, row_idx), (-1, row_idx), 0),
+                            ('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 0),
+                        ])
+                    else:
+                        # Alternate row backgrounds for data rows
+                        bg_color = colors.white if (row_idx % 2 == 1) else colors.HexColor('#f5f4ed')
+                        style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), bg_color))
+            
+            table.setStyle(TableStyle(style_commands))
             story.append(table)
         else:
             story.append(Paragraph("No CP coefficient data available.", self.styles['CustomBodyText']))
@@ -334,29 +414,83 @@ class WindLoadReport:
         story.append(Spacer(1, 12))
     
     def _add_pressure_summary_section(self, story):
-        """Add pressure summary section."""
+        """Add pressure summary section with midrules between direction changes."""
         story.append(Paragraph("7. Pressure Summary", self.styles['SectionHeading']))
         
         results = self.data.get('results', {})
         pressure_summary = results.get('pressure_summary')
         
         if pressure_summary and pressure_summary.get('data'):
-            # Get column headers
             columns = pressure_summary.get('columns', [])
             
-            # Create header row
-            header_row = columns
+            # Remove c_dir column if it exists
+            filtered_columns = [col for col in columns if col.lower() not in ['c_dir', 'cdir']]
             
-            # Create data rows
+            # Create header row
+            header_row = filtered_columns
             data_rows = [header_row]
+            
+            # Track current direction for adding midrules
+            current_direction = None
+            
             for row_dict in pressure_summary['data']:
-                data_rows.append([str(row_dict.get(col, '')) for col in columns])
+                # Try to find direction in the data (could be in various column names)
+                wind_direction = None
+                for possible_dir_col in ['Wind Direction', 'wind direction', 'Direction', 'direction', 'Elevation', 'elevation']:
+                    if possible_dir_col in row_dict:
+                        wind_direction = row_dict.get(possible_dir_col, '')
+                        break
+                
+                # If direction changed and we have a direction, add midrule placeholder
+                if wind_direction and wind_direction != current_direction and current_direction is not None:
+                    data_rows.append([''] * len(filtered_columns))  # Placeholder for midrule
+                    current_direction = wind_direction
+                elif wind_direction:
+                    current_direction = wind_direction
+                
+                # Add data row
+                data_rows.append([str(row_dict.get(col, '')) for col in filtered_columns])
             
             # Calculate column widths dynamically
-            num_cols = len(columns)
+            num_cols = len(filtered_columns)
             col_widths = [self.content_width / num_cols] * num_cols
             
-            table = self._create_table(data_rows, col_widths=col_widths)
+            # Create table with custom styling for midrules
+            table = Table(data_rows, colWidths=col_widths)
+            
+            style_commands = [
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e9e8e0')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), self.font_bold),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTNAME', (0, 1), (-1, -1), self.font_regular),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('TOPPADDING', (0, 0), (-1, 0), 8),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+                ('LINEABOVE', (0, 0), (-1, 0), 1.0, colors.HexColor('#8b9064')),
+                ('LINEBELOW', (0, 0), (-1, 0), 0.7, colors.HexColor('#8b9064')),
+                ('LINEBELOW', (0, -1), (-1, -1), 1.0, colors.HexColor('#8b9064')),
+            ]
+            
+            # Add styling for midrule placeholders and alternating row backgrounds
+            for row_idx, row in enumerate(data_rows):
+                if row_idx > 0:  # Skip header row
+                    # Check if this is a midrule placeholder (all empty strings)
+                    if all(cell == '' for cell in row):
+                        style_commands.extend([
+                            ('LINEABOVE', (0, row_idx), (-1, row_idx), 0.75, colors.HexColor('#8b9064')),
+                            ('TOPPADDING', (0, row_idx), (-1, row_idx), 0),
+                            ('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 0),
+                        ])
+                    else:
+                        # Alternate row backgrounds for data rows
+                        bg_color = colors.white if (row_idx % 2 == 1) else colors.HexColor('#f5f4ed')
+                        style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), bg_color))
+            
+            table.setStyle(TableStyle(style_commands))
             story.append(table)
         else:
             story.append(Paragraph("No pressure summary data available.", self.styles['CustomBodyText']))
