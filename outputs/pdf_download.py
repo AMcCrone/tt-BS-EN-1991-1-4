@@ -163,12 +163,14 @@ class WindLoadReport:
         
         # Try PNG first (most compatible)
         for logo_path in ["educational/images/TT_Logo_Colour.png", 
-                          "images/TT_Logo_Colour.png"]:
+                          "images/TT_Logo_Colour.png",
+                          "educational/images/TT_Logo_Colour.jpg", 
+                          "images/TT_Logo_Colour.jpg"]:
             if os.path.exists(logo_path):
                 try:
                     from reportlab.platypus import Image as RLImage
                     # Add logo with appropriate sizing
-                    logo_height = 3  # mm - adjust as needed
+                    logo_height = 3  # mm - as requested
                     logo = RLImage(logo_path, height=logo_height*mm)
                     # Maintain aspect ratio
                     logo.drawHeight = logo_height * mm
@@ -242,8 +244,8 @@ class WindLoadReport:
         inputs = self.data.get('inputs', {})
         data = [
             ['Parameter', 'Value', 'Units'],
-            ['North to South Dimension', f"{inputs.get('NS_dimension', 0):.2f}", 'm'],
-            ['East to West Dimension', f"{inputs.get('EW_dimension', 0):.2f}", 'm'],
+            ['North-South Dimension', f"{inputs.get('NS_dimension', 0):.2f}", 'm'],
+            ['East-West Dimension', f"{inputs.get('EW_dimension', 0):.2f}", 'm'],
             ['Building Height (z)', f"{inputs.get('z', 0):.2f}", 'm'],
         ]
         
@@ -262,7 +264,7 @@ class WindLoadReport:
             ['Altitude Factor', f"{inputs.get('altitude_factor', 0):.3f}", '-'],
             ['Distance to Sea', f"{inputs.get('d_sea', 0):.2f}", 'km'],
             ['Terrain Category', inputs.get('terrain_category', 'N/A'), '-'],
-            ['Air Density', f"{inputs.get('rho_air', 0):.3f}", 'kg/m³'],
+            ['Air Density (ρ)', f"{inputs.get('rho_air', 0):.3f}", 'kg/m³'],
         ]
         
         col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
@@ -292,10 +294,14 @@ class WindLoadReport:
         story.append(Spacer(1, 12))
     
     def _add_wind_pressure_section(self, story):
-        """Add wind pressure section."""
+        """Add wind pressure section with UK-specific factors if applicable."""
         story.append(Paragraph("5. Wind Pressure", self.styles['SectionHeading']))
         
+        inputs = self.data.get('inputs', {})
         results = self.data.get('results', {})
+        region = inputs.get('region', '').upper()
+        
+        # Basic pressure values
         data = [
             ['Parameter', 'Value', 'Units'],
             ['Basic Wind Pressure (qb)', f"{results.get('q_b', 0):.2f}", 'kPa'],
@@ -305,13 +311,55 @@ class WindLoadReport:
         col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
         table = self._create_table(data, col_widths=col_widths)
         story.append(table)
+        story.append(Spacer(1, 8))
+        
+        # UK-specific factors for peak velocity pressure
+        if region == 'UK':
+            story.append(Paragraph("5.1 Peak Velocity Pressure Factors (UK NA)", self.styles['SubsectionHeading']))
+            
+            # Get factors, use "-" if zero or missing
+            def format_factor(key, default=0):
+                val = results.get(key, default)
+                if val == 0 or val is None:
+                    return "-"
+                try:
+                    return f"{float(val):.3f}"
+                except:
+                    return "-"
+            
+            uk_data = [
+                ['Factor', 'Value', 'Description'],
+                ['c_ez', format_factor('c_ez'), 'Exposure factor at height z'],
+                ['c_eT', format_factor('c_eT'), 'Turbulence factor'],
+                ['I_vz', format_factor('I_vz'), 'Turbulence intensity at height z'],
+                ['k_iT', format_factor('k_iT'), 'Terrain factor'],
+            ]
+            
+            col_widths_uk = [self.content_width * 0.2, self.content_width * 0.2, self.content_width * 0.6]
+            table_uk = self._create_table(uk_data, col_widths=col_widths_uk)
+            story.append(table_uk)
+            story.append(Spacer(1, 8))
+            
+            # UK-specific factors for mean wind velocity
+            story.append(Paragraph("5.2 Mean Wind Velocity Factors (UK NA)", self.styles['SubsectionHeading']))
+            
+            uk_mean_data = [
+                ['Factor', 'Value', 'Description'],
+                ['c_rz', format_factor('c_rz'), 'Roughness factor at height z'],
+                ['c_rT', format_factor('c_rT'), 'Terrain factor for roughness'],
+            ]
+            
+            table_uk_mean = self._create_table(uk_mean_data, col_widths=col_widths_uk)
+            story.append(table_uk_mean)
+        
         story.append(Spacer(1, 12))
     
     def _add_cp_coefficients_section(self, story):
-        """Add external pressure coefficients section with direction headers."""
+        """Add external pressure coefficients section with direction headers, funnelling and inset zones."""
         story.append(Paragraph("6. External Pressure Coefficients", self.styles['SectionHeading']))
         
         results = self.data.get('results', {})
+        inputs = self.data.get('inputs', {})
         cp_results = results.get('cp_results')
         
         if cp_results and cp_results.get('data'):
@@ -414,6 +462,98 @@ class WindLoadReport:
             story.append(table)
         else:
             story.append(Paragraph("No CP coefficient data available.", self.styles['CustomBodyText']))
+        
+        story.append(Spacer(1, 12))
+        
+        # Add Funnelling subsection
+        self._add_funnelling_subsection(story, inputs)
+        
+        # Add Inset Zones subsection
+        self._add_inset_zones_subsection(story, inputs)
+    
+    def _add_funnelling_subsection(self, story, inputs):
+        """Add funnelling information subsection."""
+        story.append(Paragraph("6.1 Funnelling", self.styles['SubsectionHeading']))
+        
+        # Check if funnelling is enabled
+        funnelling_enabled = inputs.get('funnelling', False) or inputs.get('include_funnelling', False)
+        
+        if funnelling_enabled:
+            # Try to get gap data from various possible locations
+            gaps_data = inputs.get('gaps', [])
+            funnelling_data = inputs.get('funnelling_data', {})
+            
+            if gaps_data and len(gaps_data) > 0:
+                # Create table with gap information
+                table_data = [['Gap', 'Funnelling Present']]
+                
+                for gap_info in gaps_data:
+                    if isinstance(gap_info, dict):
+                        gap_name = gap_info.get('gap_name', gap_info.get('name', 'Unknown'))
+                        has_funnelling = gap_info.get('funnelling_present', gap_info.get('present', False))
+                        funnelling_status = 'Yes' if has_funnelling else 'No'
+                        table_data.append([gap_name, funnelling_status])
+                
+                col_widths = [self.content_width * 0.6, self.content_width * 0.4]
+                table = self._create_table(table_data, col_widths=col_widths)
+                story.append(table)
+            elif funnelling_data:
+                # Alternative format - dict of gaps
+                table_data = [['Gap', 'Funnelling Present']]
+                for gap_name, present in funnelling_data.items():
+                    funnelling_status = 'Yes' if present else 'No'
+                    table_data.append([gap_name, funnelling_status])
+                
+                col_widths = [self.content_width * 0.6, self.content_width * 0.4]
+                table = self._create_table(table_data, col_widths=col_widths)
+                story.append(table)
+            else:
+                story.append(Paragraph("Funnelling considered: Yes (no gap details available)", self.styles['CustomBodyText']))
+        else:
+            story.append(Paragraph("Funnelling considered: No", self.styles['CustomBodyText']))
+        
+        story.append(Spacer(1, 8))
+    
+    def _add_inset_zones_subsection(self, story, inputs):
+        """Add inset zones information subsection."""
+        story.append(Paragraph("6.2 Inset Zones", self.styles['SubsectionHeading']))
+        
+        # Check if inset zones are enabled
+        inset_enabled = inputs.get('inset_zone', False) or inputs.get('include_inset_zone', False)
+        
+        if inset_enabled:
+            # Try to get inset zone data
+            inset_data = inputs.get('inset_zones', [])
+            inset_by_elevation = inputs.get('inset_by_elevation', {})
+            
+            if inset_data and len(inset_data) > 0:
+                # Create table with elevation information
+                table_data = [['Elevation', 'Inset Zone Present']]
+                
+                for inset_info in inset_data:
+                    if isinstance(inset_info, dict):
+                        elevation = inset_info.get('elevation', inset_info.get('name', 'Unknown'))
+                        has_inset = inset_info.get('inset_present', inset_info.get('present', False))
+                        inset_status = 'Yes' if has_inset else 'No'
+                        table_data.append([elevation, inset_status])
+                
+                col_widths = [self.content_width * 0.6, self.content_width * 0.4]
+                table = self._create_table(table_data, col_widths=col_widths)
+                story.append(table)
+            elif inset_by_elevation:
+                # Alternative format - dict by elevation
+                table_data = [['Elevation', 'Inset Zone Present']]
+                for elevation, present in inset_by_elevation.items():
+                    inset_status = 'Yes' if present else 'No'
+                    table_data.append([elevation, inset_status])
+                
+                col_widths = [self.content_width * 0.6, self.content_width * 0.4]
+                table = self._create_table(table_data, col_widths=col_widths)
+                story.append(table)
+            else:
+                story.append(Paragraph("Inset zones considered: Yes (no elevation details available)", self.styles['CustomBodyText']))
+        else:
+            story.append(Paragraph("Inset zones considered: No", self.styles['CustomBodyText']))
         
         story.append(Spacer(1, 12))
     
@@ -554,7 +694,17 @@ class WindLoadReport:
         # Title page
         story.append(Spacer(1, 40))
         story.append(Paragraph("Wind Load Calculation Report", self.styles['CustomTitle']))
-        story.append(Paragraph("BS EN 1991-1-4", self.styles['CustomTitle']))
+        
+        # Add code reference based on region
+        inputs = self.data.get('inputs', {})
+        region = inputs.get('region', '').upper()
+        
+        if region == 'UK':
+            code_reference = "BS EN 1991-1-4 + UK National Annex & PD 6688-1-4"
+        else:
+            code_reference = "BS EN 1991-1-4"
+        
+        story.append(Paragraph(code_reference, self.styles['CustomTitle']))
         story.append(Spacer(1, 12))
         
         # Report info
