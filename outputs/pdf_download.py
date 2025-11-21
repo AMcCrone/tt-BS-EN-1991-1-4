@@ -476,7 +476,7 @@ class WindLoadReport:
         story.append(Paragraph("6.1 Funnelling", self.styles['SubsectionHeading']))
         
         # Check if funnelling is enabled
-        funnelling_enabled = inputs.get('funnelling', False) or inputs.get('include_funnelling', False)
+        funnelling_enabled = inputs.get('funnelling_enabled', False)
         
         if funnelling_enabled:
             # Try to get gap data from various possible locations
@@ -519,7 +519,7 @@ class WindLoadReport:
         story.append(Paragraph("6.2 Inset Zones", self.styles['SubsectionHeading']))
         
         # Check if inset zones are enabled
-        inset_enabled = inputs.get('inset_zone', False) or inputs.get('include_inset_zone', False)
+        inset_enabled = inputs.get('inset_enabled', False)
         
         if inset_enabled:
             # Try to get inset zone data
