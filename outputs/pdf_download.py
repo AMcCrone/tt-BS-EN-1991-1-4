@@ -200,9 +200,9 @@ class WindLoadReport:
             ('TOPPADDING', (0, 0), (-1, 0), 8),
             ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
             ('TOPPADDING', (0, 1), (-1, -1), 6),
-            ('LINEABOVE', (0, 0), (-1, 0), 1.0, colors.HexColor('#8b9064')),
-            ('LINEBELOW', (0, 0), (-1, 0), 0.7, colors.HexColor('#8b9064')),
-            ('LINEBELOW', (0, -1), (-1, -1), 1.0, colors.HexColor('#8b9064')),
+            ('LINEABOVE', (0, 0), (-1, 0), 1.0, colors.black),
+            ('LINEBELOW', (0, 0), (-1, 0), 0.7, colors.black),
+            ('LINEBELOW', (0, -1), (-1, -1), 1.0, colors.black),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f4ed')])
         ]
         
