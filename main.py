@@ -18,7 +18,8 @@ from visualisation.building_viz import create_building_visualisation
 from visualisation.map import render_map_with_markers, get_elevation, compute_distance, interactive_map_ui
 from educational import text_content
 from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_sidebar_save_ui, add_sidebar_upload_ui
-from calc_engine.report_export import add_sidebar_report_export_ui
+from outputs.json_download import add_sidebar_report_export_ui, ReportExporter
+from outputs.pdf_download import add_wind_pdf_download_button
 from calc_engine.common.util import get_session_value, store_session_value
 
 # Set authentication from auth.py
@@ -785,3 +786,28 @@ add_sidebar_upload_ui()
 add_sidebar_save_ui()
 # add_sidebar_report_export_ui()
 st.session_state.show_educational = show_educational
+
+# After calculations are complete
+st.sidebar.header("Export Options")
+
+# Project name input
+project_name = st.sidebar.text_input(
+    "Project Name",
+    value=st.session_state.inputs.get("project_name", ""),
+    help="Enter a project name to include in the PDF report header",
+    placeholder="e.g., My New Project"
+)
+
+# Generate report data using ReportExporter
+if hasattr(st.session_state, 'summary_df') and st.session_state.summary_df is not None:
+    exporter = ReportExporter()
+    report_data = exporter.create_export_data()
+    
+    # Add PDF download button
+    add_wind_pdf_download_button(
+        report_data=report_data,
+        project_name=project_name if project_name else None,
+        filename="wind_load_report.pdf"
+    )
+else:
+    st.sidebar.info("📊 Complete the calculations to download report")
