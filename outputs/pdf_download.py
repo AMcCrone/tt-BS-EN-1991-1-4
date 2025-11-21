@@ -299,7 +299,7 @@ class WindLoadReport:
         
         inputs = self.data.get('inputs', {})
         results = self.data.get('results', {})
-        region = inputs.get('region', '')
+        region = inputs.get('region', '').upper()
         
         # Basic pressure values
         data = [
@@ -314,7 +314,7 @@ class WindLoadReport:
         story.append(Spacer(1, 8))
         
         # UK-specific factors for peak velocity pressure
-        if region == 'United Kingdom':
+        if region == 'UK':
             story.append(Paragraph("5.1 Peak Velocity Pressure Factors (UK NA)", self.styles['SubsectionHeading']))
             
             # Get factors, use "-" if zero or missing
@@ -476,9 +476,9 @@ class WindLoadReport:
         story.append(Paragraph("6.1 Funnelling", self.styles['SubsectionHeading']))
         
         # Check if funnelling is enabled
-        consider_funnelling = inputs.get('consider_funnelling', False) or inputs.get('consider_funnelling', False)
+        funnelling_enabled = inputs.get('funnelling', False) or inputs.get('include_funnelling', False)
         
-        if consider_funnelling:
+        if funnelling_enabled:
             # Try to get gap data from various possible locations
             gaps_data = inputs.get('gaps', [])
             funnelling_data = inputs.get('funnelling_data', {})
@@ -519,11 +519,11 @@ class WindLoadReport:
         story.append(Paragraph("6.2 Inset Zones", self.styles['SubsectionHeading']))
         
         # Check if inset zones are enabled
-        inset_enabled = inputs.get('inset_enabled', False)
+        inset_enabled = inputs.get('inset_zone', False) or inputs.get('include_inset_zone', False)
         
         if inset_enabled:
             # Try to get inset zone data
-            inset_data = inputs.get('inset_enabled', [])
+            inset_data = inputs.get('inset_zones', [])
             inset_by_elevation = inputs.get('inset_by_elevation', {})
             
             if inset_data and len(inset_data) > 0:
@@ -655,7 +655,7 @@ class WindLoadReport:
         <br/><br/>
         The building has dimensions of {inputs.get('NS_dimension', 0):.1f}m (N-S) × 
         {inputs.get('EW_dimension', 0):.1f}m (E-W) with a height of {inputs.get('z', 0):.1f}m. 
-        The site is located in terrain category "<b>{inputs.get('terrain_category', 'N/A')}</b>", 
+        The site is located in terrain category <b>{inputs.get('terrain_category', 'N/A')}</b>, 
         at {inputs.get('d_sea', 0):.1f}km from the sea.
         <br/><br/>
         The basic wind speed (Vb,map) of {inputs.get('V_bmap', 0):.2f} m/s was adjusted using an 
@@ -697,9 +697,9 @@ class WindLoadReport:
         
         # Add code reference based on region
         inputs = self.data.get('inputs', {})
-        region = inputs.get('region', '')
+        region = inputs.get('region', '').upper()
         
-        if region == 'United Kingdom':
+        if region == 'UK':
             code_reference = "BS EN 1991-1-4 + UK National Annex & PD 6688-1-4"
         else:
             code_reference = "BS EN 1991-1-4"
