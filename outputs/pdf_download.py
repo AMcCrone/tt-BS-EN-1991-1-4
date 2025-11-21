@@ -519,11 +519,11 @@ class WindLoadReport:
         story.append(Paragraph("6.2 Inset Zones", self.styles['SubsectionHeading']))
         
         # Check if inset zones are enabled
-        inset_enabled = inputs.get('inset_zone', False) or inputs.get('include_inset_zone', False)
+        inset_enabled = inputs.get('inset_enabled', False)
         
         if inset_enabled:
             # Try to get inset zone data
-            inset_data = inputs.get('inset_zones', [])
+            inset_data = inputs.get('inset_enabled', [])
             inset_by_elevation = inputs.get('inset_by_elevation', {})
             
             if inset_data and len(inset_data) > 0:
