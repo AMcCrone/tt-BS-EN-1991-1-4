@@ -168,7 +168,7 @@ class WindLoadReport:
                 try:
                     from reportlab.platypus import Image as RLImage
                     # Add logo with appropriate sizing
-                    logo_height = 15  # mm - adjust as needed
+                    logo_height = 4  # mm - adjust as needed
                     logo = RLImage(logo_path, height=logo_height*mm)
                     # Maintain aspect ratio
                     logo.drawHeight = logo_height * mm
