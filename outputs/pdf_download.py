@@ -242,8 +242,8 @@ class WindLoadReport:
         inputs = self.data.get('inputs', {})
         data = [
             ['Parameter', 'Value', 'Units'],
-            ['North-South Dimension', f"{inputs.get('NS_dimension', 0):.2f}", 'm'],
-            ['East-West Dimension', f"{inputs.get('EW_dimension', 0):.2f}", 'm'],
+            ['North to South Dimension', f"{inputs.get('NS_dimension', 0):.2f}", 'm'],
+            ['East to West Dimension', f"{inputs.get('EW_dimension', 0):.2f}", 'm'],
             ['Building Height (z)', f"{inputs.get('z', 0):.2f}", 'm'],
         ]
         
@@ -262,7 +262,7 @@ class WindLoadReport:
             ['Altitude Factor', f"{inputs.get('altitude_factor', 0):.3f}", '-'],
             ['Distance to Sea', f"{inputs.get('d_sea', 0):.2f}", 'km'],
             ['Terrain Category', inputs.get('terrain_category', 'N/A'), '-'],
-            ['Air Density (ρ)', f"{inputs.get('rho_air', 0):.2f}", 'kg/m³'],
+            ['Air Density', f"{inputs.get('rho_air', 0):.3f}", 'kg/m³'],
         ]
         
         col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
