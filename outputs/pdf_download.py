@@ -655,7 +655,7 @@ class WindLoadReport:
         <br/><br/>
         The building has dimensions of {inputs.get('NS_dimension', 0):.1f}m (N-S) × 
         {inputs.get('EW_dimension', 0):.1f}m (E-W) with a height of {inputs.get('z', 0):.1f}m. 
-        The site is located in terrain category <b>{inputs.get('terrain_category', 'N/A')}</b>, 
+        The site is located in terrain category "<b>{inputs.get('terrain_category', 'N/A')}</b>", 
         at {inputs.get('d_sea', 0):.1f}km from the sea.
         <br/><br/>
         The basic wind speed (Vb,map) of {inputs.get('V_bmap', 0):.2f} m/s was adjusted using an 
@@ -699,7 +699,7 @@ class WindLoadReport:
         inputs = self.data.get('inputs', {})
         region = inputs.get('region', '').upper()
         
-        if region == 'UK':
+        if region == 'United Kingdom':
             code_reference = "BS EN 1991-1-4 + UK National Annex & PD 6688-1-4"
         else:
             code_reference = "BS EN 1991-1-4"
