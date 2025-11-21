@@ -70,6 +70,10 @@ class ReportExporter:
         # Wind parameters
         inputs["V_bmap"] = session_inputs.get("V_bmap", 0.0)  # Basic wind speed
         inputs["V_b"] = session_inputs.get("V_b", 0.0)  # Adjusted basic wind speed
+
+        # Funnelling and Inset Zone
+        inputs["inset_enabled"] = session_inputs.get("inset_enabled", False)
+        inputs["consider_funnelling"] = session_inputs.get("consider_funnelling", False)
         
         return inputs
     
