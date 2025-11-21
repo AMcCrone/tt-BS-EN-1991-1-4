@@ -314,7 +314,7 @@ class WindLoadReport:
         story.append(Spacer(1, 8))
         
         # UK-specific factors for peak velocity pressure
-        if region == 'UK':
+        if region == 'UNITED KINGDOM':
             story.append(Paragraph("5.1 Peak Velocity Pressure Factors (UK NA)", self.styles['SubsectionHeading']))
             
             # Get factors, use "-" if zero or missing
@@ -699,7 +699,7 @@ class WindLoadReport:
         inputs = self.data.get('inputs', {})
         region = inputs.get('region', '').upper()
         
-        if region == 'United Kingdom':
+        if region == 'UNITED KINGDOM':
             code_reference = "BS EN 1991-1-4 + UK National Annex & PD 6688-1-4"
         else:
             code_reference = "BS EN 1991-1-4"
