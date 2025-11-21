@@ -476,9 +476,9 @@ class WindLoadReport:
         story.append(Paragraph("6.1 Funnelling", self.styles['SubsectionHeading']))
         
         # Check if funnelling is enabled
-        funnelling_enabled = inputs.get('funnelling', False) or inputs.get('include_funnelling', False)
+        consider_funnelling = inputs.get('consider_funnelling', False) or inputs.get('consider_funnelling', False)
         
-        if funnelling_enabled:
+        if consider_funnelling:
             # Try to get gap data from various possible locations
             gaps_data = inputs.get('gaps', [])
             funnelling_data = inputs.get('funnelling_data', {})
