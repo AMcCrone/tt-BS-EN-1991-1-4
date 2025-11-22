@@ -261,7 +261,7 @@ class WindLoadReport:
         inputs = self.data.get('inputs', {})
         data = [
             ['Parameter', 'Value', 'Units'],
-            ['Altitude Factor', f"{inputs.get('altitude', 0):.3f}", '-'],
+            ['Altitude', f"{inputs.get('altitude', 0):.3f}", 'm'],
             ['Distance to Sea', f"{inputs.get('d_sea', 0):.2f}", 'km'],
             ['Terrain Category', inputs.get('terrain_category', 'N/A'), '-'],
             ['Air Density (ρ)', f"{inputs.get('rho_air', 0):.3f}", 'kg/m³'],
