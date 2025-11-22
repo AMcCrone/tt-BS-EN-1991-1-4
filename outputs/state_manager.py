@@ -407,22 +407,10 @@ def add_pdf_export_ui():
     """Add PDF data export UI to sidebar."""
     st.sidebar.subheader("📊 Export Data (JSON)")
     
-    with st.sidebar.expander("ℹ️ What gets exported?", expanded=False):
-        st.markdown("""
-        **Complete Calculation Data:**
-        - All inputs
-        - All calculated results
-        - CP coefficient tables
-        - Pressure summaries
-        - UK-specific factors (c_ez, c_eT, I_vz, etc.)
-        
-        This JSON file contains all data for external processing.
-        """)
-    
     manager = StateManager()
     
     # Generate filename
-    project_name = st.session_state.inputs.get("project_name", "Untitled")
+    project_name = st.session_state.inputs.get("project_name", "Untitled") if hasattr(st.session_state, 'inputs') else "Untitled"
     timestamp = datetime.now().strftime("%d.%m.%Y_%H.%M")
     safe_name = "".join(c if c.isalnum() or c in (' ', '_', '-') else '_' 
                        for c in project_name)
