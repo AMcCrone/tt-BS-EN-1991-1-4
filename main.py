@@ -699,11 +699,17 @@ st.markdown("---")
 st.write('### External Pressure Coefficients $$c_{p,e}$$')
 
 # Loaded area input. This will only appear when region is EU
-
 region = st.session_state.inputs.get("region", "United Kingdom")
-
 if region != "United Kingdom":  # Show for EU region
-    loaded_area = st.number_input("Loaded Area (m²)", min_value=0.1, max_value=100.0, value=10.0, step=0.1, help="Area over which the wind load is applied. Used for interpolating between Cpe,1 and Cpe,10 values.", key="loaded_area_input")
+    loaded_area = st.number_input(
+        "Loaded Area (m²)", 
+        min_value=0.1, 
+        max_value=100.0, 
+        value=10.0, 
+        step=0.1, 
+        help="Area over which the wind load is applied. Used for interpolating between Cpe,1 and Cpe,10 values.", 
+        key="loaded_area_input"
+    )
     st.session_state.inputs["loaded_area"] = loaded_area
 
 # Automatically calculate cp,e values with or without funnelling based on checkbox
@@ -717,7 +723,13 @@ EW_dimension = st.session_state.inputs.get("EW_dimension", 40.0)
 # Display results for each elevation using our new function
 elevations = ["North", "East", "South", "West"]
 for elevation in elevations:
-    display_elevation_results(elevation=elevation, cp_results=cp_results_by_elevation, h=h, NS_dimension=NS_dimension, EW_dimension=EW_dimension)
+    display_elevation_results(
+        elevation=elevation, 
+        cp_results=cp_results_by_elevation, 
+        h=h, 
+        NS_dimension=NS_dimension, 
+        EW_dimension=EW_dimension
+    )
 
 # Store overall results for later use (combine all directions)
 all_results = []
@@ -725,23 +737,25 @@ for direction, df in cp_results_by_elevation.items():
     df_with_direction = df.copy()
     df_with_direction["Wind Direction"] = direction
     all_results.append(df_with_direction)
-# Store for report export
-st.session_state.results['cp_results'] = pd.concat(all_results)
+
+# STORE CP RESULTS - Combined DataFrame with all directions
+cp_results_combined = pd.concat(all_results, ignore_index=True)
+st.session_state.results['cp_results'] = cp_results_combined
 
 # Educational text on wind zone plots
 if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-
     with st.expander("How Are Wind Zones Plotted?", expanded=False):
         st.image("educational/images/wind_zones_diagram.png", width="stretch")
         st.markdown(f'<div class="educational-content">{text_content.wind_zone_help}</div>', unsafe_allow_html=True)
-
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Display wind zone plots (using your existing function)
 ns_elevation_fig, ew_elevation_fig = plot_wind_zones(st.session_state)
+
 # Display North-South Elevation
 st.plotly_chart(ns_elevation_fig, width="stretch")
+
 # Display East-West Elevation
 st.plotly_chart(ew_elevation_fig, width="stretch")
 
@@ -749,29 +763,38 @@ st.plotly_chart(ew_elevation_fig, width="stretch")
 st.markdown("---")
 st.markdown('<div class="pagebreak"></div>', unsafe_allow_html=True)
 st.subheader("Net Pressures")
+
 # Educational text on Wind Pressure Profile
 if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-    
     with st.expander("How Is Net Pressure Calculated?", expanded=False):
         st.image("educational/images/We_Wi.png", width="stretch")
         st.markdown(f'<div class="educational-content">{text_content.net_pressure_help}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures
+
+# Calculate pressure summary
 results_by_direction = calculate_cpe()  # Make sure this function exists
 summary_df = create_pressure_summary(st.session_state, results_by_direction)
+
+# STORE PRESSURE SUMMARY
 st.session_state.results['summary_df'] = summary_df
+
+# Create elevation figures with pressures
 elevation_figures = plot_elevation_with_pressures(st.session_state, results_by_direction)
-# Display results manually
+
+# Display results
 st.subheader("Pressure Summary")
 st.dataframe(summary_df, hide_index=True, height=35*len(summary_df)+38)
+
 # Display figures
 for direction, fig in elevation_figures.items():
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, width="stretch")
+
+# 3D Visualization (if educational mode enabled)
 if st.session_state.get("show_educational", False):
     st.subheader("3D Wind Visualization") 
-    # Call the create_wind_visualization_ui function
     from calc_engine.common.pressure_summary import create_wind_visualization_ui
     create_wind_visualization_ui(st.session_state, results_by_direction)
 
