@@ -164,8 +164,8 @@ st.subheader("Terrain")
 if "markers" not in st.session_state:
     st.session_state.markers = []
 if "inputs" not in st.session_state:
-    st.session_state.inputs = {"altitude_factor": 20.0, "d_sea": 60.0}
-st.session_state.inputs.setdefault("altitude_factor", 20.0)
+    st.session_state.inputs = {"altitude": 20.0, "d_sea": 60.0}
+st.session_state.inputs.setdefault("altitude", 20.0)
 st.session_state.inputs.setdefault("d_sea", 60.0)
 
 region = st.session_state.inputs.get("region")
@@ -178,15 +178,15 @@ if region == "United Kingdom":
     else:
         col1, col2 = st.columns(2)
         with col1:
-            altitude_factor = st.number_input("Altitude Above Sea Level (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("altitude_factor", 20.0)), step=1.0)
-            st.session_state.inputs["altitude_factor"] = altitude_factor
+            altitude = st.number_input("Altitude Above Sea Level (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("altitude", 20.0)), step=1.0)
+            st.session_state.inputs["altitude"] = altitude
         with col2:
             d_sea = st.number_input("Distance to Sea (km)", min_value=1.0, max_value=1000.0, value=float(st.session_state.inputs.get("d_sea", 60.0)), step=1.0)
             st.session_state.inputs["d_sea"] = d_sea
 else:
     # Non-UK: only altitude
-    altitude_factor = st.number_input("Altitude Above Sea Level (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("altitude_factor", 20.0)), step=1.0)
-    st.session_state.inputs["altitude_factor"] = altitude_factor
+    altitude = st.number_input("Altitude Above Sea Level (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("altitude", 20.0)), step=1.0)
+    st.session_state.inputs["altitude"] = altitude
 
 def render_terrain_category():
     # Import terrain module based on region from session state
@@ -267,20 +267,20 @@ if region == "United Kingdom":
 
     st.write(f"Probability factor $c_{{prob}}$: {c_prob:.3f}")
 
-    altitude_factor = st.session_state.inputs.get("altitude_factor", 20.0)
+    altitude = st.session_state.inputs.get("altitude", 20.0)
     # Altitude correction
     if z <= 10:
         case = "z ≤ 10m"
         altitude_equation = "c_{alt} = 1 + 0.001 × A"
-        c_alt = 1 + 0.001 * altitude_factor
+        c_alt = 1 + 0.001 * altitude
     else:
         case = "z > 10m"
         altitude_equation = "c_{alt} = 1 + 0.001 × A × (10/z)^{0.2}"
-        c_alt = 1 + 0.001 * altitude_factor * (10 / z) ** 0.2
+        c_alt = 1 + 0.001 * altitude * (10 / z) ** 0.2
 
     st.write(f"**Case: {case}**")
     st.latex(altitude_equation)
-    st.write(f"Where A = {altitude_factor}")
+    st.write(f"Where A = {altitude}")
     st.write(f"Therefore, $c_{{alt}}$ = {c_alt:.3f}")
         
     # Calculate V_b0
@@ -402,7 +402,7 @@ def peak_pressure_section():
     st.session_state.inputs["rho_air"] = float(rho_air)
     
     # Basic wind pressure calculation
-    v_b = st.session_state.inputs.get("V_b", 0.0)
+    v_b = st.session_state.results.get("V_b", 0.0)
     q_b = 0.5 * rho_air * (v_b ** 2)
     st.session_state.inputs["q_b"] = q_b
     
@@ -443,7 +443,7 @@ def peak_pressure_section():
         
         # Get parameters from session state
         d_sea = st.session_state.inputs.get("d_sea", 60.0)
-        z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 10.0)
+        z_minus_h_dis = st.session_state.results.get("z_minus_h_dis", 10.0)
         terrain = st.session_state.inputs.get("terrain_category", "").lower()
         z = st.session_state.inputs.get("z", 30.0)
         
@@ -484,7 +484,7 @@ def peak_pressure_section():
                 
                 # Check if terrain is "Town" for UK region
                 if terrain_type == "Town":
-                    c_rT = st.session_state.inputs.get("c_rT", 1.0)
+                    c_rT = st.session_state.results.get("c_rT", 1.0)
                     st.session_state.inputs["c_rT"] = c_rT
                 
                 # Calculate mean wind velocity
@@ -536,7 +536,7 @@ def peak_pressure_section():
         
         from calc_engine.eu.roughness import display_eu_roughness_calculation
         
-        z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 10.0)
+        z_minus_h_dis = st.session_state.results.get("z_minus_h_dis", 10.0)
         terrain_category = st.session_state.inputs.get("terrain_category", "II")
         
         # Calculate and display EU roughness factor
