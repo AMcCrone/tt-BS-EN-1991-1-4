@@ -297,7 +297,6 @@ if region == "United Kingdom":
     # Basic Wind Speed with c_prob included (UK)
     V_b = V_b0 * c_dir * c_season * c_prob
     st.session_state.inputs["V_b"] = V_b
-    store_session_value(st, "V_b", V_b)
         
     # Display the final result
     st.markdown("**Basic Wind Speed**")
@@ -345,7 +344,6 @@ else:
     
     V_b = c_dir * c_season * c_prob * V_b0
     st.session_state.inputs["V_b"] = V_b
-    store_session_value(st, "V_b", V_b)
     
     st.markdown("**Basic Wind Speed**")
     st.latex(f"V_b = c_{{dir}} × c_{{season}} × c_{{prob}} × V_{{b,0}} = {V_b:.2f}\\; m/s")
@@ -354,7 +352,6 @@ else:
 # DISPLACEMENT HEIGHT - Always needed for both UK and EU
 # ============================================================================
 from calc_engine.common.displacement import calculate_displacement_height, display_displacement_results
-from calc_engine.common.util import get_session_value, store_session_value
 
 st.markdown("---")
 st.subheader("Displacement Height $$h_{dis}$$")
@@ -362,7 +359,7 @@ st.subheader("Displacement Height $$h_{dis}$$")
 # Calculate displacement height
 h_dis = calculate_displacement_height(st)
 display_displacement_results(st, h_dis)
-store_session_value(st, "h_dis", h_dis)
+st.session_state.inputs["h_dis"] = h_dis
 
 # Educational text on h_dis calculation
 if st.session_state.get("show_educational", False):
@@ -381,18 +378,18 @@ def peak_pressure_section():
     st.subheader("Basic Wind Pressure $$q_{b}$$")
 
     # Get region
-    region = get_session_value(st, "region", "United Kingdom")
+    region = st.session_state.inputs.get("region", "United Kingdom")
 
     # Determine region-specific default rho
     default_rho = 1.226 if region == "United Kingdom" else 1.25
 
     # If the user changed region since last run, reset rho_air to the region default
-    last_region = get_session_value(st, "last_region", None)
+    last_region = st.session_state.inputs.get("last_region", None)
     if last_region != region:
-        store_session_value(st, "rho_air", float(default_rho))
-        store_session_value(st, "last_region", region)
+        st.session_state.inputs["rho_air"] = default_rho
+        st.session_state.inputs["last_region"] = region
 
-    initial_rho = get_session_value(st, "rho_air", float(default_rho))
+    initial_rho = st.session_state.inputs.get("rho_air", float(default_rho))
 
     # Air density input
     rho_air = st.number_input(
@@ -403,12 +400,12 @@ def peak_pressure_section():
         step=0.001,
         format="%.3f"
     )
-    store_session_value(st, "rho_air", float(rho_air))
+    st.session_state.inputs["rho_air"] = float(rho_air)
     
     # Basic wind pressure calculation
-    v_b = get_session_value(st, "V_b", 0.0)
+    v_b = st.session_state.inputs.get("V_b", 0.0)
     q_b = 0.5 * rho_air * (v_b ** 2)
-    store_session_value(st, "q_b", q_b)
+    st.session_state.inputs["q_b"] = q_b
     
     st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdot {rho_air:.3f} \\cdot {v_b:.2f}^2 = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
     
@@ -429,10 +426,10 @@ def peak_pressure_section():
         # CRITICAL DECISION POINT: Is orography significant?
         is_orography_significant = st.checkbox(
             "Orography is significant", 
-            value=get_session_value(st, "is_orography_significant", False),
+            value=st.session_state.inputs.get("is_orography_significant", False),
             help="Check if the site has significant terrain features (hills, cliffs, ridges) per Figure NA.2"
         )
-        store_session_value(st, "is_orography_significant", is_orography_significant)
+        st.session_state.inputs["is_orography_significant"] = is_orography_significant
         
         # Get common parameters
         from calc_engine.uk.contour_plots import load_contour_data
@@ -446,9 +443,9 @@ def peak_pressure_section():
         datasets = load_contour_data(contour_data_path)
         
         # Get parameters from session state
-        d_sea = get_session_value(st, "d_sea", 60.0)
-        z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
-        terrain = get_session_value(st, "terrain_category", "").lower()
+        d_sea = st.session_state.inputs.get("d_sea", 60.0)
+        z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 10.0)
+        terrain = st.session_state.inputs.get("terrain_category", "").lower()
         z = st.session_state.inputs.get("z", 30.0)
         
         # ====================================================================
@@ -460,12 +457,12 @@ def peak_pressure_section():
                 "Orography factor $c_o(z)$",
                 min_value=0.0,
                 max_value=5.0,
-                value=get_session_value(st, "c_o", 1.0),
+                value=st.session_state.inputs.get("c_o", 1.0),
                 step=0.1,
                 format="%.2f",
                 help="Enter the orography factor for the site (from Annex A of EN 1991-1-4)"
             )
-            store_session_value(st, "c_o", c_o)
+            st.session_state.inputs["c_o"] = c_o
             
             # Check if we need mean wind velocity (only for z > 50m)
             if z > 50:
@@ -481,26 +478,26 @@ def peak_pressure_section():
                 c_rz = calculate_uk_roughness(st, datasets)
                 
                 # Get terrain type for UK calculation
-                terrain_type = get_session_value(st, "terrain_type", "")
+                terrain_type = st.session_state.inputs.get("terrain_type", "")
                 
                 # Initialize terrain factor
                 c_rT = 1.0
                 
                 # Check if terrain is "Town" for UK region
                 if terrain_type == "Town":
-                    c_rT = get_session_value(st, "c_rT", 1.0)
-                    store_session_value(st, "c_rT", c_rT)
+                    c_rT = st.session_state.inputs.get("c_rT", 1.0)
+                    st.session_state.inputs["c_rT"] = c_rT
                 
                 # Calculate mean wind velocity
                 v_mean = v_b * c_rz * c_o
-                store_session_value(st, "v_mean", v_mean)
+                st.session_state.inputs["v_mean"] = v_mean
                 
                 # Display the mean wind velocity result
                 st.markdown("#### Mean Wind Velocity $$v_m(z)$$")
                 st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.3f} \\cdot {c_o:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
             else:
                 # For z ≤ 50m, we don't need v_m, but store a placeholder
-                store_session_value(st, "v_mean", 0.0)
+                st.session_state.inputs["v_mean"] = v_mean
             
             # Now calculate peak pressure with orography
             st.markdown("---")
@@ -509,7 +506,7 @@ def peak_pressure_section():
             qp_value = calculate_uk_peak_pressure_with_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z, c_o
             )
-            store_session_value(st, "qp_value", qp_value)
+            st.session_state.inputs["qp_value"] = qp_value
         
         # ====================================================================
         # PATH 2: OROGRAPHY IS NOT SIGNIFICANT
@@ -517,10 +514,10 @@ def peak_pressure_section():
         else:
            
             # Set c_o to 1.0 for consistency (not used in calculation)
-            store_session_value(st, "c_o", 1.0)
+            st.session_state.inputs["c_o"] = 1.0
             
             # No mean wind velocity needed - go straight to peak pressure
-            store_session_value(st, "v_mean", 0.0)
+            st.session_state.inputs["v_mean"] = 0.0
             
             st.markdown("---")
             st.subheader("Peak Velocity Pressure $$q_p(z)$$")
@@ -528,7 +525,7 @@ def peak_pressure_section():
             qp_value = calculate_uk_peak_pressure_no_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain
             )
-            store_session_value(st, "qp_value", qp_value)
+            st.session_state.inputs["qp_value"] = qp_value
     
     # ========================================================================
     # EU CALCULATION PATH - Keep existing logic
@@ -540,18 +537,18 @@ def peak_pressure_section():
         
         from calc_engine.eu.roughness import display_eu_roughness_calculation
         
-        z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
-        terrain_category = get_session_value(st, "terrain_category", "II")
+        z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 10.0)
+        terrain_category = st.session_state.inputs.get("terrain_category", "II")
         
         # Calculate and display EU roughness factor
         c_rz = display_eu_roughness_calculation(st, z_minus_h_dis, terrain_category)
         
         # Get orography factor
-        c_o = get_session_value(st, "c_o", 1.0)
+        c_o = st.session_state.inputs.get("c_o", 1.0)
         
         # Calculate mean wind velocity
         v_mean = v_b * c_rz * c_o
-        store_session_value(st, "v_mean", v_mean)
+        st.session_state.inputs["v_mean"] = v_mean
         
         # Display the mean wind velocity result
         st.markdown("#### Mean Wind Velocity $$v_m(z)$$")
@@ -574,7 +571,7 @@ def peak_pressure_section():
         qp_value = display_eu_peak_pressure_calculation(
             st, z_minus_h_dis, terrain_category, v_b, rho_air, c_o
         )
-        store_session_value(st, "qp_value", qp_value)
+        st.session_state.inputs["qp_value"] = qp_value
 
 # Call the peak pressure section
 peak_pressure_section()
