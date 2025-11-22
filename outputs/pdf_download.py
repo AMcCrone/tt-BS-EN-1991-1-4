@@ -18,7 +18,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 import os
 
 # Import the StateManager
-from state_manager import StateManager
+from outputs.state_manager import StateManager
 
 
 class WindLoadReport:
