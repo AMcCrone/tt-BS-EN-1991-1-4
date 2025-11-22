@@ -301,18 +301,6 @@ class WindLoadReport:
         results = self.data.get('results', {})
         region = inputs.get('region', '').upper()
         
-        # Basic pressure values
-        data = [
-            ['Parameter', 'Value', 'Units'],
-            ['Basic Wind Pressure (qb)', f"{results.get('q_b', 0):.2f}", 'kPa'],
-            ['Peak Velocity Pressure (qp)', f"{results.get('qp_value', 0):.2f}", 'kPa'],
-        ]
-        
-        col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
-        table = self._create_table(data, col_widths=col_widths)
-        story.append(table)
-        story.append(Spacer(1, 8))
-        
         # UK-specific factors for peak velocity pressure
         if region == 'UNITED KINGDOM':
             story.append(Paragraph("5.1 Peak Velocity Pressure Factors (UK NA)", self.styles['SubsectionHeading']))
