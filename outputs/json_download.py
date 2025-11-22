@@ -62,7 +62,8 @@ class ReportExporter:
         inputs["z"] = session_inputs.get("z", 0.0)  # Building height
         
         # Site parameters
-        inputs["altitude_factor"] = session_inputs.get("altitude_factor", 0.0)
+        inputs["c_alt"] = session_inputs.get("c_alt", 0.0)
+        inputs["altitude"] = session_inputs.get("altitude", 0.0)
         inputs["d_sea"] = session_inputs.get("d_sea", 0.0)
         inputs["terrain_category"] = session_inputs.get("terrain_category", "N/A")
         inputs["rho_air"] = session_inputs.get("rho_air", 0.0)
