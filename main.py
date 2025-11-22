@@ -17,9 +17,8 @@ from calc_engine.common.pressure_summary import create_pressure_summary, plot_el
 from visualisation.building_viz import create_building_visualisation
 from visualisation.map import render_map_with_markers, get_elevation, compute_distance, interactive_map_ui
 from educational import text_content
-from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_sidebar_save_ui, add_sidebar_upload_ui
-from outputs.json_download import add_sidebar_report_export_ui, ReportExporter
-from outputs.pdf_download import add_wind_pdf_download_button
+from outputs.state_manager import add_session_save_ui, add_session_load_ui, add_pdf_export_ui
+from outputs.pdf_download import add_pdf_download_button
 
 # Set authentication from auth.py
 authenticate_user()
@@ -792,27 +791,46 @@ add_sidebar_save_ui()
 # add_sidebar_report_export_ui()
 st.session_state.show_educational = show_educational
 
-# After calculations are complete
-st.sidebar.header("Export Options")
+# ============================================================================
+# SIDEBAR - Export Options
+# ============================================================================
 
-# Project name input
-project_name = st.sidebar.text_input(
-    "Project Name",
-    value=st.session_state.inputs.get("project_name", ""),
-    help="Enter a project name to include in the PDF report header",
-    placeholder="e.g., My New Project"
+st.sidebar.header("💾 Session Management")
+
+# Session Save/Load
+add_session_save_ui()
+st.sidebar.markdown("---")
+add_session_load_ui()
+
+# ============================================================================
+# SIDEBAR - Report Export (only show after calculations complete)
+# ============================================================================
+
+st.sidebar.markdown("---")
+st.sidebar.header("📊 Report Export")
+
+# Project name input (optional - for PDF header)
+project_name_input = st.sidebar.text_input(
+    "Project Name (optional)",
+    value=st.session_state.inputs.get("project_name", "") if hasattr(st.session_state, 'inputs') else "",
+    help="Enter a project name to customize the PDF report header",
+    placeholder="e.g., My Wind Load Project",
+    key="pdf_project_name_override"
 )
 
-# Generate report data using ReportExporter
+# Show export options if calculations are complete
 if hasattr(st.session_state, 'summary_df') and st.session_state.summary_df is not None:
-    exporter = ReportExporter()
-    report_data = exporter.create_export_data()
     
-    # Add PDF download button
-    add_wind_pdf_download_button(
-        report_data=report_data,
-        project_name=project_name if project_name else None,
-        filename="wind_load_report.pdf"
+    # Export data for external use (JSON)
+    add_pdf_export_ui()
+    
+    st.sidebar.markdown("---")
+    
+    # Generate PDF report
+    st.sidebar.subheader("📄 PDF Report")
+    add_pdf_download_button(
+        project_name=project_name_input if project_name_input else None
     )
+    
 else:
-    st.sidebar.info("📊 Complete the calculations to download report")
+    st.sidebar.info("📊 Complete the calculations to export results")
