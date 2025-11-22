@@ -809,7 +809,7 @@ for p in paragraphs:
 st.session_state.show_educational = show_educational
 
 # ============================================================================
-# SIDEBAR - Export Options
+# SIDEBAR - Session Management
 # ============================================================================
 
 st.sidebar.header("💾 Session Management")
@@ -844,6 +844,7 @@ add_pdf_export_ui()
 st.sidebar.markdown("---")
 
 # Generate PDF report
+st.sidebar.subheader("📄 PDF Report")
 add_pdf_download_button(
     project_name=project_name_input if project_name_input else None
 )
