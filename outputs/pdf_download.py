@@ -261,7 +261,7 @@ class WindLoadReport:
         inputs = self.data.get('inputs', {})
         data = [
             ['Parameter', 'Value', 'Units'],
-            ['Altitude Factor', f"{inputs.get('altitude_factor', 0):.3f}", '-'],
+            ['Altitude Factor', f"{inputs.get('altitude', 0):.3f}", '-'],
             ['Distance to Sea', f"{inputs.get('d_sea', 0):.2f}", 'km'],
             ['Terrain Category', inputs.get('terrain_category', 'N/A'), '-'],
             ['Air Density (ρ)', f"{inputs.get('rho_air', 0):.3f}", 'kg/m³'],
@@ -647,7 +647,7 @@ class WindLoadReport:
         at {inputs.get('d_sea', 0):.1f}km from the sea.
         <br/><br/>
         The basic wind speed (Vb,map) of {inputs.get('V_bmap', 0):.2f} m/s was adjusted using an 
-        altitude factor of {inputs.get('altitude_factor', 0):.3f}, resulting in an adjusted basic 
+        altitude factor of {inputs.get('c_alt', 0):.3f}, resulting in an adjusted basic 
         wind speed (Vb) of {inputs.get('V_b', 0):.2f} m/s.
         <br/><br/>
         <b>Key Results:</b>
