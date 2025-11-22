@@ -276,7 +276,8 @@ if region == "United Kingdom":
         case = "z > 10m"
         altitude_equation = "c_{alt} = 1 + 0.001 × A × (10/z)^{0.2}"
         c_alt = 1 + 0.001 * altitude * (10 / z) ** 0.2
-
+    st.session_state.inputs["c_alt"] = c_alt
+    
     st.write(f"**Case: {case}**")
     st.latex(altitude_equation)
     st.write(f"Where A = {altitude}")
@@ -294,7 +295,7 @@ if region == "United Kingdom":
         
     # Basic Wind Speed with c_prob included (UK)
     V_b = V_b0 * c_dir * c_season * c_prob
-    st.session_state.inputs["V_b"] = V_b
+    st.session_state.results["V_b"] = V_b
         
     # Display the final result
     st.markdown("**Basic Wind Speed**")
@@ -341,7 +342,7 @@ else:
     st.write(f"Seasonal factor $c_{{season}}$: {c_season}")
     
     V_b = c_dir * c_season * c_prob * V_b0
-    st.session_state.inputs["V_b"] = V_b
+    st.session_state.results["V_b"] = V_b
     
     st.markdown("**Basic Wind Speed**")
     st.latex(f"V_b = c_{{dir}} × c_{{season}} × c_{{prob}} × V_{{b,0}} = {V_b:.2f}\\; m/s")
@@ -403,7 +404,7 @@ def peak_pressure_section():
     # Basic wind pressure calculation
     v_b = st.session_state.results.get("V_b", 0.0)
     q_b = 0.5 * rho_air * (v_b ** 2)
-    st.session_state.inputs["q_b"] = q_b
+    st.session_state.results["q_b"] = q_b
     
     st.write(f"Basic wind pressure: $q_b = 0.5 \\cdot \\rho \\cdot v_b^2 = 0.5 \\cdot {rho_air:.3f} \\cdot {v_b:.2f}^2 = {q_b:.2f}\\;\\mathrm{{N/m²}}$")
     
@@ -484,18 +485,18 @@ def peak_pressure_section():
                 # Check if terrain is "Town" for UK region
                 if terrain_type == "Town":
                     c_rT = st.session_state.results.get("c_rT", 1.0)
-                    st.session_state.inputs["c_rT"] = c_rT
+                    st.session_state.results["c_rT"] = c_rT
                 
                 # Calculate mean wind velocity
                 v_mean = v_b * c_rz * c_o
-                st.session_state.inputs["v_mean"] = v_mean
+                st.session_state.results["v_mean"] = v_mean
                 
                 # Display the mean wind velocity result
                 st.markdown("#### Mean Wind Velocity $$v_m(z)$$")
                 st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.3f} \\cdot {c_o:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
             else:
                 # For z ≤ 50m, we don't need v_m, but store a placeholder
-                st.session_state.inputs["v_mean"] = v_mean
+                st.session_state.results["v_mean"] = v_mean
             
             # Now calculate peak pressure with orography
             st.markdown("---")
@@ -504,7 +505,7 @@ def peak_pressure_section():
             qp_value = calculate_uk_peak_pressure_with_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z, c_o
             )
-            st.session_state.inputs["qp_value"] = qp_value
+            st.session_state.results["qp_value"] = qp_value
         
         # ====================================================================
         # PATH 2: OROGRAPHY IS NOT SIGNIFICANT
@@ -515,7 +516,7 @@ def peak_pressure_section():
             st.session_state.inputs["c_o"] = 1.0
             
             # No mean wind velocity needed - go straight to peak pressure
-            st.session_state.inputs["v_mean"] = 0.0
+            st.session_state.results["v_mean"] = 0.0
             
             st.markdown("---")
             st.subheader("Peak Velocity Pressure $$q_p(z)$$")
@@ -523,7 +524,7 @@ def peak_pressure_section():
             qp_value = calculate_uk_peak_pressure_no_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain
             )
-            st.session_state.inputs["qp_value"] = qp_value
+            st.session_state.results["qp_value"] = qp_value
     
     # ========================================================================
     # EU CALCULATION PATH - Keep existing logic
@@ -546,7 +547,7 @@ def peak_pressure_section():
         
         # Calculate mean wind velocity
         v_mean = v_b * c_rz * c_o
-        st.session_state.inputs["v_mean"] = v_mean
+        st.session_state.results["v_mean"] = v_mean
         
         # Display the mean wind velocity result
         st.markdown("#### Mean Wind Velocity $$v_m(z)$$")
@@ -569,7 +570,7 @@ def peak_pressure_section():
         qp_value = display_eu_peak_pressure_calculation(
             st, z_minus_h_dis, terrain_category, v_b, rho_air, c_o
         )
-        st.session_state.inputs["qp_value"] = qp_value
+        st.session_state.results["qp_value"] = qp_value
 
 # Call the peak pressure section
 peak_pressure_section()
@@ -646,7 +647,7 @@ if add_inset:
     st.session_state["inset_fig"] = fig
 
     # Store inset results in inputs for export
-    st.session_state.inputs["inset_results"] = results
+    st.session_state.results["inset_results"] = results
 
     st.plotly_chart(fig, width="stretch")
         
