@@ -791,40 +791,36 @@ st.session_state.show_educational = show_educational
 
 st.sidebar.header("💾 Session Management")
 
-# Session Save/Load
+# Session Save
 add_session_save_ui()
+
 st.sidebar.markdown("---")
+
+# Session Load
 add_session_load_ui()
 
 # ============================================================================
-# SIDEBAR - Report Export (only show after calculations complete)
+# SIDEBAR - Report Export
 # ============================================================================
 
 st.sidebar.markdown("---")
 st.sidebar.header("📊 Report Export")
 
-# Project name input (optional - for PDF header)
+# Optional project name input for PDF header
 project_name_input = st.sidebar.text_input(
     "Project Name (optional)",
     value=st.session_state.inputs.get("project_name", "") if hasattr(st.session_state, 'inputs') else "",
-    help="Enter a project name to customize the PDF report header",
+    help="Customize the PDF report header",
     placeholder="e.g., My Wind Load Project",
     key="pdf_project_name_override"
 )
 
-# Show export options if calculations are complete
-if hasattr(st.session_state, 'summary_df') and st.session_state.summary_df is not None:
-    
-    # Export data for external use (JSON)
-    add_pdf_export_ui()
-    
-    st.sidebar.markdown("---")
-    
-    # Generate PDF report
-    st.sidebar.subheader("📄 PDF Report")
-    add_pdf_download_button(
-        project_name=project_name_input if project_name_input else None
-    )
-    
-else:
-    st.sidebar.info("📊 Complete the calculations to export results")
+# Export JSON data
+add_pdf_export_ui()
+
+st.sidebar.markdown("---")
+
+# Generate PDF report
+add_pdf_download_button(
+    project_name=project_name_input if project_name_input else None
+)
