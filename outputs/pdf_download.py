@@ -2,6 +2,7 @@ import io
 from datetime import datetime
 from typing import Dict, Any, Optional
 import streamlit as st
+import pandas as pd
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -17,7 +18,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 import os
 
 # Import the StateManager
-from outputs.state_manager import StateManager
+from state_manager import StateManager
 
 
 class WindLoadReport:
@@ -344,6 +345,144 @@ class WindLoadReport:
         story.append(table_qp)
         story.append(Spacer(1, 12))
     
+    def _add_external_pressure_coefficients_section(self, story):
+        """Add external pressure coefficients section from cp_results DataFrame."""
+        story.append(Paragraph("6. External Pressure Coefficients", self.styles['SectionHeading']))
+        
+        # Get cp_results from results dictionary
+        cp_results_data = self.results.get('cp_results')
+        
+        if cp_results_data and cp_results_data.get('_type') == 'dataframe':
+            # Deserialize the DataFrame
+            import pandas as pd
+            df = self.manager.deserialize_dataframe(cp_results_data)
+            
+            if df is not None and not df.empty:
+                # Convert DataFrame to table data
+                # First row: headers
+                table_data = [list(df.columns)]
+                
+                # Data rows
+                for idx, row in df.iterrows():
+                    table_data.append([str(val) for val in row])
+                
+                # Create table with appropriate column widths
+                num_cols = len(df.columns)
+                col_widths = [self.content_width / num_cols] * num_cols
+                
+                table = self._create_table(table_data, col_widths=col_widths)
+                story.append(table)
+                story.append(Spacer(1, 12))
+            else:
+                story.append(Paragraph(
+                    "<i>External pressure coefficient data not available.</i>",
+                    self.styles['CustomBodyText']
+                ))
+                story.append(Spacer(1, 12))
+        else:
+            story.append(Paragraph(
+                "<i>External pressure coefficient data not available.</i>",
+                self.styles['CustomBodyText']
+            ))
+            story.append(Spacer(1, 12))
+    
+    def _add_pressure_summary_section(self, story):
+        """Add pressure summary section from summary_df DataFrame."""
+        story.append(Paragraph("7. Pressure Summary", self.styles['SectionHeading']))
+        
+        # Get pressure_summary from results dictionary
+        pressure_summary_data = self.results.get('pressure_summary')
+        
+        if pressure_summary_data and pressure_summary_data.get('_type') == 'dataframe':
+            # Deserialize the DataFrame
+            import pandas as pd
+            df = self.manager.deserialize_dataframe(pressure_summary_data)
+            
+            if df is not None and not df.empty:
+                # Convert DataFrame to table data
+                table_data = [list(df.columns)]
+                
+                # Data rows - format numeric values nicely
+                for idx, row in df.iterrows():
+                    formatted_row = []
+                    for col_name, val in row.items():
+                        # Try to format as number if possible
+                        try:
+                            if isinstance(val, (int, float)):
+                                formatted_row.append(f"{val:.3f}" if isinstance(val, float) else str(val))
+                            else:
+                                formatted_row.append(str(val))
+                        except:
+                            formatted_row.append(str(val))
+                    table_data.append(formatted_row)
+                
+                # Create table with appropriate column widths
+                num_cols = len(df.columns)
+                col_widths = [self.content_width / num_cols] * num_cols
+                
+                table = self._create_table(table_data, col_widths=col_widths)
+                story.append(table)
+                story.append(Spacer(1, 12))
+            else:
+                story.append(Paragraph(
+                    "<i>Pressure summary data not available.</i>",
+                    self.styles['CustomBodyText']
+                ))
+                story.append(Spacer(1, 12))
+        else:
+            story.append(Paragraph(
+                "<i>Pressure summary data not available.</i>",
+                self.styles['CustomBodyText']
+            ))
+            story.append(Spacer(1, 12))
+    
+    def _add_summary_section(self, story):
+        """Add overall summary section."""
+        story.append(Paragraph("8. Summary", self.styles['SectionHeading']))
+        
+        # Create summary of key results
+        summary_text = f"""
+        This wind load calculation has been performed in accordance with EN 1991-1-4 
+        for the {self.inputs.get('region', 'specified')} region.
+        """
+        
+        story.append(Paragraph(summary_text, self.styles['CustomBodyText']))
+        story.append(Spacer(1, 8))
+        
+        # Key results summary
+        story.append(Paragraph("8.1 Key Results", self.styles['SubsectionHeading']))
+        
+        key_results_data = [
+            ['Parameter', 'Value', 'Units'],
+            ['Basic Wind Speed (V_b)', f"{self.inputs.get('V_b', 0.0):.2f}", 'm/s'],
+            ['Basic Wind Pressure (q_b)', f"{self.results.get('q_b', 0.0):.3f}", 'kPa'],
+            ['Peak Velocity Pressure (q_p)', f"{self.results.get('qp_value', 0.0):.3f}", 'kPa'],
+        ]
+        
+        # Add mean wind velocity if calculated
+        v_mean = self.results.get('v_mean', 0.0)
+        if v_mean > 0.0:
+            key_results_data.insert(3, ['Mean Wind Velocity (v_m)', f"{v_mean:.2f}", 'm/s'])
+        
+        col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
+        table = self._create_table(key_results_data, col_widths=col_widths)
+        story.append(table)
+        story.append(Spacer(1, 12))
+        
+        # Design recommendations
+        story.append(Paragraph("8.2 Design Recommendations", self.styles['SubsectionHeading']))
+        recommendations = f"""
+        The peak velocity pressure of <b>{self.results.get('qp_value', 0.0):.3f} kPa</b> should be used 
+        in combination with the external pressure coefficients provided in Section 6 to determine 
+        the wind loads on the building facades.
+        <br/><br/>
+        For detailed facade design, refer to the pressure summary in Section 7 which provides 
+        the wind pressures for different building zones and directions.
+        """
+        
+        story.append(Paragraph(recommendations, self.styles['CustomBodyText']))
+        story.append(Spacer(1, 12))
+    
     def generate(self):
         """Generate the complete PDF report."""
         doc = SimpleDocTemplate(
@@ -379,6 +518,9 @@ class WindLoadReport:
         self._add_site_parameters_section(story)
         self._add_wind_parameters_section(story)
         self._add_calculated_results_section(story)
+        self._add_external_pressure_coefficients_section(story)
+        self._add_pressure_summary_section(story)
+        self._add_summary_section(story)
         
         # Build PDF
         doc.build(story, onFirstPage=self._header_footer, onLaterPages=self._header_footer)
@@ -428,6 +570,34 @@ def add_pdf_download_button(
         st.sidebar.warning("⚠️ No data available. Complete calculations first.")
         return
     
+    # Check for essential DataFrames
+    missing_items = []
+    
+    # Check for cp_results
+    has_cp_results = False
+    if hasattr(st.session_state, 'cp_results') and st.session_state.cp_results is not None:
+        has_cp_results = True
+    elif hasattr(st.session_state, 'results') and 'cp_results' in st.session_state.results:
+        has_cp_results = True
+    
+    if not has_cp_results:
+        missing_items.append("External pressure coefficients")
+    
+    # Check for summary_df / pressure_summary
+    has_summary = False
+    if hasattr(st.session_state, 'summary_df') and st.session_state.summary_df is not None:
+        has_summary = True
+    elif hasattr(st.session_state, 'results') and 'pressure_summary' in st.session_state.results:
+        has_summary = True
+    
+    if not has_summary:
+        missing_items.append("Pressure summary")
+    
+    # Show warning if data is missing
+    if missing_items:
+        st.sidebar.warning(f"⚠️ Missing: {', '.join(missing_items)}. Complete calculations first.")
+        return
+    
     # Generate filename if not provided
     if filename is None:
         proj_name = project_name or st.session_state.inputs.get("project_name", "Wind_Load")
@@ -448,3 +618,6 @@ def add_pdf_download_button(
         )
     except Exception as e:
         st.sidebar.error(f"❌ PDF generation failed: {str(e)}")
+        # Show detailed error in expander for debugging
+        with st.sidebar.expander("Error details"):
+            st.exception(e)
