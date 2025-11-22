@@ -760,7 +760,7 @@ if st.session_state.get("show_educational", False):
 from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures
 results_by_direction = calculate_cpe()  # Make sure this function exists
 summary_df = create_pressure_summary(st.session_state, results_by_direction)
-st.session_state.results['summary_df'] = summary_dataframe
+st.session_state.results['summary_df'] = summary_df
 elevation_figures = plot_elevation_with_pressures(st.session_state, results_by_direction)
 # Display results manually
 st.subheader("Pressure Summary")
