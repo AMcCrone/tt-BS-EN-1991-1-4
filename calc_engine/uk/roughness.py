@@ -1,6 +1,5 @@
 import streamlit as st
 from calc_engine.uk.plot_display import display_contour_plot_with_override
-from calc_engine.common.util import get_session_value, store_session_value
 
 def calculate_uk_roughness(st, datasets):
     """Calculate the roughness factor for UK region.
@@ -13,9 +12,9 @@ def calculate_uk_roughness(st, datasets):
         float: The calculated roughness factor
     """
     # Get necessary parameters from session state
-    z_minus_h_dis = get_session_value(st, "z_minus_h_dis", 10.0)
-    d_sea = get_session_value(st, "d_sea", 60.0)
-    terrain = get_session_value(st, "terrain_category", "").lower()
+    z_minus_h_dis = st.session_state.inputs.get("z_minus_h_dis", 10.0)
+    d_sea = st.session_state.inputs.get("d_sea", 60.0)
+    terrain = st.session_state.inputs.get("terrain_category", "").lower()
     
     # Calculate roughness factor from NA.3 plot
     c_rz = display_contour_plot_with_override(
@@ -31,7 +30,7 @@ def calculate_uk_roughness(st, datasets):
     
     # If terrain is town, apply additional correction factor
     if terrain == "town":
-        d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
+        d_town_terrain = st.session_state.inputs.get("d_town_terrain", 5.0)
         
         c_rT = display_contour_plot_with_override(
             st, 
