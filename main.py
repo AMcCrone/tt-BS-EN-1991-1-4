@@ -709,7 +709,7 @@ if region != "United Kingdom":  # Show for EU region
 cp_results_by_elevation = calculate_cpe(consider_funnelling=consider_funnelling)
 
 # Store for report export
-st.session_state.cp_results_by_elevation = cp_results_by_elevation
+st.session_state.results['cp_results'] = cp_dataframe
     
 # Get building dimensions from session state
 h = st.session_state.inputs.get("z", 10.0)  # Building height
@@ -762,7 +762,7 @@ if st.session_state.get("show_educational", False):
 from calc_engine.common.pressure_summary import create_pressure_summary, plot_elevation_with_pressures
 results_by_direction = calculate_cpe()  # Make sure this function exists
 summary_df = create_pressure_summary(st.session_state, results_by_direction)
-st.session_state.summary_df = summary_df
+st.session_state.results['summary_df'] = summary_dataframe
 elevation_figures = plot_elevation_with_pressures(st.session_state, results_by_direction)
 # Display results manually
 st.subheader("Pressure Summary")
