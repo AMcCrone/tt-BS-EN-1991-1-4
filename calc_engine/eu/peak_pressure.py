@@ -2,7 +2,6 @@
 
 import math
 import streamlit as st
-from calc_engine.common.util import get_session_value, store_session_value
 
 def calculate_qp(z, terrain_category, v_b, rho_air=1.25, c_o=1.0):
     """
@@ -111,12 +110,12 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
             "Orography factor $c_o(z)$",
             min_value=0.0,
             max_value=5.0,
-            value=get_session_value(st, "c_o", 1.0),
+            value=st.session_state.inputs.get("c_o", 1.0),
             step=0.1,
             format="%.2f",
         )
         # Store the value in session state
-        store_session_value(st, "c_o", c_o)
+        st.session_state.inputs["c_o"] = c_o
         
     # Calculate basic wind pressure
     q_b = 0.5 * rho_air * (v_b ** 2)
