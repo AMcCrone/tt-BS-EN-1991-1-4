@@ -20,7 +20,6 @@ from educational import text_content
 from calc_engine.JSON_save_load import JSON_generator, JSON_loader, add_sidebar_save_ui, add_sidebar_upload_ui
 from outputs.json_download import add_sidebar_report_export_ui, ReportExporter
 from outputs.pdf_download import add_wind_pdf_download_button
-from calc_engine.common.util import get_session_value, store_session_value
 
 # Set authentication from auth.py
 authenticate_user()
