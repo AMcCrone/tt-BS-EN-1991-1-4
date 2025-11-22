@@ -707,9 +707,6 @@ if region != "United Kingdom":  # Show for EU region
 
 # Automatically calculate cp,e values with or without funnelling based on checkbox
 cp_results_by_elevation = calculate_cpe(consider_funnelling=consider_funnelling)
-
-# Store for report export
-st.session_state.results['cp_results'] = cp_dataframe
     
 # Get building dimensions from session state
 h = st.session_state.inputs.get("z", 10.0)  # Building height
@@ -727,7 +724,8 @@ for direction, df in cp_results_by_elevation.items():
     df_with_direction = df.copy()
     df_with_direction["Wind Direction"] = direction
     all_results.append(df_with_direction)
-st.session_state.cp_results = pd.concat(all_results)
+# Store for report export
+st.session_state.results['cp_results'] = pd.concat(all_results)
 
 # Educational text on wind zone plots
 if st.session_state.get("show_educational", False):
