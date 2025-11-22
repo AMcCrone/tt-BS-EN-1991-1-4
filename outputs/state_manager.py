@@ -405,8 +405,7 @@ def add_session_load_ui():
 
 def add_pdf_export_ui():
     """Add PDF data export UI to sidebar."""
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("📊 Export for PDF")
+    st.sidebar.subheader("📊 Export Data (JSON)")
     
     with st.sidebar.expander("ℹ️ What gets exported?", expanded=False):
         st.markdown("""
@@ -417,19 +416,8 @@ def add_pdf_export_ui():
         - Pressure summaries
         - UK-specific factors (c_ez, c_eT, I_vz, etc.)
         
-        This file is used to generate the PDF report.
+        This JSON file contains all data for external processing.
         """)
-    
-    # Check if results are available
-    missing_items = []
-    if not hasattr(st.session_state, 'cp_results') or st.session_state.cp_results is None:
-        missing_items.append("CP results")
-    if not hasattr(st.session_state, 'summary_df') or st.session_state.summary_df is None:
-        missing_items.append("Pressure summary")
-    
-    if missing_items:
-        st.sidebar.warning(f"⚠️ Missing: {', '.join(missing_items)}. Complete calculations first.")
-        return
     
     manager = StateManager()
     
@@ -445,11 +433,11 @@ def add_pdf_export_ui():
         json_content = manager.export_for_pdf(filename)
         
         st.sidebar.download_button(
-            label="⬇️ Download Results",
+            label="⬇️ Download JSON",
             data=json_content,
             file_name=filename,
             mime="application/json",
-            help="Download complete results for PDF generation",
+            help="Download complete results as JSON",
             use_container_width=True
         )
     except Exception as e:
