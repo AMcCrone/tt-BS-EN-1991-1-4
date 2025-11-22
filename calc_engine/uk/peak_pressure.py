@@ -1,7 +1,7 @@
 import math
 import streamlit as st
 from calc_engine.uk.plot_display import display_contour_plot_with_override
-from calc_engine.common.util import get_session_value, store_session_value
+from calc_engine.common.util import get_session_value
 
 
 def calculate_uk_peak_pressure_no_orography(st, datasets, q_b, d_sea, z_minus_h_dis, terrain):
@@ -34,7 +34,7 @@ def calculate_uk_peak_pressure_no_orography(st, datasets, q_b, d_sea, z_minus_h_
     
     if terrain == "town":
         # Town terrain - need NA.8 as well
-        d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
+        d_town_terrain = st.session_state.inputs.get("d_town_terrain", 5.0)
         
         c_eT = display_contour_plot_with_override(
             st, 
@@ -98,7 +98,7 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
         
         if terrain == "town":
             # Town: need both NA.7 and NA.8
-            d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
+            d_town_terrain = st.session_state.inputs.get("d_town_terrain", 5.0)
             
             c_eT = display_contour_plot_with_override(
                 st, 
@@ -140,7 +140,7 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
         
         if terrain == "town":
             # Town: need correction factors NA.6 and NA.8
-            d_town_terrain = get_session_value(st, "d_town_terrain", 5.0)
+            d_town_terrain = st.session_state.inputs.get("d_town_terrain", 5.0)
             
             # Get NA.6 - Turbulence Correction Factor
             k_IT = display_contour_plot_with_override(
@@ -171,8 +171,8 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             st.write(f"Corrected turbulence intensity: $I_v(z) = I_v(z)_{{flat}} \\cdot k_{{I,T}} = {i_vz:.3f} \\cdot {k_IT:.3f} = {i_vz_corrected:.3f}$")
             
             # Get air density and mean velocity from session state
-            rho = get_session_value(st, "rho_air", 1.226)
-            v_m = get_session_value(st, "v_mean", 0.0)
+            rho = st.session_state.inputs.get("rho_air", 1.226)
+            v_m = st.session_state.results.get("v_mean", 0.0)
             
             # Calculate peak pressure
             qp_base = (1 + 3 * i_vz_corrected) ** 2 * 0.5 * rho * (v_m ** 2)
@@ -187,8 +187,8 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             # Country/Sea: use turbulence intensity directly
             
             # Get air density and mean velocity from session state
-            rho = get_session_value(st, "rho_air", 1.226)
-            v_m = get_session_value(st, "v_mean", 0.0)
+            rho = st.session_state.inputs.get("rho_air", 1.226)
+            v_m = st.session_state.results.get("v_mean", 0.0)
             
             # Calculate peak pressure
             qp_value = (1 + 3 * i_vz) ** 2 * 0.5 * rho * (v_m ** 2)
