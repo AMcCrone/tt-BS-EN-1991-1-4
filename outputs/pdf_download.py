@@ -549,7 +549,7 @@ def create_pdf_report(project_name: Optional[str] = None) -> io.BytesIO:
 
 def add_pdf_download_button(
     filename: Optional[str] = None,
-    button_label: str = "📄 Download PDF Report",
+    button_label: str = "📄 Download PDF",
     project_name: Optional[str] = None
 ):
     """
@@ -570,34 +570,6 @@ def add_pdf_download_button(
         st.sidebar.warning("⚠️ No data available. Complete calculations first.")
         return
     
-    # Check for essential DataFrames
-    missing_items = []
-    
-    # Check for cp_results
-    has_cp_results = False
-    if hasattr(st.session_state, 'cp_results') and st.session_state.cp_results is not None:
-        has_cp_results = True
-    elif hasattr(st.session_state, 'results') and 'cp_results' in st.session_state.results:
-        has_cp_results = True
-    
-    if not has_cp_results:
-        missing_items.append("External pressure coefficients")
-    
-    # Check for summary_df / pressure_summary
-    has_summary = False
-    if hasattr(st.session_state, 'summary_df') and st.session_state.summary_df is not None:
-        has_summary = True
-    elif hasattr(st.session_state, 'results') and 'pressure_summary' in st.session_state.results:
-        has_summary = True
-    
-    if not has_summary:
-        missing_items.append("Pressure summary")
-    
-    # Show warning if data is missing
-    if missing_items:
-        st.sidebar.warning(f"⚠️ Missing: {', '.join(missing_items)}. Complete calculations first.")
-        return
-    
     # Generate filename if not provided
     if filename is None:
         proj_name = project_name or st.session_state.inputs.get("project_name", "Wind_Load")
@@ -613,11 +585,11 @@ def add_pdf_download_button(
             data=pdf_buffer,
             file_name=filename,
             mime="application/pdf",
-            help="Download complete wind load calculation report as PDF",
+            help="Download wind load calculation report as PDF",
             use_container_width=True
         )
     except Exception as e:
         st.sidebar.error(f"❌ PDF generation failed: {str(e)}")
         # Show detailed error in expander for debugging
-        with st.sidebar.expander("Error details"):
+        with st.sidebar.expander("🔍 Error details"):
             st.exception(e)
