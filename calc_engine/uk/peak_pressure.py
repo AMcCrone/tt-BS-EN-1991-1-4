@@ -30,6 +30,7 @@ def calculate_uk_peak_pressure_no_orography(st, datasets, q_b, d_sea, z_minus_h_
         "c_e(z)", 
         "c_ez"
     )
+    st.session_state.results["c_ez"] = c_ez
     
     if terrain == "town":
         # Town terrain - need NA.8 as well
@@ -45,20 +46,21 @@ def calculate_uk_peak_pressure_no_orography(st, datasets, q_b, d_sea, z_minus_h_
             "c_{e,T}", 
             "c_eT"
         )
+        st.session_state.results["c_eT"] = c_eT
         
         # Calculate with town correction
-        qp_value = q_b * c_ez * c_eT
-        
+        q_p = q_b * c_ez * c_eT
+        st.session_state.results["q_p"] = q_p
         # Display result with formula
-        st.write(f"$q_p(z) = q_b \\cdot c_e(z) \\cdot c_{{e,T}} = {q_b:.2f} \\cdot {c_ez:.3f} \\cdot {c_eT:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+        st.write(f"$q_p(z) = q_b \\cdot c_e(z) \\cdot c_{{e,T}} = {q_b:.2f} \\cdot {c_ez:.3f} \\cdot {c_eT:.3f} = {q_p:.2f}\\;\\mathrm{{N/m^2}}$")
     else:
         # Country/Sea terrain - simple calculation
-        qp_value = q_b * c_ez
-        
+        q_p = q_b * c_ez
+        st.session_state.results["q_p"] = q_p
         # Display result with formula
-        st.write(f"$q_p(z) = q_b \\cdot c_e(z) = {q_b:.2f} \\cdot {c_ez:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+        st.write(f"$q_p(z) = q_b \\cdot c_e(z) = {q_b:.2f} \\cdot {c_ez:.3f} = {q_p:.2f}\\;\\mathrm{{N/m^2}}$")
     
-    return qp_value
+    return q_p
 
 
 def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z, c_o):
@@ -94,6 +96,7 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             "c_e(z)", 
             "c_ez"
         )
+        st.session_state.results["c_ez"] = c_ez
         
         if terrain == "town":
             # Town: need both NA.7 and NA.8
@@ -109,18 +112,21 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
                 "c_{e,T}", 
                 "c_eT"
             )
+            st.session_state.results["c_eT"] = c_eT
             
             # Calculate with town correction
-            qp_value = c_ez * c_eT * q_b * ((c_o + 0.6) / 1.6) ** 2
+            q_p = c_ez * c_eT * q_b * ((c_o + 0.6) / 1.6) ** 2
+            st.session_state.results["q_p"] = q_p
             
             st.write(f"z ≤ 50m (Town): $q_p(z) = c_e(z) \\cdot c_{{e,T}} \\cdot q_b \\cdot \\left(\\frac{{c_o(z) + 0.6}}{{1.6}}\\right)^2$")
-            st.write(f"$q_p(z) = {c_ez:.3f} \\cdot {c_eT:.3f} \\cdot {q_b:.2f} \\cdot {((c_o + 0.6) / 1.6):.3f}^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"$q_p(z) = {c_ez:.3f} \\cdot {c_eT:.3f} \\cdot {q_b:.2f} \\cdot {((c_o + 0.6) / 1.6):.3f}^2 = {q_p:.2f}\\;\\mathrm{{N/m^2}}$")
         else:
             # Country/Sea: only need NA.7
-            qp_value = c_ez * q_b * ((c_o + 0.6) / 1.6) ** 2
+            q_p = c_ez * q_b * ((c_o + 0.6) / 1.6) ** 2
+            st.session_state.results["q_p"] = q_p
             
             st.write(f"z ≤ 50m: $q_p(z) = c_e(z) \\cdot q_b \\cdot \\left(\\frac{{c_o(z) + 0.6}}{{1.6}}\\right)^2$")
-            st.write(f"$q_p(z) = {c_ez:.3f} \\cdot {q_b:.2f} \\cdot {((c_o + 0.6) / 1.6):.3f}^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"$q_p(z) = {c_ez:.3f} \\cdot {q_b:.2f} \\cdot {((c_o + 0.6) / 1.6):.3f}^2 = {q_p:.2f}\\;\\mathrm{{N/m^2}}$")
     
     else:
         # z > 50m: Use turbulence intensity formula
@@ -136,6 +142,7 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             "I_v(z)_flat", 
             "i_v"
         )
+        st.session_state.results["i_vz"] = i_vz
         
         if terrain == "town":
             # Town: need correction factors NA.6 and NA.8
@@ -152,6 +159,7 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
                 "k_{I,T}", 
                 "k_IT"
             )
+            st.session_state.results["k_IT"] = k_IT
             
             # Get NA.8 - Exposure Factor Correction
             c_eT = display_contour_plot_with_override(
@@ -164,6 +172,7 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
                 "c_{e,T}", 
                 "c_eT"
             )
+            st.session_state.results["c_eT"] = c_eT
             
             # Apply town correction to turbulence intensity
             i_vz_corrected = i_vz * k_IT
@@ -180,8 +189,9 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             st.write(f"$q_p(z) = (1 + 3 \\cdot {i_vz_corrected:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {qp_base:.2f}\\;\\mathrm{{N/m^2}}$")
             
             # Apply town correction
-            qp_value = qp_base * c_eT
-            st.write(f"With town correction: $q_p(z) = q_p(z) \\cdot c_{{e,T}} = {qp_base:.2f} \\cdot {c_eT:.3f} = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            q_p = qp_base * c_eT
+            st.session_state.results["q_p"] = q_p
+            st.write(f"With town correction: $q_p(z) = q_p(z) \\cdot c_{{e,T}} = {qp_base:.2f} \\cdot {c_eT:.3f} = {q_p:.2f}\\;\\mathrm{{N/m^2}}$")
         else:
             # Country/Sea: use turbulence intensity directly
             
@@ -190,9 +200,9 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             v_m = st.session_state.results.get("v_mean", 0.0)
             
             # Calculate peak pressure
-            qp_value = (1 + 3 * i_vz) ** 2 * 0.5 * rho * (v_m ** 2)
-            
+            q_p = (1 + 3 * i_vz) ** 2 * 0.5 * rho * (v_m ** 2)
+            st.session_state.results["q_p"] = q_p
             st.write(f"z > 50m: $q_p(z) = (1 + 3 \\cdot I_v(z)_{{flat}})^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2$")
-            st.write(f"$q_p(z) = (1 + 3 \\cdot {i_vz:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {qp_value:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"$q_p(z) = (1 + 3 \\cdot {i_vz:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {q_p:.2f}\\;\\mathrm{{N/m^2}}$")
     
-    return qp_value
+    return q_p
