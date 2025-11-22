@@ -188,36 +188,6 @@ class ReportExporter:
             json.dump(export_data, f, indent=2, ensure_ascii=False)
         
         return filepath
-    
-    def get_export_preview(self) -> Dict:
-        """
-        Get a preview of what will be exported.
-        """
-        data = self.create_export_data()
-        
-        # Count available results
-        cp_rows = 0
-        pressure_rows = 0
-        
-        if data["results"].get("cp_results"):
-            cp_rows = len(data["results"]["cp_results"]["data"])
-        
-        if data["results"].get("pressure_summary"):
-            pressure_rows = len(data["results"]["pressure_summary"]["data"])
-        
-        preview = {
-            "Input Variables": len([v for v in data["inputs"].values() if v not in ["N/A", 0.0]]),
-            "Calculated Results": {
-                "CP Results Rows": cp_rows,
-                "Pressure Summary Rows": pressure_rows,
-                "Has h_dis": data["results"].get("h_dis", 0.0) > 0,
-                "Has Peak Pressure": data["results"].get("q_p", 0.0) > 0
-            },
-            "Metadata": data["_metadata"]
-        }
-        
-        return preview
-
 
 def add_sidebar_report_export_ui():
     """
@@ -299,46 +269,7 @@ def add_sidebar_report_export_ui():
             help="Download JSON file to your browser's download folder",
            width="stretch"
         )
-        
-        # Show preview with pressure_summary status
-        preview = exporter.get_export_preview()
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("**Export includes:**")
-        st.sidebar.markdown(f"- {preview['Input Variables']} essential inputs")
-        st.sidebar.markdown(f"- {preview['Calculated Results']['CP Results Rows']} CP coefficients")
-        
-        # Highlight pressure summary status
-        pressure_rows = preview['Calculated Results']['Pressure Summary Rows']
-        if pressure_rows > 0:
-            st.sidebar.markdown(f"- ✅ {pressure_rows} pressure summary rows")
-        else:
-            st.sidebar.markdown(f"- ⚠️ No pressure summary data")
             
     except Exception as e:
         st.sidebar.error(f"❌ Export preparation failed: {str(e)}")
         st.sidebar.exception(e)
-
-
-def show_export_statistics():
-    """
-    Display statistics about available export data (for debugging).
-    """
-    st.subheader("Export Data Preview")
-    
-    exporter = ReportExporter()
-    preview = exporter.get_export_preview()
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.metric("Input Variables", preview["Input Variables"])
-        st.metric("CP Results", preview["Calculated Results"]["CP Results Rows"])
-    
-    with col2:
-        st.metric("Pressure Results", preview["Calculated Results"]["Pressure Summary Rows"])
-        st.write(f"**Has Peak Pressure:** {preview['Calculated Results']['Has Peak Pressure']}")
-    
-    # Show full preview
-    if st.checkbox("Show detailed preview"):
-        data = exporter.create_export_data()
-        st.json(data)
