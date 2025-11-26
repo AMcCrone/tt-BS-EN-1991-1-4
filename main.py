@@ -838,11 +838,6 @@ project_name_input = st.sidebar.text_input(
     key="pdf_project_name_override"
 )
 
-# Export JSON data
-add_pdf_export_ui()
-
-st.sidebar.markdown("---")
-
 # Generate PDF report
 st.sidebar.subheader("📄 PDF Report")
 add_pdf_download_button(
