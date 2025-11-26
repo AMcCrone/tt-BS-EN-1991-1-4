@@ -806,23 +806,12 @@ paragraphs = generate_pressure_summary_paragraphs(st.session_state, results_by_d
 for p in paragraphs:
     st.markdown(p)
 
-st.session_state.show_educational = show_educational
-
-# ============================================================================
-# SIDEBAR - Session Save/Load
-# ============================================================================
-
-# Session Save
-add_session_save_ui()
-
-st.sidebar.markdown("---")
-
-# Session Load
-add_session_load_ui()
-
 # ============================================================================
 # SIDEBAR - Report Export
 # ============================================================================
+st.session_state.show_educational = show_educational
+
+st.sidebar.markdown("---")
 
 st.sidebar.markdown("---")
 st.sidebar.header("📊 Report Export")
@@ -841,3 +830,15 @@ st.sidebar.subheader("📄 PDF Report")
 add_pdf_download_button(
     project_name=project_name_input if project_name_input else None
 )
+
+# ============================================================================
+# SIDEBAR - Session Save/Load
+# ============================================================================
+
+# Session Save
+add_session_save_ui()
+
+st.sidebar.markdown("---")
+
+# Session Load
+add_session_load_ui()
