@@ -586,7 +586,7 @@ def add_pdf_download_button(
             file_name=filename,
             mime="application/pdf",
             help="Download wind load calculation report as PDF",
-            use_container_width=True
+            width="stretch"
         )
     except Exception as e:
         st.sidebar.error(f"❌ PDF generation failed: {str(e)}")
