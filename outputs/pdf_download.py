@@ -147,7 +147,7 @@ class WindLoadReport:
         canvas.setFillColor(colors.grey)
         
         # Try to add logo
-        logo_paths = ["images/TT_Logo_Colour.png", "TT_Logo_Colour.png"]
+        logo_paths = ["educational/images/TT_Logo_Colour.png", "TT_Logo_Colour.png"]
         logo_added = False
         for logo_path in logo_paths:
             if os.path.exists(logo_path):
