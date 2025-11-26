@@ -809,10 +809,8 @@ for p in paragraphs:
 st.session_state.show_educational = show_educational
 
 # ============================================================================
-# SIDEBAR - Session Management
+# SIDEBAR - Session Save/Load
 # ============================================================================
-
-st.sidebar.header("💾 Session Management")
 
 # Session Save
 add_session_save_ui()
