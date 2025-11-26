@@ -351,17 +351,6 @@ def add_session_save_ui():
     """Add session save UI to sidebar."""
     st.sidebar.subheader("💾 Save Session")
     
-    with st.sidebar.expander("ℹ️ What gets saved?", expanded=False):
-        st.markdown("""
-        **User Inputs Only:**
-        - Project information
-        - Building dimensions
-        - Site parameters
-        - All user selections
-        
-        **Results are NOT saved** - they will be recalculated when you load the session.
-        """)
-    
     manager = StateManager()
     
     # Generate filename
