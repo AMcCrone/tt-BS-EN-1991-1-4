@@ -132,7 +132,7 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
         # z > 50m: Use turbulence intensity formula
         
         # Get NA.5 - Turbulence Intensity (needed for z > 50)
-        z = display_contour_plot_with_override(
+        i_vz = display_contour_plot_with_override(
             st, 
             datasets, 
             "NA.5", 
@@ -140,9 +140,9 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             z_minus_h_dis, 
             "Turbulence Intensity $I_{v}(z)_{flat}$", 
             "I_v(z)_flat", 
-            "z"
+            "i_vz"
         )
-        st.session_state.results["z"] = z
+        st.session_state.results["i_vz"] = i_vz
         
         if terrain == "town":
             # Town: need correction factors NA.6 and NA.8
