@@ -264,23 +264,23 @@ class StateManager:
         
         pdf_results = {
             # Displacement height
-            "h_dis": get_result("h_dis"),
-            "z_minus_h_dis": get_result("z_minus_h_dis"),
+            "h_dis": results.get("h_dis"),
+            "z_minus_h_dis": results.get("z_minus_h_dis"),
             
             # Wind velocities and pressures
-            "v_b": get_result("v_b"),
-            "v_mean": get_result("v_mean"),
-            "q_b": get_result("q_b"),
-            "qp_value": get_result("qp_value"),
+            "v_b": results.get("v_b"),
+            "v_mean": results.get("v_mean"),
+            "q_b": results.get("q_b"),
+            "qp_value": results.get("qp_value"),
             
             # UK-specific factors
-            "c_ez": get_result("c_ez"),
-            "c_eT": get_result("c_eT"),
-            "I_vz": get_result("I_vz"),
-            "k_iT": get_result("k_iT"),
-            "c_rz": get_result("c_rz"),
-            "c_rT": get_result("c_rT"),
-            "c_o": get_result("c_o", 1.0),
+            "c_ez": results.get("c_ez"),
+            "c_eT": results.get("c_eT"),
+            "I_vz": results.get("I_vz"),
+            "k_iT": results.get("k_iT"),
+            "c_rz": results.get("c_rz"),
+            "c_rT": results.get("c_rT"),
+            "c_o": results.get("c_o", 1.0),
         }
         
         # DataFrames - check multiple locations
