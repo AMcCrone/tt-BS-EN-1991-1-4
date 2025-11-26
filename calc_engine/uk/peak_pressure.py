@@ -132,7 +132,7 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
         # z > 50m: Use turbulence intensity formula
         
         # Get NA.5 - Turbulence Intensity (needed for z > 50)
-        i_vz = display_contour_plot_with_override(
+        z = display_contour_plot_with_override(
             st, 
             datasets, 
             "NA.5", 
@@ -140,16 +140,16 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             z_minus_h_dis, 
             "Turbulence Intensity $I_{v}(z)_{flat}$", 
             "I_v(z)_flat", 
-            "i_v"
+            "z"
         )
-        st.session_state.results["i_vz"] = i_vz
+        st.session_state.results["z"] = z
         
         if terrain == "town":
             # Town: need correction factors NA.6 and NA.8
             d_town_terrain = st.session_state.inputs.get("d_town_terrain", 5.0)
             
             # Get NA.6 - Turbulence Correction Factor
-            k_IT = display_contour_plot_with_override(
+            k_iT = display_contour_plot_with_override(
                 st, 
                 datasets, 
                 "NA.6", 
@@ -157,9 +157,9 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
                 z_minus_h_dis, 
                 "Turbulence Correction Factor $k_{I,T}$", 
                 "k_{I,T}", 
-                "k_IT"
+                "k_iT"
             )
-            st.session_state.results["k_IT"] = k_IT
+            st.session_state.results["k_iT"] = k_iT
             
             # Get NA.8 - Exposure Factor Correction
             c_eT = display_contour_plot_with_override(
@@ -175,18 +175,18 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             st.session_state.results["c_eT"] = c_eT
             
             # Apply town correction to turbulence intensity
-            i_vz_corrected = i_vz * k_IT
-            st.write(f"Corrected turbulence intensity: $I_v(z) = I_v(z)_{{flat}} \\cdot k_{{I,T}} = {i_vz:.3f} \\cdot {k_IT:.3f} = {i_vz_corrected:.3f}$")
+            z_corrected = z * k_iT
+            st.write(f"Corrected turbulence intensity: $I_v(z) = I_v(z)_{{flat}} \\cdot k_{{I,T}} = {z:.3f} \\cdot {k_iT:.3f} = {z_corrected:.3f}$")
             
             # Get air density and mean velocity from session state
             rho = st.session_state.inputs.get("rho_air", 1.226)
             v_m = st.session_state.results.get("v_mean", 0.0)
             
             # Calculate peak pressure
-            qp_base = (1 + 3 * i_vz_corrected) ** 2 * 0.5 * rho * (v_m ** 2)
+            qp_base = (1 + 3 * z_corrected) ** 2 * 0.5 * rho * (v_m ** 2)
             
             st.write(f"z > 50m: $q_p(z) = (1 + 3 \\cdot I_v(z))^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2$")
-            st.write(f"$q_p(z) = (1 + 3 \\cdot {i_vz_corrected:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {qp_base:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"$q_p(z) = (1 + 3 \\cdot {z_corrected:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {qp_base:.2f}\\;\\mathrm{{N/m^2}}$")
             
             # Apply town correction
             q_p = qp_base * c_eT
@@ -200,9 +200,9 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             v_m = st.session_state.results.get("v_mean", 0.0)
             
             # Calculate peak pressure
-            q_p = (1 + 3 * i_vz) ** 2 * 0.5 * rho * (v_m ** 2)
+            q_p = (1 + 3 * z) ** 2 * 0.5 * rho * (v_m ** 2)
             st.session_state.results["q_p"] = q_p
             st.write(f"z > 50m: $q_p(z) = (1 + 3 \\cdot I_v(z)_{{flat}})^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2$")
-            st.write(f"$q_p(z) = (1 + 3 \\cdot {i_vz:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {q_p:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"$q_p(z) = (1 + 3 \\cdot {z:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {q_p:.2f}\\;\\mathrm{{N/m^2}}$")
     
     return q_p
