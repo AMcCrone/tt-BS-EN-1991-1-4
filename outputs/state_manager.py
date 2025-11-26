@@ -270,7 +270,7 @@ class StateManager:
             "z_minus_h_dis": get_result("z_minus_h_dis"),
             
             # Wind velocities and pressures
-            "V_b": get_result("v_b"),
+            "V_b": get_result("V_b"),
             "v_mean": get_result("v_mean"),
             "q_b": get_result("q_b"),
             "qp_value": get_result("qp_value"),
