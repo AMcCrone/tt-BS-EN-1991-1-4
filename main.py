@@ -813,7 +813,6 @@ st.session_state.show_educational = show_educational
 
 st.sidebar.markdown("---")
 
-st.sidebar.markdown("---")
 st.sidebar.header("📊 Report Export")
 
 # Optional project name input for PDF header
@@ -831,6 +830,7 @@ add_pdf_download_button(
     project_name=project_name_input if project_name_input else None
 )
 
+st.sidebar.markdown("---")
 # ============================================================================
 # SIDEBAR - Session Save/Load
 # ============================================================================
