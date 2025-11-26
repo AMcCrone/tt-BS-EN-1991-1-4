@@ -246,6 +246,8 @@ class StateManager:
         Checks both st.session_state.results and st.session_state.inputs
         for backwards compatibility.
         """
+        results = st.session_state.results
+        
         results_dict = {}
         
         # Get from results namespace (preferred)
