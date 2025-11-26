@@ -276,7 +276,7 @@ class StateManager:
             # UK-specific factors
             "c_ez": results.get("c_ez"),
             "c_eT": results.get("c_eT"),
-            "I_vz": results.get("I_vz"),
+            "i_vz": results.get("i_vz"),
             "k_iT": results.get("k_iT"),
             "c_rz": results.get("c_rz"),
             "c_rT": results.get("c_rT"),
