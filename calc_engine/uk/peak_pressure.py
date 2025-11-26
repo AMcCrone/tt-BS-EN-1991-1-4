@@ -175,18 +175,18 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             st.session_state.results["c_eT"] = c_eT
             
             # Apply town correction to turbulence intensity
-            z_corrected = z * k_iT
-            st.write(f"Corrected turbulence intensity: $I_v(z) = I_v(z)_{{flat}} \\cdot k_{{I,T}} = {z:.3f} \\cdot {k_iT:.3f} = {z_corrected:.3f}$")
+            i_vz_corrected = i_vz * k_iT
+            st.write(f"Corrected turbulence intensity: $I_v(z) = I_v(z)_{{flat}} \\cdot k_{{I,T}} = {i_vz:.3f} \\cdot {k_iT:.3f} = {i_vz_corrected:.3f}$")
             
             # Get air density and mean velocity from session state
             rho = st.session_state.inputs.get("rho_air", 1.226)
             v_m = st.session_state.results.get("v_mean", 0.0)
             
             # Calculate peak pressure
-            qp_base = (1 + 3 * z_corrected) ** 2 * 0.5 * rho * (v_m ** 2)
+            qp_base = (1 + 3 * i_vz_corrected) ** 2 * 0.5 * rho * (v_m ** 2)
             
             st.write(f"z > 50m: $q_p(z) = (1 + 3 \\cdot I_v(z))^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2$")
-            st.write(f"$q_p(z) = (1 + 3 \\cdot {z_corrected:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {qp_base:.2f}\\;\\mathrm{{N/m^2}}$")
+            st.write(f"$q_p(z) = (1 + 3 \\cdot {i_vz_corrected:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {qp_base:.2f}\\;\\mathrm{{N/m^2}}$")
             
             # Apply town correction
             q_p = qp_base * c_eT
@@ -200,7 +200,7 @@ def calculate_uk_peak_pressure_with_orography(st, datasets, q_b, d_sea, z_minus_
             v_m = st.session_state.results.get("v_mean", 0.0)
             
             # Calculate peak pressure
-            q_p = (1 + 3 * z) ** 2 * 0.5 * rho * (v_m ** 2)
+            q_p = (1 + 3 * i_vz) ** 2 * 0.5 * rho * (v_m ** 2)
             st.session_state.results["q_p"] = q_p
             st.write(f"z > 50m: $q_p(z) = (1 + 3 \\cdot I_v(z)_{{flat}})^2 \\cdot 0.5 \\cdot \\rho \\cdot v_m^2$")
             st.write(f"$q_p(z) = (1 + 3 \\cdot {z:.3f})^2 \\cdot 0.5 \\cdot {rho:.3f} \\cdot {v_m:.2f}^2 = {q_p:.2f}\\;\\mathrm{{N/m^2}}$")
