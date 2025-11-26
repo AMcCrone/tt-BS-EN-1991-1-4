@@ -256,7 +256,7 @@ class WindLoadReport:
         data = [
             ['Parameter', 'Value', 'Units'],
             ['Basic Wind Speed (map)', f"{self.inputs.get('V_bmap', 0.0):.2f}", 'm/s'],
-            ['Basic Wind Speed (adjusted)', f"{self.results.get('V_b', 0.0):.2f}", 'm/s'],
+            ['Basic Wind Speed (v_b)', f"{self.results.get('v_b', 0.0):.2f}", 'm/s'],
             ['Basic Wind Pressure (q_b)', f"{self.results.get('q_b', 0.0):.3f}", 'kPa'],
         ]
         
@@ -298,7 +298,7 @@ class WindLoadReport:
                 ['Factor', 'Value', 'Description'],
                 ['c_ez', format_factor('c_ez'), 'Exposure factor at height z'],
                 ['c_eT', format_factor('c_eT'), 'Turbulence factor'],
-                ['I_vz', format_factor('I_vz'), 'Turbulence intensity at height z'],
+                ['I_vz', format_factor('i_vz'), 'Turbulence intensity at height z'],
                 ['k_iT', format_factor('k_iT'), 'Terrain factor'],
             ]
             
