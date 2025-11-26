@@ -207,7 +207,7 @@ class StateManager:
             
             # Wind parameters
             "V_bmap": inputs.get("V_bmap", 0.0),
-            "V_b": inputs.get("V_b", 0.0),
+            "V_b0": inputs.get("V_b0", 0.0),
             
             # UK-specific
             "is_orography_significant": inputs.get("is_orography_significant", False),
@@ -268,6 +268,7 @@ class StateManager:
             "z_minus_h_dis": get_result("z_minus_h_dis"),
             
             # Wind velocities and pressures
+            "v_b": get_result("v_b"),
             "v_mean": get_result("v_mean"),
             "q_b": get_result("q_b"),
             "qp_value": get_result("qp_value"),
