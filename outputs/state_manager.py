@@ -350,7 +350,7 @@ class StateManager:
 
 def add_session_save_ui():
     """Add session save UI to sidebar."""
-    st.sidebar.subheader("💾 Save Session")
+    st.sidebar.header("💾 Save Session")
     
     manager = StateManager()
     
