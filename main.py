@@ -6,7 +6,7 @@ import pandas as pd
 import openpyxl
 import requests
 from streamlit_folium import st_folium
-from geopy.distance import geodesic 
+from geopy.distance import geodesic
 
 # Import functions from modules
 from auth import authenticate_user
