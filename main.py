@@ -496,7 +496,7 @@ def peak_pressure_section():
                 st.write(f"$$v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.3f} \\cdot {c_o:.2f} = {v_mean:.2f}\\;\\mathrm{{m/s}}$$")
             else:
                 # For z ≤ 50m, we don't need v_m, but store a placeholder
-                st.session_state.results["v_mean"] = v_mean
+                st.session_state.results["v_mean"] = 0.0
             
             # Now calculate peak pressure with orography
             st.markdown("---")
