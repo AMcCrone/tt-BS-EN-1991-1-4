@@ -287,7 +287,7 @@ class StateManager:
             # EU-specific factors
             "z_0": get_result("z_0"),
             "z_min": get_result("z_min"),
-            "k_I": get_result("k_I"),
+            "k_r": get_result("k_r"),
 
             # Add summary paragraphs
             "summary_paragraphs": get_result("summary_paragraphs", []),
