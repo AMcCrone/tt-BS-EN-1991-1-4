@@ -454,7 +454,7 @@ class WindLoadReport:
         
         key_results_data = [
             ['Parameter', 'Value', 'Units'],
-            ['Basic Wind Speed (V_b)', f"{self.inputs.get('V_b', 0.0):.2f}", 'm/s'],
+            ['Basic Wind Speed (V_b)', f"{self.inputs.get('v_b', 0.0):.2f}", 'm/s'],
             ['Basic Wind Pressure (q_b)', f"{self.results.get('q_b', 0.0):.3f}", 'kPa'],
             ['Peak Velocity Pressure (q_p)', f"{self.results.get('qp_value', 0.0):.3f}", 'kPa'],
         ]
