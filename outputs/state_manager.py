@@ -273,7 +273,7 @@ class StateManager:
             "V_b": get_result("V_b"),
             "v_mean": get_result("v_mean"),
             "q_b": get_result("q_b"),
-            "qp_value": get_result("qp_value"),
+            "q_p": get_result("q_p"),
             
             # UK-specific factors
             "c_ez": get_result("c_ez"),
