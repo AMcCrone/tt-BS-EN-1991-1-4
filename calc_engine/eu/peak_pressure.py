@@ -55,6 +55,7 @@ def calculate_qp(z, terrain_category, v_b, rho_air=1.25, c_o=1.0):
     # Calculate the terrain factor k_r using Equation (4.5)
     z0_II = 0.05  # roughness length for terrain category II as reference
     k_r = 0.19 * (z_0 / z0_II) ** 0.07
+    st.session_state.results["k_r"] = k_r
     
     # Calculate roughness factor c_r(z)
     if z < z_min:
@@ -139,22 +140,22 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
         'IV': {'z_0': 1.0, 'z_min': 10},
     }
     z_0 = terrain_params[terrain_category]['z_0']
-    st.session_state.inputs["z_0"] = z_0
+    st.session_state.results["z_0"] = z_0
     z_min = terrain_params[terrain_category]['z_min']
-    st.session_state.inputs["z_min"] = z_min
+    st.session_state.results["z_min"] = z_min
     k_I = 1.0
-    st.session_state.inputs["k_I"] = k_I
+    st.session_state.results["k_I"] = k_I
     
     if z_minus_h_dis < z_min:
         I_vz = k_I / (c_o * math.log(z_min / z_0))
     else:
         I_vz = k_I / (c_o * math.log(z_minus_h_dis / z_0))
     
-    st.session_state.inputs["I_vz"] = I_vz
+    st.session_state.results["I_vz"] = I_vz
     
     # Calculate peak velocity pressure using your existing function
-    qp_value = calculate_qp(z_minus_h_dis, terrain_category, v_b, rho_air, c_o)
-    st.session_state.inputs["qp_value"] = qp_value
+    q_p = calculate_qp(z_minus_h_dis, terrain_category, v_b, rho_air, c_o)
+    st.session_state.inputs["q_p"] = q_p
     
     # Display calculation parameters and results
     st.write(f"Roughness factor, $c_r(z) = {c_rz:.3f}$")
@@ -163,6 +164,6 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
     st.write(f"Turbulence intensity, $I_v(z) = {I_vz:.3f}$")
     
     # Display the peak pressure calculation and result
-    st.write(f"Peak velocity pressure, $q_p(z) = [1 + 7 \\cdot I_v(z)] \\cdot 0.5 \\cdot \\rho \\cdot v_m^2(z) = {qp_value:.2f}\\;\\mathrm{{N/m²}}$")
+    st.write(f"Peak velocity pressure, $q_p(z) = [1 + 7 \\cdot I_v(z)] \\cdot 0.5 \\cdot \\rho \\cdot v_m^2(z) = {q_p:.2f}\\;\\mathrm{{N/m²}}$")
     
-    return qp_value
+    return q_p
