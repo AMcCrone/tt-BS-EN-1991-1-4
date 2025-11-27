@@ -504,10 +504,10 @@ def peak_pressure_section():
             st.markdown("---")
             st.subheader("Peak Velocity Pressure $q_p$")
             
-            qp_value = calculate_uk_peak_pressure_with_orography(
+            q_p = calculate_uk_peak_pressure_with_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain, z, c_o
             )
-            st.session_state.results["qp_value"] = qp_value
+            st.session_state.results["q_p"] = q_p
         
         # ====================================================================
         # PATH 2: OROGRAPHY IS NOT SIGNIFICANT
@@ -523,10 +523,10 @@ def peak_pressure_section():
             st.markdown("---")
             st.subheader("Peak Velocity Pressure $$q_p(z)$$")
             
-            qp_value = calculate_uk_peak_pressure_no_orography(
+            q_p = calculate_uk_peak_pressure_no_orography(
                 st, datasets, q_b, d_sea, z_minus_h_dis, terrain
             )
-            st.session_state.results["qp_value"] = qp_value
+            st.session_state.results["q_p"] = q_p
     
     # ========================================================================
     # EU CALCULATION PATH - Keep existing logic
@@ -569,10 +569,10 @@ def peak_pressure_section():
         
         from calc_engine.eu.peak_pressure import display_eu_peak_pressure_calculation
         
-        qp_value = display_eu_peak_pressure_calculation(
+        q_p = display_eu_peak_pressure_calculation(
             st, z_minus_h_dis, terrain_category, v_b, rho_air, c_o
         )
-        st.session_state.results["qp_value"] = qp_value
+        st.session_state.results["q_p"] = q_p
 
 # Call the peak pressure section
 peak_pressure_section()
