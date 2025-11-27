@@ -359,6 +359,8 @@ st.subheader("Displacement Height $$h_{dis}$$")
 h_dis = calculate_displacement_height(st)
 display_displacement_results(st, h_dis)
 st.session_state.inputs["h_dis"] = h_dis
+z_minus_h_dis = z - h_dis
+st.session_state.inputs["z_minus_h_dis"] = z_minus_h_dis
 
 # Educational text on h_dis calculation
 if st.session_state.get("show_educational", False):
