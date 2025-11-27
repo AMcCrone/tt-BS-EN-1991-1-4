@@ -257,7 +257,7 @@ class WindLoadReport:
             ['Parameter', 'Value', 'Units'],
             ['Basic Wind Speed (map)', f"{self.inputs.get('V_bmap', 0.0):.2f}", 'm/s'],
             ['Basic Wind Speed (v_b)', f"{self.results.get('V_b', 0.0):.2f}", 'm/s'],
-            ['Basic Wind Pressure (q_b)', f"{self.results.get('q_b', 0.0):.3f}", 'kPa'],
+            ['Basic Wind Pressure (q_b)', f"{self.results.get('q_b', 0.0):.1f}", 'Pa'],
         ]
         
         col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
@@ -385,7 +385,7 @@ class WindLoadReport:
             story.append(Paragraph(f"{section_num} Peak Velocity Pressure", self.styles['SubsectionHeading']))
             qp_data = [
                 ['Parameter', 'Value', 'Units'],
-                ['q_p(z)', f"{self.results.get('qp_value', 0.0):.3f}", 'kPa'],
+                ['q_p(z)', f"{self.results.get('qp_value', 0.0):.1f}", 'Pa'],
             ]
             
             table_qp = self._create_table(qp_data, col_widths=col_widths)
@@ -496,10 +496,10 @@ class WindLoadReport:
                         # Style for wind direction row
                         custom_style.extend([
                             ('SPAN', (0, row_idx), (-1, row_idx)),  # Merge all columns
-                            ('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#d3d2c8')),
+                            ('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#e9e8e0')),
                             ('FONTNAME', (0, row_idx), (-1, row_idx), self.font_bold),
                             ('FONTSIZE', (0, row_idx), (-1, row_idx), 10),
-                            ('LINEBELOW', (0, row_idx), (-1, row_idx), 1.0, colors.HexColor('#8b9064')),
+                            # ('LINEBELOW', (0, row_idx), (-1, row_idx), 1.0, colors.HexColor('#8b9064')),
                         ])
                         
                         # Move to next set of rows
@@ -508,7 +508,7 @@ class WindLoadReport:
                         # Add line below last row of this direction group
                         if row_idx < len(table_data):
                             custom_style.append(
-                                ('LINEBELOW', (0, row_idx - 1), (-1, row_idx - 1), 1.5, colors.HexColor('#8b9064'))
+                                ('LINEBELOW', (0, row_idx - 1), (-1, row_idx - 1), 0.75, colors.HexColor('#8b9064'))
                             )
                     
                     table = self._create_table(table_data, col_widths=col_widths, style_commands=custom_style)
@@ -580,7 +580,29 @@ class WindLoadReport:
                 num_cols = len(df.columns)
                 col_widths = [self.content_width / num_cols] * num_cols
                 
-                table = self._create_table(table_data, col_widths=col_widths)
+                # Custom styling for pressure summary table with TT colors
+                # TT_DarkBlue = rgb(0,48,60) = #00303C
+                # TT_LightLightBlue = rgb(207,241,242) = #CFF1F2
+                pressure_summary_style = [
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#00303C')),  # TT Dark Blue header
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),  # White text in header
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), self.font_bold),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('FONTNAME', (0, 1), (-1, -1), self.font_regular),
+                    ('FONTSIZE', (0, 1), (-1, -1), 9),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                    ('TOPPADDING', (0, 0), (-1, 0), 8),
+                    ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                    ('TOPPADDING', (0, 1), (-1, -1), 6),
+                    ('LINEABOVE', (0, 0), (-1, 0), 1.0, colors.HexColor('#00303C')),  # TT Dark Blue
+                    ('LINEBELOW', (0, 0), (-1, 0), 0.7, colors.HexColor('#00303C')),  # TT Dark Blue
+                    ('LINEBELOW', (0, -1), (-1, -1), 1.0, colors.HexColor('#00303C')),  # TT Dark Blue
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#CFF1F2')])  # Alternate with TT Light Light Blue
+                ]
+                
+                table = Table(table_data, colWidths=col_widths)
+                table.setStyle(TableStyle(pressure_summary_style))
                 story.append(table)
                 story.append(Spacer(1, 12))
             else:
