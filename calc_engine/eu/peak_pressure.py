@@ -72,12 +72,12 @@ def calculate_qp(z, terrain_category, v_b, rho_air=1.25, c_o=1.0):
     k_I = 1.0  # turbulence factor (default value is 1.0)
     
     if z < z_min:
-        I_vz = k_I / (c_o * math.log(z_min / z_0))
+        i_vz = k_I / (c_o * math.log(z_min / z_0))
     else:
-        I_vz = k_I / (c_o * math.log(z / z_0))
+        i_vz = k_I / (c_o * math.log(z / z_0))
     
     # Calculate the peak velocity pressure q_p(z)
-    q_p = (1 + 7 * I_vz) * 0.5 * rho_air * (v_m ** 2)
+    q_p = (1 + 7 * i_vz) * 0.5 * rho_air * (v_m ** 2)
     
     return q_p
 
@@ -147,11 +147,11 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
     st.session_state.results["k_I"] = k_I
     
     if z_minus_h_dis < z_min:
-        I_vz = k_I / (c_o * math.log(z_min / z_0))
+        i_vz = k_I / (c_o * math.log(z_min / z_0))
     else:
-        I_vz = k_I / (c_o * math.log(z_minus_h_dis / z_0))
+        i_vz = k_I / (c_o * math.log(z_minus_h_dis / z_0))
     
-    st.session_state.results["I_vz"] = I_vz
+    st.session_state.results["i_vz"] = i_vz
     
     # Calculate peak velocity pressure using your existing function
     q_p = calculate_qp(z_minus_h_dis, terrain_category, v_b, rho_air, c_o)
@@ -161,7 +161,7 @@ def display_eu_peak_pressure_calculation(st, z_minus_h_dis, terrain_category, v_
     st.write(f"Roughness factor, $c_r(z) = {c_rz:.3f}$")
     st.write(f"Orography factor, $c_o(z) = {c_o:.3f}$")
     st.write(f"Mean wind velocity, $v_m(z) = v_b \\cdot c_r(z) \\cdot c_o(z) = {v_b:.2f} \\cdot {c_rz:.3f} \\cdot {c_o:.3f} = {v_m:.2f}\\;\\mathrm{{m/s}}$")
-    st.write(f"Turbulence intensity, $I_v(z) = {I_vz:.3f}$")
+    st.write(f"Turbulence intensity, $I_v(z) = {i_vz:.3f}$")
     
     # Display the peak pressure calculation and result
     st.write(f"Peak velocity pressure, $q_p(z) = [1 + 7 \\cdot I_v(z)] \\cdot 0.5 \\cdot \\rho \\cdot v_m^2(z) = {q_p:.2f}\\;\\mathrm{{N/m²}}$")
