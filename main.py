@@ -802,9 +802,10 @@ if st.session_state.get("show_educational", False):
 st.markdown("---")
 st.subheader("Summary")
 
-paragraphs = generate_pressure_summary_paragraphs(st.session_state, results_by_direction)
-for p in paragraphs:
+summary_paragraphs = generate_pressure_summary_paragraphs(st.session_state, results_by_direction)
+for p in summary_paragraphs:
     st.markdown(p)
+st.session_state.results['summary_paragraphs'] = summary_paragraphs
 
 # ============================================================================
 # SIDEBAR - Report Export
