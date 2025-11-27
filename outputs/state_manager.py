@@ -284,6 +284,11 @@ class StateManager:
             "c_rT": get_result("c_rT"),
             "c_o": get_result("c_o", 1.0),
 
+            # EU-specific factors
+            "z_0": get_result("z_0"),
+            "z_min": get_result("z_min"),
+            "k_I": get_result("k_I"),
+
             # Add summary paragraphs
             "summary_paragraphs": get_result("summary_paragraphs", []),
         }
