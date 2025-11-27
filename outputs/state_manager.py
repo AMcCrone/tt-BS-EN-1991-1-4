@@ -283,10 +283,10 @@ class StateManager:
             "c_rz": get_result("c_rz"),
             "c_rT": get_result("c_rT"),
             "c_o": get_result("c_o", 1.0),
-        }
 
-        # Add summary paragraphs
-        "summary_paragraphs": get_result("summary_paragraphs", []),
+            # Add summary paragraphs
+            "summary_paragraphs": get_result("summary_paragraphs", []),
+        }
         
         # DataFrames - check multiple locations
         # CP results
