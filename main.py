@@ -576,6 +576,7 @@ def peak_pressure_section():
 
 # Call the peak pressure section
 peak_pressure_section()
+st.session_state.results["q_p"] = q_p
 
 # Section 5: WIND ZONES
 st.markdown("---")
