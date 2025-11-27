@@ -595,53 +595,32 @@ class WindLoadReport:
                 self.styles['CustomBodyText']
             ))
             story.append(Spacer(1, 12))
-    
+
     def _add_summary_section(self, story):
-        """Add overall summary section."""
-        story.append(Paragraph("8. Summary", self.styles['SectionHeading']))
-        
-        # Create summary of key results
-        summary_text = f"""
-        This wind load calculation has been performed in accordance with EN 1991-1-4 
-        for the {self.inputs.get('region', 'specified')} region.
-        """
-        
-        story.append(Paragraph(summary_text, self.styles['CustomBodyText']))
-        story.append(Spacer(1, 8))
-        
-        # Key results summary
-        story.append(Paragraph("8.1 Key Results", self.styles['SubsectionHeading']))
-        
-        key_results_data = [
-            ['Parameter', 'Value', 'Units'],
-            ['Basic Wind Speed (V_b)', f"{self.inputs.get('v_b', 0.0):.2f}", 'm/s'],
-            ['Basic Wind Pressure (q_b)', f"{self.results.get('q_b', 0.0):.3f}", 'kPa'],
-            ['Peak Velocity Pressure (q_p)', f"{self.results.get('qp_value', 0.0):.3f}", 'kPa'],
-        ]
-        
-        # Add mean wind velocity if calculated
-        v_mean = self.results.get('v_mean', 0.0)
-        if v_mean > 0.0:
-            key_results_data.insert(3, ['Mean Wind Velocity (v_m)', f"{v_mean:.2f}", 'm/s'])
-        
-        col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
-        table = self._create_table(key_results_data, col_widths=col_widths)
-        story.append(table)
-        story.append(Spacer(1, 12))
-        
-        # Design recommendations
-        story.append(Paragraph("8.2 Design Recommendations", self.styles['SubsectionHeading']))
-        recommendations = f"""
-        The peak velocity pressure of <b>{self.results.get('qp_value', 0.0):.3f} kPa</b> should be used 
-        in combination with the external pressure coefficients provided in Section 6 to determine 
-        the wind loads on the building facades.
-        <br/><br/>
-        For detailed facade design, refer to the pressure summary in Section 7 which provides 
-        the wind pressures for different building zones and directions.
-        """
-        
-        story.append(Paragraph(recommendations, self.styles['CustomBodyText']))
-        story.append(Spacer(1, 12))
+    """Add overall summary section using generated summary paragraphs."""
+    story.append(Paragraph("8. Summary", self.styles['SectionHeading']))
+    
+    # Get summary paragraphs from results
+    summary_paragraphs = self.results.get('summary_paragraphs', [])
+    
+    if summary_paragraphs:
+        # Add each paragraph
+        for para_text in summary_paragraphs:
+            # Convert markdown bold (**text**) to ReportLab bold (<b>text</b>)
+            formatted_text = para_text.replace('**', '<b>', 1)
+            if '<b>' in formatted_text:
+                formatted_text = formatted_text.replace('**', '</b>', 1)
+            
+            story.append(Paragraph(formatted_text, self.styles['CustomBodyText']))
+            story.append(Spacer(1, 6))
+    else:
+        # Fallback if no summary paragraphs available
+        story.append(Paragraph(
+            "<i>Summary data not available.</i>",
+            self.styles['CustomBodyText']
+        ))
+    
+    story.append(Spacer(1, 12))
     
     def generate(self):
         """Generate the complete PDF report."""
