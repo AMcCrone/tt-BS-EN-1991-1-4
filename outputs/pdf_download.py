@@ -249,9 +249,9 @@ class WindLoadReport:
         story.append(table)
         story.append(Spacer(1, 12))
     
-    def _add_wind_parameters_section(self, story):
-        """Add wind parameters section."""
-        story.append(Paragraph("4. Wind Parameters", self.styles['SectionHeading']))
+    def _add_basic_wind_pressure_section(self, story):
+        """Add basic wind pressure section."""
+        story.append(Paragraph("4. Basic Wind Pressure", self.styles['SectionHeading']))
         
         data = [
             ['Parameter', 'Value', 'Units'],
@@ -265,9 +265,9 @@ class WindLoadReport:
         story.append(table)
         story.append(Spacer(1, 12))
     
-    def _add_calculated_results_section(self, story):
-        """Add calculated results section."""
-        story.append(Paragraph("5. Calculated Results", self.styles['SectionHeading']))
+    def _add_peak_wind_pressure_section(self, story):
+        """Add peak wind pressure section."""
+        story.append(Paragraph("5. Peak Wind Pressure", self.styles['SectionHeading']))
         
         # Helper function to safely format values
         def format_factor(key):
@@ -292,7 +292,8 @@ class WindLoadReport:
         # Check if this is UK region for UK-specific factors
         region = self.inputs.get('region', '')
         if region == 'United Kingdom':
-            story.append(Paragraph("5.2 Peak Velocity Pressure Factors (UK NA)", self.styles['SubsectionHeading']))
+            # UK National Annex factors
+            story.append(Paragraph("5.2 National Annex Factors", self.styles['SubsectionHeading']))
             
             uk_data = [
                 ['Factor', 'Value', 'Description'],
@@ -300,6 +301,8 @@ class WindLoadReport:
                 ['c_eT', format_factor('c_eT'), 'Turbulence factor'],
                 ['I_vz', format_factor('i_vz'), 'Turbulence intensity at height z'],
                 ['k_iT', format_factor('k_iT'), 'Terrain factor'],
+                ['c_rz', format_factor('c_rz'), 'Roughness factor at height z'],
+                ['c_rT', format_factor('c_rT'), 'Terrain factor for roughness'],
             ]
             
             col_widths_uk = [self.content_width * 0.2, self.content_width * 0.2, self.content_width * 0.6]
@@ -307,24 +310,26 @@ class WindLoadReport:
             story.append(table_uk)
             story.append(Spacer(1, 8))
             
-            # Check if mean wind velocity was calculated (z > 50m with orography)
-            v_mean = self.results.get('v_mean', 0.0)
-            if v_mean > 0.0:
-                story.append(Paragraph("5.3 Mean Wind Velocity Factors (UK NA)", self.styles['SubsectionHeading']))
+            # Orography factor if significant
+            is_orography_significant = self.inputs.get('is_orography_significant', False)
+            if is_orography_significant:
+                story.append(Paragraph("5.3 Orography Factor", self.styles['SubsectionHeading']))
                 
-                uk_mean_data = [
+                orog_data = [
                     ['Factor', 'Value', 'Description'],
-                    ['c_rz', format_factor('c_rz'), 'Roughness factor at height z'],
-                    ['c_rT', format_factor('c_rT'), 'Terrain factor for roughness'],
                     ['c_o', format_factor('c_o'), 'Orography factor'],
                 ]
                 
-                table_uk_mean = self._create_table(uk_mean_data, col_widths=col_widths_uk)
-                story.append(table_uk_mean)
+                table_orog = self._create_table(orog_data, col_widths=col_widths_uk)
+                story.append(table_orog)
                 story.append(Spacer(1, 8))
+            
+            # Mean wind velocity if calculated (z > 50m with orography)
+            v_mean = self.results.get('v_mean', 0.0)
+            if v_mean > 0.0:
+                section_num = "5.4" if is_orography_significant else "5.3"
+                story.append(Paragraph(f"{section_num} Mean Wind Velocity", self.styles['SubsectionHeading']))
                 
-                # Mean wind velocity result
-                story.append(Paragraph("5.4 Mean Wind Velocity", self.styles['SubsectionHeading']))
                 v_mean_data = [
                     ['Parameter', 'Value', 'Units'],
                     ['v_m(z)', f"{v_mean:.2f}", 'm/s'],
@@ -333,46 +338,203 @@ class WindLoadReport:
                 story.append(table_v_mean)
                 story.append(Spacer(1, 8))
         
-        # Peak velocity pressure (for all regions)
-        section_num = "5.5" if region == "United Kingdom" and v_mean > 0.0 else "5.3"
-        story.append(Paragraph(f"{section_num} Peak Velocity Pressure", self.styles['SubsectionHeading']))
-        qp_data = [
-            ['Parameter', 'Value', 'Units'],
-            ['q_p(z)', f"{self.results.get('qp_value', 0.0):.3f}", 'kPa'],
-        ]
+        else:
+            # Non-UK regions: Mean wind velocity factors
+            story.append(Paragraph("5.2 Mean Wind Velocity", self.styles['SubsectionHeading']))
+            
+            mean_data = [
+                ['Parameter', 'Value', 'Units'],
+                ['z_0', format_factor('z_0'), 'm'],
+                ['z_min', format_factor('z_min'), 'm'],
+                ['k_r', format_factor('k_r'), '-'],
+                ['c_r(z)', format_factor('c_rz'), '-'],
+                ['v_m(z)', f"{self.results.get('v_mean', 0.0):.2f}", 'm/s'],
+            ]
+            
+            table_mean = self._create_table(mean_data, col_widths=col_widths)
+            story.append(table_mean)
+            story.append(Spacer(1, 8))
+            
+            # Peak velocity pressure factors
+            story.append(Paragraph("5.3 Peak Velocity Pressure", self.styles['SubsectionHeading']))
+            
+            peak_data = [
+                ['Parameter', 'Value', 'Units'],
+                ['I_v(z)', format_factor('i_vz'), '-'],
+                ['q_p(z)', f"{self.results.get('qp_value', 0.0):.3f}", 'kPa'],
+            ]
+            
+            table_peak = self._create_table(peak_data, col_widths=col_widths)
+            story.append(table_peak)
+            story.append(Spacer(1, 8))
         
-        table_qp = self._create_table(qp_data, col_widths=col_widths)
-        story.append(table_qp)
-        story.append(Spacer(1, 12))
+        # Final peak velocity pressure result (for UK only, if not already shown above)
+        if region == 'United Kingdom':
+            v_mean = self.results.get('v_mean', 0.0)
+            is_orography_significant = self.inputs.get('is_orography_significant', False)
+            
+            if v_mean > 0.0 and is_orography_significant:
+                section_num = "5.5"
+            elif v_mean > 0.0:
+                section_num = "5.4"
+            elif is_orography_significant:
+                section_num = "5.4"
+            else:
+                section_num = "5.3"
+            
+            story.append(Paragraph(f"{section_num} Peak Velocity Pressure", self.styles['SubsectionHeading']))
+            qp_data = [
+                ['Parameter', 'Value', 'Units'],
+                ['q_p(z)', f"{self.results.get('qp_value', 0.0):.3f}", 'kPa'],
+            ]
+            
+            table_qp = self._create_table(qp_data, col_widths=col_widths)
+            story.append(table_qp)
+            story.append(Spacer(1, 8))
+        
+        story.append(Spacer(1, 4))
     
     def _add_external_pressure_coefficients_section(self, story):
-        """Add external pressure coefficients section from cp_results DataFrame."""
+        """Add external pressure coefficients section with inset and funnelling subsections."""
         story.append(Paragraph("6. External Pressure Coefficients", self.styles['SectionHeading']))
+        
+        # Inset Zone subsection if applicable
+        inset_enabled = self.inputs.get('inset_enabled', False)
+        if inset_enabled:
+            story.append(Paragraph("6.1 Inset Zone", self.styles['SubsectionHeading']))
+            
+            inset_data = [
+                ['Parameter', 'Value', 'Units'],
+                ['Inset Height', f"{self.inputs.get('inset_height', 0.0):.2f}", 'm'],
+                ['North Offset', f"{self.inputs.get('north_offset', 0.0):.2f}", 'm'],
+                ['South Offset', f"{self.inputs.get('south_offset', 0.0):.2f}", 'm'],
+                ['East Offset', f"{self.inputs.get('east_offset', 0.0):.2f}", 'm'],
+                ['West Offset', f"{self.inputs.get('west_offset', 0.0):.2f}", 'm'],
+            ]
+            
+            col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
+            table_inset = self._create_table(inset_data, col_widths=col_widths)
+            story.append(table_inset)
+            story.append(Spacer(1, 8))
+        
+        # Funnelling subsection if applicable
+        consider_funnelling = self.inputs.get('consider_funnelling', False)
+        if consider_funnelling:
+            subsection_num = "6.2" if inset_enabled else "6.1"
+            story.append(Paragraph(f"{subsection_num} Funnelling", self.styles['SubsectionHeading']))
+            
+            funnelling_data = [
+                ['Parameter', 'Value', 'Units'],
+                ['North Gap', f"{self.inputs.get('north_gap', 0.0):.2f}", 'm'],
+                ['South Gap', f"{self.inputs.get('south_gap', 0.0):.2f}", 'm'],
+                ['East Gap', f"{self.inputs.get('east_gap', 0.0):.2f}", 'm'],
+                ['West Gap', f"{self.inputs.get('west_gap', 0.0):.2f}", 'm'],
+            ]
+            
+            col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
+            table_funnelling = self._create_table(funnelling_data, col_widths=col_widths)
+            story.append(table_funnelling)
+            story.append(Spacer(1, 8))
+        
+        # Main pressure coefficients table
+        subsection_label = "6.3" if (inset_enabled and consider_funnelling) else ("6.2" if (inset_enabled or consider_funnelling) else "6.1")
+        story.append(Paragraph(f"{subsection_label} Pressure Coefficients by Zone", self.styles['SubsectionHeading']))
         
         # Get cp_results from results dictionary
         cp_results_data = self.results.get('cp_results')
         
         if cp_results_data and cp_results_data.get('_type') == 'dataframe':
             # Deserialize the DataFrame
-            import pandas as pd
             df = self.manager.deserialize_dataframe(cp_results_data)
             
             if df is not None and not df.empty:
-                # Convert DataFrame to table data
-                # First row: headers
-                table_data = [list(df.columns)]
-                
-                # Data rows
-                for idx, row in df.iterrows():
-                    table_data.append([str(val) for val in row])
-                
-                # Create table with appropriate column widths
-                num_cols = len(df.columns)
-                col_widths = [self.content_width / num_cols] * num_cols
-                
-                table = self._create_table(table_data, col_widths=col_widths)
-                story.append(table)
-                story.append(Spacer(1, 12))
+                # Group by wind direction
+                if 'Wind Direction' in df.columns:
+                    # Create table data with wind direction as group headers
+                    table_data = []
+                    
+                    # Get all columns except Wind Direction
+                    other_cols = [col for col in df.columns if col != 'Wind Direction']
+                    
+                    # Add main header row
+                    table_data.append(other_cols)
+                    
+                    # Group by wind direction
+                    grouped = df.groupby('Wind Direction', sort=False)
+                    
+                    for wind_dir, group in grouped:
+                        # Add wind direction header row (spanning all columns)
+                        dir_header = [f"{wind_dir}"] + [''] * (len(other_cols) - 1)
+                        table_data.append(dir_header)
+                        
+                        # Add data rows for this wind direction
+                        for idx, row in group.iterrows():
+                            row_data = []
+                            for col in other_cols:
+                                val = row[col]
+                                # Round cp,e values to 2 decimal places
+                                if 'cp,e' in col or 'cp_e' in col.lower():
+                                    try:
+                                        row_data.append(f"{float(val):.2f}")
+                                    except:
+                                        row_data.append(str(val))
+                                else:
+                                    row_data.append(str(val))
+                            table_data.append(row_data)
+                    
+                    # Calculate column widths
+                    num_cols = len(other_cols)
+                    # Give more width to description column (assuming it's the first)
+                    col_widths = [self.content_width * 0.35] + [self.content_width * 0.65 / (num_cols - 1)] * (num_cols - 1)
+                    
+                    # Create custom styling for wind direction headers
+                    custom_style = []
+                    
+                    # Track row indices for wind direction headers
+                    row_idx = 1  # Start after main header
+                    for wind_dir, group in grouped:
+                        # Style for wind direction row
+                        custom_style.extend([
+                            ('SPAN', (0, row_idx), (-1, row_idx)),  # Merge all columns
+                            ('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#d3d2c8')),
+                            ('FONTNAME', (0, row_idx), (-1, row_idx), self.font_bold),
+                            ('FONTSIZE', (0, row_idx), (-1, row_idx), 10),
+                            ('LINEBELOW', (0, row_idx), (-1, row_idx), 1.0, colors.HexColor('#8b9064')),
+                        ])
+                        
+                        # Move to next set of rows
+                        row_idx += 1 + len(group)
+                        
+                        # Add line below last row of this direction group
+                        if row_idx < len(table_data):
+                            custom_style.append(
+                                ('LINEBELOW', (0, row_idx - 1), (-1, row_idx - 1), 1.5, colors.HexColor('#8b9064'))
+                            )
+                    
+                    table = self._create_table(table_data, col_widths=col_widths, style_commands=custom_style)
+                    story.append(table)
+                    story.append(Spacer(1, 12))
+                else:
+                    # Fallback if no Wind Direction column
+                    table_data = [list(df.columns)]
+                    for idx, row in df.iterrows():
+                        row_data = []
+                        for col in df.columns:
+                            val = row[col]
+                            if 'cp,e' in col or 'cp_e' in col.lower():
+                                try:
+                                    row_data.append(f"{float(val):.2f}")
+                                except:
+                                    row_data.append(str(val))
+                            else:
+                                row_data.append(str(val))
+                        table_data.append(row_data)
+                    
+                    num_cols = len(df.columns)
+                    col_widths = [self.content_width / num_cols] * num_cols
+                    table = self._create_table(table_data, col_widths=col_widths)
+                    story.append(table)
+                    story.append(Spacer(1, 12))
             else:
                 story.append(Paragraph(
                     "<i>External pressure coefficient data not available.</i>",
@@ -395,21 +557,19 @@ class WindLoadReport:
         
         if pressure_summary_data and pressure_summary_data.get('_type') == 'dataframe':
             # Deserialize the DataFrame
-            import pandas as pd
             df = self.manager.deserialize_dataframe(pressure_summary_data)
             
             if df is not None and not df.empty:
                 # Convert DataFrame to table data
                 table_data = [list(df.columns)]
                 
-                # Data rows - format numeric values nicely
+                # Data rows - format numeric values to 2 decimal places
                 for idx, row in df.iterrows():
                     formatted_row = []
                     for col_name, val in row.items():
-                        # Try to format as number if possible
                         try:
                             if isinstance(val, (int, float)):
-                                formatted_row.append(f"{val:.3f}" if isinstance(val, float) else str(val))
+                                formatted_row.append(f"{val:.2f}")
                             else:
                                 formatted_row.append(str(val))
                         except:
@@ -501,6 +661,19 @@ class WindLoadReport:
         story.append(Paragraph("Wind Load Calculation Report", self.styles['CustomTitle']))
         story.append(Spacer(1, 12))
         
+        # Add standard reference based on region
+        region = self.inputs.get('region', '')
+        if region == 'United Kingdom':
+            reference_text = "BS EN 1991-1-4, United Kingdom National Annex, and PD 6688"
+        else:
+            reference_text = "BS EN 1991-1-4"
+        
+        story.append(Paragraph(
+            f"<i>{reference_text}</i>",
+            self.styles['CustomBodyText']
+        ))
+        story.append(Spacer(1, 12))
+        
         # Report info
         story.append(Paragraph(
             f"<b>Report Generated:</b> {datetime.now().strftime('%B %d, %Y at %H:%M')}",
@@ -516,8 +689,8 @@ class WindLoadReport:
         self._add_project_info_section(story)
         self._add_building_geometry_section(story)
         self._add_site_parameters_section(story)
-        self._add_wind_parameters_section(story)
-        self._add_calculated_results_section(story)
+        self._add_basic_wind_pressure_section(story)
+        self._add_peak_wind_pressure_section(story)
         self._add_external_pressure_coefficients_section(story)
         self._add_pressure_summary_section(story)
         self._add_summary_section(story)
@@ -586,7 +759,7 @@ def add_pdf_download_button(
             file_name=filename,
             mime="application/pdf",
             help="Download wind load calculation report as PDF",
-            width="stretch"
+            use_container_width=True
         )
     except Exception as e:
         st.sidebar.error(f"❌ PDF generation failed: {str(e)}")
