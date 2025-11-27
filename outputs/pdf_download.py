@@ -597,30 +597,30 @@ class WindLoadReport:
             story.append(Spacer(1, 12))
 
     def _add_summary_section(self, story):
-    """Add overall summary section using generated summary paragraphs."""
-    story.append(Paragraph("8. Summary", self.styles['SectionHeading']))
-    
-    # Get summary paragraphs from results
-    summary_paragraphs = self.results.get('summary_paragraphs', [])
-    
-    if summary_paragraphs:
-        # Add each paragraph
-        for para_text in summary_paragraphs:
-            # Convert markdown bold (**text**) to ReportLab bold (<b>text</b>)
-            formatted_text = para_text.replace('**', '<b>', 1)
-            if '<b>' in formatted_text:
-                formatted_text = formatted_text.replace('**', '</b>', 1)
-            
-            story.append(Paragraph(formatted_text, self.styles['CustomBodyText']))
-            story.append(Spacer(1, 6))
-    else:
-        # Fallback if no summary paragraphs available
-        story.append(Paragraph(
-            "<i>Summary data not available.</i>",
-            self.styles['CustomBodyText']
-        ))
-    
-    story.append(Spacer(1, 12))
+        """Add overall summary section using generated summary paragraphs."""
+        story.append(Paragraph("8. Summary", self.styles['SectionHeading']))
+        
+        # Get summary paragraphs from results
+        summary_paragraphs = self.results.get('summary_paragraphs', [])
+        
+        if summary_paragraphs:
+            # Add each paragraph
+            for para_text in summary_paragraphs:
+                # Convert markdown bold (**text**) to ReportLab bold (<b>text</b>)
+                formatted_text = para_text.replace('**', '<b>', 1)
+                if '<b>' in formatted_text:
+                    formatted_text = formatted_text.replace('**', '</b>', 1)
+                
+                story.append(Paragraph(formatted_text, self.styles['CustomBodyText']))
+                story.append(Spacer(1, 6))
+        else:
+            # Fallback if no summary paragraphs available
+            story.append(Paragraph(
+                "<i>Summary data not available.</i>",
+                self.styles['CustomBodyText']
+            ))
+        
+        story.append(Spacer(1, 12))
     
     def generate(self):
         """Generate the complete PDF report."""
