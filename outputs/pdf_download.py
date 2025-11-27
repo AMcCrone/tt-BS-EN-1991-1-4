@@ -361,7 +361,7 @@ class WindLoadReport:
             peak_data = [
                 ['Parameter', 'Value', 'Units'],
                 ['I_v(z)', format_factor('i_vz'), '-'],
-                ['q_p(z)', f"{self.results.get('qp_value', 0.0):.3f}", 'kPa'],
+                ['q_p(z)', f"{self.results.get('q_p', 0.0):.1f}", 'Pa'],
             ]
             
             table_peak = self._create_table(peak_data, col_widths=col_widths)
@@ -385,7 +385,7 @@ class WindLoadReport:
             story.append(Paragraph(f"{section_num} Peak Velocity Pressure", self.styles['SubsectionHeading']))
             qp_data = [
                 ['Parameter', 'Value', 'Units'],
-                ['q_p(z)', f"{self.results.get('qp_value', 0.0):.1f}", 'Pa'],
+                ['q_p(z)', f"{self.results.get('q_p', 0.0):.1f}", 'Pa'],
             ]
             
             table_qp = self._create_table(qp_data, col_widths=col_widths)
