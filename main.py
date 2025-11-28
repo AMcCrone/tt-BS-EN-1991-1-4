@@ -188,38 +188,44 @@ else:
     st.session_state.inputs["altitude"] = altitude
 
 def render_terrain_category():
-    # Import terrain module based on region from session state
     region = st.session_state.inputs.get("region")
     if region == "United Kingdom":
         from calc_engine.uk import terrain as terrain_module
     else:
         from calc_engine.eu import terrain as terrain_module
-
-    # Get the terrain categories dictionary
+    
     terrain_dict = terrain_module.get_terrain_categories()
-
-    # Create a display list that combines the key and description
     display_options = [f"{code} - {desc}" for code, desc in terrain_dict.items()]
-
-    # Create a dropdown (selectbox) for terrain category selection using full descriptions
-    selected_option = st.selectbox("Select Terrain Category", display_options)
-
-    # Extract the simplified category code by splitting at " - "
+    
+    saved_terrain = st.session_state.inputs.get("terrain_category", None)
+    default_index = 0
+    if saved_terrain:
+        for i, option in enumerate(display_options):
+            if option.startswith(saved_terrain):
+                default_index = i
+                break
+    
+    selected_option = st.selectbox(
+        "Select Terrain Category", 
+        display_options,
+        index=default_index
+    )
+    
     selected_code = selected_option.split(" - ")[0].strip()
     st.session_state.inputs["terrain_category"] = selected_code
-
+    
     if region == "United Kingdom" and selected_code.lower() == "town":
         d_default = float(st.session_state.inputs.get("d_town_terrain", 5.0))
         d_town_terrain = st.number_input("Distance inside Town Terrain (km)", min_value=0.1, max_value=50.0, value=d_default, step=0.1)
         st.session_state.inputs["d_town_terrain"] = d_town_terrain
-
+    
     if st.session_state.get("show_educational", False):
         st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
         with st.expander("Which Terrain Type Should I Use?", expanded=False):
             st.image("educational/images/Terrain_Cats.png", caption="Terrain Types")
             st.markdown(f'<div class="educational-content">{text_content.terrain_help}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-# Display the terrain category dropdown list
+
 render_terrain_category()
 
 # Section 3: WIND VELOCITY
@@ -583,49 +589,37 @@ st.subheader("Wind Zones")
 
 st.write("#### Inset Storey")
 
-# Checkbox to opt into adding an inset zone
 add_inset = st.checkbox(
     "Add inset zone (upper storey)",
     value=bool(st.session_state.inputs.get("inset_enabled", False)),
-    key="ui_add_inset", help="Enable to consider additional wind suction effects from inset zones as per PD 6688-1-4"
+    help="Enable to consider additional wind suction effects from inset zones as per PD 6688-1-4"
 )
-# persist the checkbox state
 st.session_state.inputs["inset_enabled"] = bool(add_inset)
 
-# Educational text on inset zone calculation
 if st.session_state.get("show_educational", False):
     st.markdown('<div class="educational-expander">', unsafe_allow_html=True)
-
     with st.expander("What Are Inset Zones?", expanded=False):
-        # st.image("educational/images/h_dis_diagram.png", width="stretch")
         st.markdown(f'<div class="educational-content">{text_content.inset_zone_help}</div>', unsafe_allow_html=True)
-
     st.markdown('</div>', unsafe_allow_html=True)
     
 if add_inset:
-    # Show inputs when inset is enabled
     c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
-
     with c1:
-        north_offset = st.number_input("North offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("north_offset", 0.0)), step=0.1, key="ui_north_offset")
+        north_offset = st.number_input("North offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("north_offset", 0.0)), step=0.1)
         st.session_state.inputs["north_offset"] = float(north_offset)
-
     with c2:
-        south_offset = st.number_input("South offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("south_offset", 4.0)), step=0.1, key="ui_south_offset")
+        south_offset = st.number_input("South offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("south_offset", 4.0)), step=0.1)
         st.session_state.inputs["south_offset"] = float(south_offset)
-
     with c3:
-        east_offset = st.number_input("East offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("east_offset", 0.0)), step=0.1, key="ui_east_offset")
+        east_offset = st.number_input("East offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("east_offset", 0.0)), step=0.1)
         st.session_state.inputs["east_offset"] = float(east_offset)
-
     with c4:
-        west_offset = st.number_input("West offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("west_offset", 4.0)), step=0.1, key="ui_west_offset")
+        west_offset = st.number_input("West offset (m)", min_value=0.0, max_value=1000.0, value=float(st.session_state.inputs.get("west_offset", 4.0)), step=0.1)
         st.session_state.inputs["west_offset"] = float(west_offset)
-
-    # Inset (upper storey) vertical height
+    
     inset_col1, inset_col2 = st.columns([1, 2])
     with inset_col1:
-        inset_height = st.number_input("Inset height H1 (m)", min_value=0.0, max_value=500.0, value=float(st.session_state.inputs.get("inset_height", 10.0)), step=0.1, key="ui_inset_height")
+        inset_height = st.number_input("Inset height H1 (m)", min_value=0.0, max_value=500.0, value=float(st.session_state.inputs.get("inset_height", 10.0)), step=0.1)
         st.session_state.inputs["inset_height"] = float(inset_height)
 
     # Call the visualiser with the stored values
