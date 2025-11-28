@@ -56,7 +56,7 @@ def get_profile_case(h, b):
     else:  # h > 2*b
         return "Case 3: h > 2b"
 
-def create_wind_pressure_plot(building_height, building_width, qp_value, direction):
+def create_wind_pressure_plot(building_height, building_width, q_p, direction):
     """Create wind pressure profile plot using Plotly."""
     # Determine the case based on height-to-width ratio
     profile_case = get_profile_case(building_height, building_width)
@@ -65,10 +65,10 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
     z_points = np.linspace(0, building_height, 100)
     
     # Conservative approach (constant pressure)
-    qp_points = [get_qp_at_height(z, building_height, building_width, qp_value) for z in z_points]
+    qp_points = [get_qp_at_height(z, building_height, building_width, q_p) for z in z_points]
     
     # Less conservative approach (for reference)
-    qp_points_less_conservative = [get_qp_less_conservative(z, building_height, building_width, qp_value) for z in z_points]
+    qp_points_less_conservative = [get_qp_less_conservative(z, building_height, building_width, q_p) for z in z_points]
     
     # Create the figure
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -76,7 +76,7 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
     # Define max arrow length and reference point
     max_arrow_length = building_width * 1.5
     ref_x = building_width * 1.5
-    arrow_scale = max_arrow_length / qp_value if qp_value > 0 else 1
+    arrow_scale = max_arrow_length / q_p if q_p > 0 else 1
     
     # Create building outline
     fig.add_trace(
@@ -116,7 +116,7 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
     arrow_heights = np.linspace(0.1*building_height, 0.9*building_height, num_arrows)
     
     for i, z_height in enumerate(arrow_heights):
-        qp_at_z = get_qp_at_height(z_height, building_height, building_width, qp_value)
+        qp_at_z = get_qp_at_height(z_height, building_height, building_width, q_p)
         arrow_length = qp_at_z * arrow_scale
         
         # Draw arrow line
@@ -304,7 +304,7 @@ def create_wind_pressure_plot(building_height, building_width, qp_value, directi
     
     return fig, profile_case
 
-def create_pressure_table(building_height, building_width, qp_value):
+def create_pressure_table(building_height, building_width, q_p):
     """Create a dataframe with pressure values at key heights for display in Streamlit."""
     key_heights = []
     if building_height <= building_width:
@@ -324,7 +324,7 @@ def create_pressure_table(building_height, building_width, qp_value):
     for label, z_height in key_heights:
         # Apply the same pressure for all heights in conservative approach
         # Ground level has the same pressure as the building top
-        qp_at_z = get_qp_at_height(z_height, building_height, building_width, qp_value)
+        qp_at_z = get_qp_at_height(z_height, building_height, building_width, q_p)
         data.append([label, f"{z_height:.2f}", f"{qp_at_z:.2f}"])
             
     df = pd.DataFrame(data, columns=["Position", "Height (m)", "q_p(z) (N/m²)"])
@@ -339,9 +339,9 @@ def create_pressure_table(building_height, building_width, qp_value):
     
     return df
 
-def calculate_design_pressure(building_height, building_width, qp_value):
+def calculate_design_pressure(building_height, building_width, q_p):
     """Calculate design pressure based on building dimensions.
     Using conservative approach for all cases."""
-    # Conservative approach - use the qp_value directly for all cases
-    design_pressure = qp_value
+    # Conservative approach - use the q_p directly for all cases
+    design_pressure = q_p
     return design_pressure
