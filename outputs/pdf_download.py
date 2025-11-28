@@ -235,14 +235,24 @@ class WindLoadReport:
         """Add site parameters section."""
         story.append(Paragraph("3. Site Parameters", self.styles['SectionHeading']))
         
+        region = self.inputs.get('region', 'N/A')
+        terrain_category = self.inputs.get('terrain_category', 'N/A')
+        
         data = [
             ['Parameter', 'Value', 'Units'],
             ['Altitude', f"{self.inputs.get('altitude', 0.0):.0f}", 'm'],
             ['Altitude Factor (c_alt)', f"{self.inputs.get('c_alt', 0.0):.3f}", '-'],
-            ['Distance to Sea', f"{self.inputs.get('d_sea', 0.0):.0f}", 'km'],
-            ['Terrain Category', self.inputs.get('terrain_category', 'N/A'), '-'],
-            ['Air Density', f"{self.inputs.get('rho_air', 0.0):.2f}", 'kg/m³'],
         ]
+        
+        if region == 'United Kingdom':
+            data.append(['Distance to Sea', f"{self.inputs.get('d_sea', 0.0):.0f}", 'km'])
+        
+        data.append(['Terrain Category', terrain_category, '-'])
+        
+        if terrain_category == 'Town':
+            data.append(['Distance Inside Town', f"{self.inputs.get('d_town_terrain', 'N/A')}", 'km'])
+        
+        data.append(['Air Density', f"{self.inputs.get('rho_air', 0.0):.3f}", 'kg/m³'])
         
         col_widths = [self.content_width * 0.5, self.content_width * 0.3, self.content_width * 0.2]
         table = self._create_table(data, col_widths=col_widths)
