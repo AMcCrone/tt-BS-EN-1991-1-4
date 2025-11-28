@@ -201,6 +201,7 @@ class StateManager:
             "c_alt": inputs.get("c_alt", 0.0),
             "altitude": inputs.get("altitude", 0.0),
             "d_sea": inputs.get("d_sea", 0.0),
+            "d_town_terrain": inputs.get("d_town_terrain", 0.0),
             "terrain_category": inputs.get("terrain_category", "N/A"),
             "terrain_type": inputs.get("terrain_type", "N/A"),
             "rho_air": inputs.get("rho_air", 0.0),
