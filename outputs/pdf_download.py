@@ -494,8 +494,7 @@ class WindLoadReport:
                     
                     # Calculate column widths
                     num_cols = len(other_cols)
-                    # Give more width to description column (assuming it's the first)
-                    col_widths = [self.content_width * 0.25, self.content_width * 0.25, self.content_width * 0.5]
+                    col_widths = [self.content_width * 0.2, self.content_width * 0.2, self.content_width * 0.6]
                     
                     # Create custom styling for wind direction headers
                     custom_style = []
