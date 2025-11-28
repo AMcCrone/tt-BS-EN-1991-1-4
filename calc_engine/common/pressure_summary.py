@@ -222,9 +222,9 @@ def calculate_pressure_data(session_state, results_by_direction):
             summary_data.append({
                 "Direction": direction,
                 "Zone": zone,
-                "c_dir": round(c_dir, 2),
+                # "c_dir": round(c_dir, 2),
                 "cp,e": cp_e,
-                "cp,i (used)": cp_i_used,
+                "cp,i": cp_i_used,
                 "We (kPa)": we_kpa,
                 "Wi (kPa)": wi_kpa,
                 "Net (kPa)": net_kpa,
