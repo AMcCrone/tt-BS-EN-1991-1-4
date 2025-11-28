@@ -215,6 +215,9 @@ class StateManager:
             
             # Funnelling
             "consider_funnelling": inputs.get("consider_funnelling", False),
+
+            # Loaded Area
+            "loaded_area": inputs.get("loaded_area", 10.0),
         }
         
         # Conditional inputs
