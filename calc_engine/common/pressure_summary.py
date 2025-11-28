@@ -74,7 +74,7 @@ def calculate_pressure_data(session_state, results_by_direction):
     """
     # Extract dimensions and peak velocity pressure
     h = session_state.inputs.get("z", 10.0)  # Building height
-    qp_value = session_state.results.get("qp_value", 1000.0)  # Peak velocity pressure in N/m²
+    q_p = session_state.results.get("q_p", 1000.0)  # Peak velocity pressure in N/m²
 
     # Plan dimensions (needed to determine which zones appear)
     NS_dimension = session_state.inputs.get("NS_dimension", 20.0)
@@ -122,7 +122,7 @@ def calculate_pressure_data(session_state, results_by_direction):
     # Process each direction (elevation)
     for direction, cp_df in results_by_direction.items():
         c_dir = direction_factors.get(direction, 1.0)
-        adjusted_qp = qp_value * c_dir
+        adjusted_qp = q_p * c_dir
 
         # Choose width and crosswind dimension depending on direction
         if direction in ["North", "South"]:
@@ -630,7 +630,7 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     NS_dimension = session_state.inputs.get("NS_dimension", 20.0)
     EW_dimension = session_state.inputs.get("EW_dimension", 40.0)
     h = session_state.inputs.get("z", 10.0)  # Building height
-    qp_value = session_state.results.get("qp_value", 1000.0)  # Peak velocity pressure in N/m²
+    q_p = session_state.results.get("q_p", 1000.0)  # Peak velocity pressure in N/m²
     
     # Calculate aspect ratio to maintain proportions
     max_dim = max(NS_dimension, EW_dimension, h)
