@@ -208,7 +208,8 @@ def create_elevation_plot(width, height, crosswind_dim, zone_colors, title):
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
                    range=[-0.1*height, 1.1*height], scaleanchor="x", scaleratio=1),
         margin=dict(l=50, r=50, t=80, b=50),
-        plot_bgcolor="white",
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
         height=400
     )
 
