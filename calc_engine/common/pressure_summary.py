@@ -594,7 +594,8 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
                 scaleratio=1
             ),
             margin=dict(l=50, r=50, t=80, b=50),
-            plot_bgcolor="white",
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
             height=600
         )
         
