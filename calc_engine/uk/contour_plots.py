@@ -231,7 +231,8 @@ def create_contour_plot(df, sheet_name, x_input, y_input):
             range=[np.log10(y_min), np.log10(y_max)]
         ),
         height=500,
-        plot_bgcolor='rgba(240,240,240,0.95)',
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",,
         margin=dict(l=50, r=50, t=20, b=50)
     )
     
