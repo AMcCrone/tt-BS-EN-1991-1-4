@@ -33,17 +33,17 @@ def detect_zone_E_and_visualise(session_state,
     TT_Orange = "rgb(211,69,29)"
     TT_Roof = "lightgrey"
 
-    # Read base plan dims + base roof height from session_state
-    NS_dimension = float(session_state.inputs.get("NS_dimension", 20.0))  # Width of North/South elevations
-    EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))  # Width of East/West elevations  
-    base_z = float(session_state.inputs.get("z", 10.0))  # roof plane z
-
     # Sanitize offsets and H1 — treat None as 0.0
     north_offset = max(0.0, float(north_offset or 0.0))
     south_offset = max(0.0, float(south_offset or 0.0))
     east_offset  = max(0.0, float(east_offset  or 0.0))
     west_offset  = max(0.0, float(west_offset  or 0.0))
     H1 = max(0.0, float(inset_height or 0.0))
+
+    # Read base plan dims + base roof height from session_state
+    NS_dimension = float(session_state.inputs.get("NS_dimension", 20.0))  # Width of North/South elevations
+    EW_dimension = float(session_state.inputs.get("EW_dimension", 40.0))  # Width of East/West elevations  
+    base_z = float(session_state.inputs.get("z", 10.0)) - H1 # roof plane z
 
     # Upper-storey footprint in plan coordinates
     # x-axis (North-South): x=0 is North, x=EW_dimension is South
