@@ -572,6 +572,13 @@ class WindLoadReport:
                 # Convert DataFrame to table data
                 table_data = [list(df.columns)]
                 
+                # Find the column index for "Net (kPa)"
+                net_col_idx = None
+                for idx, col_name in enumerate(df.columns):
+                    if "Net" in col_name and "kPa" in col_name:
+                        net_col_idx = idx
+                        break
+                
                 # Data rows - format numeric values to 2 decimal places
                 for idx, row in df.iterrows():
                     formatted_row = []
@@ -609,6 +616,12 @@ class WindLoadReport:
                     ('LINEBELOW', (0, -1), (-1, -1), 1.0, colors.HexColor('#00303C')),  # TT Dark Blue
                     ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#CFF1F2')])  # Alternate with TT Light Light Blue
                 ]
+                
+                # Apply bold font to "Net (kPa)" column data (excluding header)
+                if net_col_idx is not None:
+                    pressure_summary_style.append(
+                        ('FONTNAME', (net_col_idx, 1), (net_col_idx, -1), self.font_bold)
+                    )
                 
                 table = Table(table_data, colWidths=col_widths)
                 table.setStyle(TableStyle(pressure_summary_style))
