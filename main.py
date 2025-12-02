@@ -20,7 +20,7 @@ from educational import text_content
 from outputs.state_manager import add_session_save_ui, add_session_load_ui, add_pdf_export_ui
 from outputs.pdf_download import add_pdf_download_button
 
-# Set authentication from auth.py
+# Set authentication from auth.py 111
 authenticate_user()
 
 # Setup page configuration
