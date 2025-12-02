@@ -45,7 +45,7 @@ show_educational = st.sidebar.checkbox(
 col1, col2, col3 = st.columns([1, 4.8, 1])
 with col2:
     st.image("educational/images/TT_Logo_Colour.svg", width=450)
-    st.title("Wind Load App")
+    st.titled("Wind Load App")
     st.caption("Wind Load Calculation to BS EN 1991-1-4 and UK National Annex")
 
 TT_Grey = "rgb(99,102,105)"
