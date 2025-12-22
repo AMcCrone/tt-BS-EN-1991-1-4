@@ -152,7 +152,7 @@ st.session_state.inputs["NS_dimension"] = NS_dimension
 st.session_state.inputs["EW_dimension"] = EW_dimension
 st.session_state.inputs["z"] = z
 
-# 3D visualization of the building
+# 3D visualisation of the building
 building_fig = create_building_visualisation(NS_dimension, EW_dimension, z)
 st.plotly_chart(building_fig, width="stretch")
 
@@ -788,11 +788,11 @@ st.dataframe(summary_df, hide_index=True, height=35*len(summary_df)+38)
 for direction, fig in elevation_figures.items():
     st.plotly_chart(fig, width="stretch")
 
-# 3D Visualization (if educational mode enabled)
+# 3D visualisation (if educational mode enabled)
 if st.session_state.get("show_educational", False):
-    st.subheader("3D Wind Visualization") 
-    from calc_engine.common.pressure_summary import create_wind_visualization_ui
-    create_wind_visualization_ui(st.session_state, results_by_direction)
+    st.subheader("3D Wind Visualisation") 
+    from calc_engine.common.pressure_summary import create_wind_visualisation_ui
+    create_wind_visualisation_ui(st.session_state, results_by_direction)
 
 # Results Summary section
 st.markdown("---")
