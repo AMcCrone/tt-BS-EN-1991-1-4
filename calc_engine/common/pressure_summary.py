@@ -605,9 +605,9 @@ def plot_elevation_with_pressures(session_state, results_by_direction):
     return figures
 
 
-def create_3d_wind_visualization(session_state, results_by_direction, mode="suction"):
+def create_3d_wind_visualisation(session_state, results_by_direction, mode="suction"):
     """
-    Create an interactive 3D visualization of the building with wind zones and pressure values.
+    Create an interactive 3D visualisation of the building with wind zones and pressure values.
     
     Parameters:
     -----------
@@ -616,12 +616,12 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
     results_by_direction : dict
         Dictionary of DataFrames with cp,e values for each direction
     mode : str
-        "suction" for zones A,B,C visualization or "pressure" for zone D visualization
+        "suction" for zones A,B,C visualisation or "pressure" for zone D visualisation
     
     Returns:
     --------
     plotly.graph_objects.Figure
-        3D visualization of the building with wind zones and pressure values
+        3D visualisation of the building with wind zones and pressure values
     """
     import plotly.graph_objects as go
     import numpy as np
@@ -996,9 +996,9 @@ def create_3d_wind_visualization(session_state, results_by_direction, mode="suct
 
     return fig
 
-def create_wind_visualization_ui(session_state, results_by_direction):
+def create_wind_visualisation_ui(session_state, results_by_direction):
     """
-    Create an interactive UI for toggling between pressure and suction visualization modes
+    Create an interactive UI for toggling between pressure and suction visualisation modes
     
     Parameters:
     -----------
@@ -1015,7 +1015,7 @@ def create_wind_visualization_ui(session_state, results_by_direction):
     
     # Create toggle for pressure/suction mode
     mode = st.radio(
-        "Visualization Mode:",
+        "Visualisation Mode:",
         ["Suction", "Pressure"],
         horizontal=True
     )
@@ -1026,8 +1026,8 @@ def create_wind_visualization_ui(session_state, results_by_direction):
     else:
         viz_mode = "pressure"
     
-    # Create 3D visualization
-    fig = create_3d_wind_visualization(session_state, results_by_direction, mode=viz_mode)
+    # Create 3D visualisation
+    fig = create_3d_wind_visualisation(session_state, results_by_direction, mode=viz_mode)
     
     # Display the figure
     st.plotly_chart(fig, width="stretch")
