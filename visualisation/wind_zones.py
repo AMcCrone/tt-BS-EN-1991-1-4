@@ -33,7 +33,7 @@ def plot_wind_zones(session_state):
         height=z,
         crosswind_dim=EW_dimension,
         zone_colors=zone_colors,
-        title="North-South Elevation Wind Zones"
+        title="North & South Elevation Wind Zones"
     )
     
     EW_elevation_fig = create_elevation_plot(
@@ -41,7 +41,7 @@ def plot_wind_zones(session_state):
         height=z,
         crosswind_dim=NS_dimension,
         zone_colors=zone_colors,
-        title="East-West Elevation Wind Zones"
+        title="East & West Elevation Wind Zones"
     )
     
     return NS_elevation_fig, EW_elevation_fig
