@@ -137,11 +137,11 @@ col1, col2, col3 = st.columns(3)
 
 # North-South Dimension input
 with col1:
-    NS_dimension = st.number_input("North-South Dimension (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("NS_dimension", 30.0)), step=1.0)
+    NS_dimension = st.number_input("North & South Width (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("NS_dimension", 30.0)), step=1.0)
 
 # East-West Dimension input
 with col2:
-    EW_dimension = st.number_input("East-West Dimension (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("EW_dimension", 30.0)),step=1.0)
+    EW_dimension = st.number_input("East & West Width (m)", min_value=1.0, max_value=500.0, value=float(st.session_state.inputs.get("EW_dimension", 30.0)),step=1.0)
 
 # Building Height input
 with col3:
