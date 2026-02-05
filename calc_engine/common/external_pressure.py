@@ -48,10 +48,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     # Determine plot size based on building dimensions and gaps
     # Add a margin factor to ensure everything fits nicely
     margin_factor = 1.2
-    max_north = NS_dimension/2 + north_gap * margin_factor
-    max_south = NS_dimension/2 + south_gap * margin_factor
-    max_east = EW_dimension/2 + east_gap * margin_factor
-    max_west = EW_dimension/2 + west_gap * margin_factor
+    max_north = EW_dimension/2 + north_gap * margin_factor
+    max_south = EW_dimension/2 + south_gap * margin_factor
+    max_east = NS_dimension/2 + east_gap * margin_factor
+    max_west = NS_dimension/2 + west_gap * margin_factor
     
     # Set plot boundaries based on the maximum extents in each direction
     plot_size_x = max(max_east, max_west) * 1.5
@@ -145,10 +145,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     
     # Highlight the gaps with orange if funnelling applies
     for direction, gap, dimension, is_ns in [
-        ("North", north_gap, EW_dimension, True),
-        ("South", south_gap, EW_dimension, True),
-        ("East", east_gap, NS_dimension, False),
-        ("West", west_gap, NS_dimension, False)
+        ("North", north_gap, NS_dimension, True),
+        ("South", south_gap, NS_dimension, True),
+        ("East", east_gap, EW_dimension, False),
+        ("West", west_gap, EW_dimension, False)
     ]:
         # Calculate e (the smaller of b or 2h)
         h = st.session_state.inputs.get("z", 10.0)  # Building height
