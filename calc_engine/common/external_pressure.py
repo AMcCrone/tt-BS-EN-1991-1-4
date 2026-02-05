@@ -42,8 +42,8 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     EW_dimension = st.session_state.inputs.get("EW_dimension", 40.0)
     
     # Calculate coordinates for main building
-    building_x = [-EW_dimension/2, EW_dimension/2, EW_dimension/2, -EW_dimension/2, -EW_dimension/2]
-    building_y = [-NS_dimension/2, -NS_dimension/2, NS_dimension/2, NS_dimension/2, -NS_dimension/2]
+    building_x = [-NS_dimension/2, NS_dimension/2, NS_dimension/2, -NS_dimension/2, -NS_dimension/2]
+    building_y = [-EW_dimension/2, -EW_dimension/2, EW_dimension/2, EW_dimension/2, -EW_dimension/2]
     
     # Determine plot size based on building dimensions and gaps
     # Add a margin factor to ensure everything fits nicely
