@@ -198,9 +198,9 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
             # Add a funnelling effect label - improved positioning to prevent overlap
             if is_ns:
                 label_x = 0
-                label_y = NS_dimension/2 + gap/2 if direction == "North" else -NS_dimension/2 - gap/2
+                label_y = EW_dimension/2 + gap/2 if direction == "North" else -EW_dimension/2 - gap/2
             else:
-                label_x = EW_dimension/2 + gap/2 if direction == "East" else -EW_dimension/2 - gap/2
+                label_x = NS_dimension/2 + gap/2 if direction == "East" else -NS_dimension/2 - gap/2
                 label_y = 0
                 
             fig.add_annotation(
