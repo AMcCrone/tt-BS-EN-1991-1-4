@@ -69,29 +69,29 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     
     # Add the four surrounding buildings as individual rectangular shapes
     # North building
-    north_x = [-EW_dimension/2 - west_gap/2, EW_dimension/2 + east_gap/2, 
-              EW_dimension/2 + east_gap/2, -EW_dimension/2 - west_gap/2, -EW_dimension/2 - west_gap/2]
-    north_y = [NS_dimension/2 + north_gap, NS_dimension/2 + north_gap,
-              NS_dimension/2 + north_gap + north_building_height, 
-              NS_dimension/2 + north_gap + north_building_height, NS_dimension/2 + north_gap]
+    north_x = [-NS_dimension/2 - west_gap/2, NS_dimension/2 + east_gap/2, 
+              NS_dimension/2 + east_gap/2, -NS_dimension/2 - west_gap/2, -NS_dimension/2 - west_gap/2]
+    north_y = [EW_dimension/2 + north_gap, EW_dimension/2 + north_gap,
+              EW_dimension/2 + north_gap + north_building_height, 
+              EW_dimension/2 + north_gap + north_building_height, EW_dimension/2 + north_gap]
     
     # South building
-    south_x = [-EW_dimension/2 - west_gap/2, EW_dimension/2 + east_gap/2, 
-              EW_dimension/2 + east_gap/2, -EW_dimension/2 - west_gap/2, -EW_dimension/2 - west_gap/2]
-    south_y = [-NS_dimension/2 - south_gap - south_building_height, -NS_dimension/2 - south_gap - south_building_height,
-              -NS_dimension/2 - south_gap, -NS_dimension/2 - south_gap, -NS_dimension/2 - south_gap - south_building_height]
+    south_x = [-NS_dimension/2 - west_gap/2, NS_dimension/2 + east_gap/2, 
+              NS_dimension/2 + east_gap/2, -NS_dimension/2 - west_gap/2, -NS_dimension/2 - west_gap/2]
+    south_y = [-EW_dimension/2 - south_gap - south_building_height, -EW_dimension/2 - south_gap - south_building_height,
+              -EW_dimension/2 - south_gap, -EW_dimension/2 - south_gap, -EW_dimension/2 - south_gap - south_building_height]
     
     # East building
-    east_x = [EW_dimension/2 + east_gap, EW_dimension/2 + east_gap + east_building_width, 
-             EW_dimension/2 + east_gap + east_building_width, EW_dimension/2 + east_gap, EW_dimension/2 + east_gap]
-    east_y = [-NS_dimension/2 - south_gap/2, -NS_dimension/2 - south_gap/2,
-             NS_dimension/2 + north_gap/2, NS_dimension/2 + north_gap/2, -NS_dimension/2 - south_gap/2]
+    east_x = [NS_dimension/2 + east_gap, NS_dimension/2 + east_gap + east_building_width, 
+             NS_dimension/2 + east_gap + east_building_width, NS_dimension/2 + east_gap, NS_dimension/2 + east_gap]
+    east_y = [-EW_dimension/2 - south_gap/2, -EW_dimension/2 - south_gap/2,
+             EW_dimension/2 + north_gap/2, EW_dimension/2 + north_gap/2, -EW_dimension/2 - south_gap/2]
     
     # West building
-    west_x = [-EW_dimension/2 - west_gap - west_building_width, -EW_dimension/2 - west_gap, 
-             -EW_dimension/2 - west_gap, -EW_dimension/2 - west_gap - west_building_width, -EW_dimension/2 - west_gap - west_building_width]
-    west_y = [-NS_dimension/2 - south_gap/2, -NS_dimension/2 - south_gap/2,
-             NS_dimension/2 + north_gap/2, NS_dimension/2 + north_gap/2, -NS_dimension/2 - south_gap/2]
+    west_x = [-NS_dimension/2 - west_gap - west_building_width, -NS_dimension/2 - west_gap, 
+             -NS_dimension/2 - west_gap, -NS_dimension/2 - west_gap - west_building_width, -NS_dimension/2 - west_gap - west_building_width]
+    west_y = [-EW_dimension/2 - south_gap/2, -EW_dimension/2 - south_gap/2,
+             EW_dimension/2 + north_gap/2, EW_dimension/2 + north_gap/2, -EW_dimension/2 - south_gap/2]
     
     # Add the surrounding buildings to the plot
     buildings_data = [
