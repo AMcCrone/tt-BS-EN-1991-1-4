@@ -129,10 +129,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     # Add building labels - position them better to avoid overlap
     # Adaptive positioning based on building size and gaps
     labels_data = [
-        (0, NS_dimension/2 + north_gap + north_building_height/2, "North Building"),
-        (0, -NS_dimension/2 - south_gap - south_building_height/2, "South Building"),
-        (EW_dimension/2 + east_gap + east_building_width/2, 0, "East Building"),
-        (-EW_dimension/2 - west_gap - west_building_width/2, 0, "West Building")
+        (0, EW_dimension/2 + north_gap + north_building_height/2, "North Building"),
+        (0, -EW_dimension/2 - south_gap - south_building_height/2, "South Building"),
+        (NS_dimension/2 + east_gap + east_building_width/2, 0, "East Building"),
+        (-NS_dimension/2 - west_gap - west_building_width/2, 0, "West Building")
     ]
     
     for x, y, text in labels_data:
