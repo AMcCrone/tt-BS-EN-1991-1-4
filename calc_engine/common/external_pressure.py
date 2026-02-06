@@ -145,10 +145,10 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
     
     # Highlight the gaps with orange if funnelling applies
     for direction, gap, dimension, is_ns in [
-        ("North", north_gap, NS_dimension, True),
-        ("South", south_gap, NS_dimension, True),
-        ("East", east_gap, EW_dimension, False),
-        ("West", west_gap, EW_dimension, False)
+        ("North", north_gap, EW_dimension, True),
+        ("South", south_gap, EW_dimension, True),
+        ("East", east_gap, NS_dimension, False),
+        ("West", west_gap, NS_dimension, False)
     ]:
         # Calculate e (the smaller of b or 2h)
         h = st.session_state.inputs.get("z", 10.0)  # Building height
