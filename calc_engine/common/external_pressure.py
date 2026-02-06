@@ -159,18 +159,18 @@ def display_building_layout(north_gap, south_gap, east_gap, west_gap):
         if e/4 < gap < e:
             if is_ns:  # North-South direction
                 if direction == "North":
-                    x = [-dimension/2, dimension/2, dimension/2, -dimension/2, -dimension/2]
-                    y = [NS_dimension/2, NS_dimension/2, NS_dimension/2+gap, NS_dimension/2+gap, NS_dimension/2]
+                    x = [-NS_dimension/2, NS_dimension/2, NS_dimension/2, -NS_dimension/2, -NS_dimension/2]
+                    y = [EW_dimension/2, EW_dimension/2, EW_dimension/2+gap, EW_dimension/2+gap, EW_dimension/2]
                 else:  # South
-                    x = [-dimension/2, dimension/2, dimension/2, -dimension/2, -dimension/2]
-                    y = [-NS_dimension/2, -NS_dimension/2, -NS_dimension/2-gap, -NS_dimension/2-gap, -NS_dimension/2]
+                    x = [-NS_dimension/2, NS_dimension/2, NS_dimension/2, -NS_dimension/2, -NS_dimension/2]
+                    y = [-EW_dimension/2, -EW_dimension/2, -EW_dimension/2-gap, -EW_dimension/2-gap, -EW_dimension/2]
             else:  # East-West direction
                 if direction == "East":
-                    x = [EW_dimension/2, EW_dimension/2+gap, EW_dimension/2+gap, EW_dimension/2, EW_dimension/2]
-                    y = [-dimension/2, -dimension/2, dimension/2, dimension/2, -dimension/2]
+                    x = [NS_dimension/2, NS_dimension/2+gap, NS_dimension/2+gap, NS_dimension/2, NS_dimension/2]
+                    y = [-EW_dimension/2, -EW_dimension/2, EW_dimension/2, EW_dimension/2, -EW_dimension/2]
                 else:  # West
-                    x = [-EW_dimension/2, -EW_dimension/2-gap, -EW_dimension/2-gap, -EW_dimension/2, -EW_dimension/2]
-                    y = [-dimension/2, -dimension/2, dimension/2, dimension/2, -dimension/2]
+                    x = [-NS_dimension/2, -NS_dimension/2-gap, -NS_dimension/2-gap, -NS_dimension/2, -NS_dimension/2]
+                    y = [-EW_dimension/2, -EW_dimension/2, EW_dimension/2, EW_dimension/2, -EW_dimension/2]
             
             # Calculate funnelling intensity based on gap's position between e/4 and e
             if gap <= e/2:
